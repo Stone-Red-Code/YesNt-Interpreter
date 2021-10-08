@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "YesNt-Interpreter": {
+      "commandName": "Project",
+      "commandLineArgs": "code.ynt"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": ""
+    }
+  }
+}
