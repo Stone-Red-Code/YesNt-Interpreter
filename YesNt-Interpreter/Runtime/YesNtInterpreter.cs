@@ -40,6 +40,11 @@ namespace YesNt.Interpreter
 
         public event Action<string> OnDebugOutput;
 
+        public void Stop()
+        {
+            runtimeInfo.Exit("Terminated by external process", true);
+        }
+
         public void Initialize()
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
@@ -80,6 +85,7 @@ namespace YesNt.Interpreter
             staticStatements = staticStatements.OrderBy(s => s.Key.Priority).ToList();
 
             runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
+            runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted.Invoke(e);
         }
 
         public void Execute(string path, bool isDebugMode = false)
@@ -87,8 +93,27 @@ namespace YesNt.Interpreter
             runtimeInfo.Reset();
             runtimeInfo.IsDebugMode = isDebugMode;
             LoadFile(path);
+            Execute();
+        }
 
-            for (runtimeInfo.LineNumber = 0; runtimeInfo.LineNumber < runtimeInfo.Lines.Count; runtimeInfo.LineNumber++)
+        internal void Execute(List<string> lines, int startLine, RuntimeInformation parentRuntimeInformation)
+        {
+            runtimeInfo.Reset();
+            runtimeInfo.IsDebugMode = parentRuntimeInformation.IsDebugMode;
+            runtimeInfo.Lines = lines;
+            runtimeInfo.LineNumber = startLine;
+            runtimeInfo.ParentRuntimeInformation = parentRuntimeInformation;
+            if (parentRuntimeInformation.StopAllTasks)
+            {
+                runtimeInfo.Exit($"Parent task was terminated!", parentRuntimeInformation.StopAllTasks);
+                return;
+            }
+            Execute();
+        }
+
+        private void Execute()
+        {
+            for (; runtimeInfo.LineNumber < runtimeInfo.Lines.Count; runtimeInfo.LineNumber++)
             {
                 if (runtimeInfo.Stop)
                 {
@@ -173,18 +198,25 @@ namespace YesNt.Interpreter
 
                 if (!statementFound)
                 {
-                    runtimeInfo.Exit("Invalid statement");
+                    runtimeInfo.Exit("Invalid statement", true);
                 }
-                if (isDebugMode && searchingLabel)
+                if (runtimeInfo.IsDebugMode && searchingLabel)
                 {
                     debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSaveString();
-                    OnLineExecuted?.Invoke(debugEventArgs);
+                    runtimeInfo.LineExecuted(debugEventArgs);
                 }
             }
 
             if (runtimeInfo.Stop == false)
             {
-                runtimeInfo.Exit("End of file");
+                if (string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
+                {
+                    runtimeInfo.Exit("End of file", false);
+                }
+                else
+                {
+                    runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", false);
+                }
             }
         }
 
@@ -192,7 +224,7 @@ namespace YesNt.Interpreter
         {
             if (!File.Exists(path))
             {
-                runtimeInfo.WriteLine($"File \"{path}\" not found!");
+                runtimeInfo.Exit($"File \"{path}\" not found!", true);
                 return;
             }
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace YesNt.CodeEditor
+﻿namespace YesNt.CodeEditor
 {
     internal class Program
     {
@@ -8,7 +6,6 @@ namespace YesNt.CodeEditor
         {
             TextEditor textEditor;
 
-            Console.CancelKeyPress += Console_CancelKeyPress;
             if (args.Length > 0)
             {
                 textEditor = new TextEditor(args[0]);
@@ -19,11 +16,6 @@ namespace YesNt.CodeEditor
             }
 
             textEditor.Run();
-        }
-
-        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
-        {
-            e.Cancel = true;
         }
     }
 }

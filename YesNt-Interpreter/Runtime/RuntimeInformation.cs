@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter
 {
     internal class RuntimeInformation
     {
+        private RuntimeInformation parentRuntimeInformation;
+
         public Dictionary<string, string> Variables { get; } = new();
         public Dictionary<string, int> Labels { get; } = new();
         public List<string> Lines { get; set; } = new();
@@ -15,15 +18,52 @@ namespace YesNt.Interpreter
         public string SearchLabel { get; set; } = string.Empty;
         public int LineNumber { get; set; } = 0;
         public bool Stop { get; private set; } = false;
-        public bool IsDebugMode { get; set; }
+        public bool StopAllTasks { get; private set; } = false;
+        public bool IsDebugMode { get; set; } = false;
+        public string CurrentFilePath { get; set; } = string.Empty;
+        public bool IsTask => ParentRuntimeInformation is not null;
+
+        public RuntimeInformation ParentRuntimeInformation
+        {
+            get => parentRuntimeInformation;
+            set
+            {
+                parentRuntimeInformation = value;
+                if (parentRuntimeInformation is not null)
+                {
+                    parentRuntimeInformation.OnExit += ParentRuntimeInformation_OnExit;
+                }
+            }
+        }
+
+        private event Action<string, bool> OnExit;
 
         public event Action<string> OnDebugOutput;
 
+        public event Action<DebugEventArgs> OnLineExecuted;
+
+        private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopChildTasks)
+        {
+            Exit($"Parent task was terminated!", stopChildTasks);
+        }
+
         public void WriteLine(string output)
         {
+            if (Stop)
+            {
+                return;
+            }
+
             if (IsDebugMode)
             {
-                OnDebugOutput?.Invoke(output.FromSaveString() + Environment.NewLine);
+                if (IsTask)
+                {
+                    parentRuntimeInformation.WriteLine(output.FromSaveString() + Environment.NewLine);
+                }
+                else
+                {
+                    OnDebugOutput?.Invoke(output.FromSaveString() + Environment.NewLine);
+                }
             }
             else
             {
@@ -33,9 +73,21 @@ namespace YesNt.Interpreter
 
         public void Write(string output)
         {
+            if (Stop)
+            {
+                return;
+            }
+
             if (IsDebugMode)
             {
-                OnDebugOutput?.Invoke(output.FromSaveString());
+                if (IsTask)
+                {
+                    parentRuntimeInformation.Write(output.FromSaveString());
+                }
+                else
+                {
+                    OnDebugOutput?.Invoke(output.FromSaveString());
+                }
             }
             else
             {
@@ -43,21 +95,45 @@ namespace YesNt.Interpreter
             }
         }
 
-        public void Exit(string message)
+        public void Exit(string message, bool stopAllTasks)
         {
-            WriteLine($"{Environment.NewLine}[The process was terminated at line {LineNumber + 1} with the message: {message}]");
-            Stop = true;
+            if (!Stop)
+            {
+                WriteLine($"{Environment.NewLine}[{(IsTask ? "A child task" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]");
+                Stop = true;
+            }
+            if (stopAllTasks == true && StopAllTasks == false)
+            {
+                StopAllTasks = true;
+                OnExit?.Invoke(message, StopAllTasks);
+                parentRuntimeInformation?.Exit("Terminated by child task", true);
+            }
+        }
+
+        public void LineExecuted(DebugEventArgs debugEventArgs)
+        {
+            if (IsTask)
+            {
+                parentRuntimeInformation.LineExecuted(debugEventArgs);
+            }
+            else
+            {
+                OnLineExecuted?.Invoke(debugEventArgs);
+            }
         }
 
         public void Reset()
         {
-            CurrentLine = string.Empty;
             Lines.Clear();
             Variables.Clear();
             Labels.Clear();
             LabelStack.Clear();
+            ParentRuntimeInformation = null;
             SearchLabel = string.Empty;
+            CurrentFilePath = string.Empty;
+            CurrentLine = string.Empty;
             Stop = false;
+            StopAllTasks = false;
             IsDebugMode = false;
             LineNumber = 0;
         }

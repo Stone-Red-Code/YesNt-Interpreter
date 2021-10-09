@@ -77,10 +77,6 @@ namespace YesNt.Interpreter.Utilities
             return null;
         }
 
-        /*
-            ((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+
-        */
-
         public static string Calculate(string input, char op = '+')
         {
             if (input is null)

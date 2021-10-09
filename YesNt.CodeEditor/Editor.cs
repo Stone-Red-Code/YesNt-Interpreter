@@ -32,6 +32,7 @@ namespace YesNt.CodeEditor
             yesNtInterpreter.OnDebugOutput += YesNtInterpreter_OnDebugOutput;
             yesNtInterpreter.OnLineExecuted += YesNtInterpreter_OnLineExecuted;
             syntaxHighlighter = new(yesNtInterpreter.StatementInformation);
+            Console.CancelKeyPress += Console_CancelKeyPress;
         }
 
         public void Run()
@@ -230,19 +231,32 @@ namespace YesNt.CodeEditor
                     case "run":
                         if (Save(input, true))
                         {
+                            mode = Mode.Debug;
                             Console.Clear();
                             yesNtInterpreter.Execute(currentPath);
+                            while (Console.KeyAvailable)
+                            {
+                                Console.ReadKey(true);
+                            }
                             Console.ReadKey();
+                            WriteStatus(string.Empty);
+                            mode = Mode.Command;
                         }
                         break;
 
                     case "debug":
                         if (Save(input, true))
                         {
+                            mode = Mode.Debug;
                             Console.Clear();
                             yesNtInterpreter.Execute(currentPath, true);
+                            while (Console.KeyAvailable)
+                            {
+                                Console.ReadKey(true);
+                            }
                             Console.ReadKey();
                             WriteStatus(string.Empty);
+                            mode = Mode.Command;
                         }
                         break;
 
@@ -254,12 +268,6 @@ namespace YesNt.CodeEditor
                         else
                         {
                             WriteStatus("Invalid arguments!");
-                            break;
-                        }
-
-                        if (!File.Exists(path))
-                        {
-                            WriteStatus("File does not exist!");
                             break;
                         }
 
@@ -277,15 +285,13 @@ namespace YesNt.CodeEditor
                         break;
 
                     case "new":
-                        if (Save(input, false))
-                        {
-                            lineOffset = 0;
-                            cursorPosition.X = 0;
-                            cursorPosition.Y = 0;
-                            currentPath = string.Empty;
-                            lines.Clear();
-                            WriteStatus(string.Empty);
-                        }
+
+                        lineOffset = 0;
+                        cursorPosition.X = 0;
+                        cursorPosition.Y = 0;
+                        currentPath = string.Empty;
+                        lines.Clear();
+                        WriteStatus(string.Empty);
                         break;
 
                     case "exit":
@@ -302,6 +308,11 @@ namespace YesNt.CodeEditor
 
         private bool Load(string path)
         {
+            if (string.IsNullOrEmpty(Path.GetExtension(path)))
+            {
+                path = Path.ChangeExtension(path, "ynt");
+            }
+
             if (!File.Exists(path))
             {
                 WriteStatus("File does not exist!");
@@ -321,7 +332,6 @@ namespace YesNt.CodeEditor
         private bool Save(string input, bool loadIfExists)
         {
             string text = "";
-            string path = "";
 
             foreach (string line in lines)
             {
@@ -329,6 +339,7 @@ namespace YesNt.CodeEditor
             }
             text = text.TrimEnd('\n');
 
+            string path;
             if (input.Split(' ').Length == 2)
             {
                 path = input.Split(' ')[1];
@@ -359,6 +370,11 @@ namespace YesNt.CodeEditor
             {
                 WriteStatus("File path is empty!");
                 return false;
+            }
+
+            if (string.IsNullOrEmpty(Path.GetExtension(path)))
+            {
+                path = Path.ChangeExtension(path, "ynt");
             }
 
             try
@@ -404,6 +420,16 @@ namespace YesNt.CodeEditor
             }
             debugOutput.Clear();
         }
+
+        private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            if (mode == Mode.Debug)
+            {
+                yesNtInterpreter.Stop();
+                mode = Mode.Command;
+            }
+        }
     }
 
     internal class Point
@@ -421,6 +447,7 @@ namespace YesNt.CodeEditor
     internal enum Mode
     {
         Edit,
-        Command
+        Command,
+        Debug
     }
 }
