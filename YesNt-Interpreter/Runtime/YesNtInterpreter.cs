@@ -215,7 +215,7 @@ namespace YesNt.Interpreter
                 }
                 else
                 {
-                    runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", false);
+                    runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", true);
                 }
             }
         }

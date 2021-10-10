@@ -44,12 +44,12 @@ namespace YesNt.Interpreter
 
         private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopChildTasks)
         {
-            Exit($"Parent task was terminated!", stopChildTasks);
+            Exit($"Terminated by parent task", stopChildTasks);
         }
 
-        public void WriteLine(string output)
+        public void WriteLine(string output, bool forceWrite = false)
         {
-            if (Stop)
+            if (Stop && !forceWrite || parentRuntimeInformation?.StopAllTasks == true && !forceWrite)
             {
                 return;
             }
@@ -58,7 +58,7 @@ namespace YesNt.Interpreter
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation.WriteLine(output.FromSaveString() + Environment.NewLine);
+                    parentRuntimeInformation.WriteLine(output.FromSaveString(), forceWrite);
                 }
                 else
                 {
@@ -71,9 +71,9 @@ namespace YesNt.Interpreter
             }
         }
 
-        public void Write(string output)
+        public void Write(string output, bool forceWrite = false)
         {
-            if (Stop)
+            if (Stop && !forceWrite || parentRuntimeInformation?.StopAllTasks == true && !forceWrite)
             {
                 return;
             }
@@ -82,7 +82,7 @@ namespace YesNt.Interpreter
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation.Write(output.FromSaveString());
+                    parentRuntimeInformation.Write(output.FromSaveString(), forceWrite);
                 }
                 else
                 {
@@ -99,7 +99,7 @@ namespace YesNt.Interpreter
         {
             if (!Stop)
             {
-                WriteLine($"{Environment.NewLine}[{(IsTask ? "A child task" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]");
+                WriteLine($"{Environment.NewLine}[{(IsTask ? "A child task" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]", true);
                 Stop = true;
             }
             if (stopAllTasks == true && StopAllTasks == false)

@@ -48,5 +48,11 @@ namespace YesNt.Interpreter.Statements
             }
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
+
+        [Statement("cls", SearchMode.Exact, SpaceAround.None)]
+        public void Clear(string args)
+        {
+            Console.Clear();
+        }
     }
 }

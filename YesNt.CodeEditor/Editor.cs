@@ -8,15 +8,17 @@ namespace YesNt.CodeEditor
 {
     internal class TextEditor
     {
-        private readonly YesNtInterpreter yesNtInterpreter = new();
+        private readonly InputHandler inputHandler;
         private readonly SyntaxHighlighter syntaxHighlighter;
-        private int lineOffset = 0;
-        private readonly List<string> lines = new();
         private readonly List<string> debugOutput = new();
-        private readonly Point cursorPosition = new(0, 0);
-        private Mode mode = Mode.Command;
 
-        private string currentPath = string.Empty;
+        public YesNtInterpreter yesNtInterpreter { get; } = new();
+
+        public int LineOffset { get; set; } = 0;
+        public List<string> Lines { get; } = new();
+        public Point CursorPosition { get; } = new(0, 0);
+        public Mode EditMode { get; set; } = Mode.Command;
+        public string CurrentPath { get; set; } = string.Empty;
 
         public TextEditor(string path) : this()
         {
@@ -32,6 +34,7 @@ namespace YesNt.CodeEditor
             yesNtInterpreter.OnDebugOutput += YesNtInterpreter_OnDebugOutput;
             yesNtInterpreter.OnLineExecuted += YesNtInterpreter_OnLineExecuted;
             syntaxHighlighter = new(yesNtInterpreter.StatementInformation);
+            inputHandler = new InputHandler(this);
             Console.CancelKeyPress += Console_CancelKeyPress;
         }
 
@@ -43,33 +46,45 @@ namespace YesNt.CodeEditor
             do
             {
                 Display(false);
-            } while (HandleInput());
+            } while (inputHandler.HandleInput());
+            Console.Clear();
         }
 
-        private void Display(bool drawAll)
+        public void Display(bool drawAll)
         {
             Console.CursorVisible = false;
 
             Console.SetCursorPosition(0, 0);
-            int padding = (Console.WindowHeight + lineOffset - 3).ToString().Length;
-            padding = Math.Max(padding, lines.Count.ToString().Length);
-            padding += 1;
-            for (int i = lineOffset; i < Console.WindowHeight + lineOffset - 2; i++)
-            {
-                Console.SetCursorPosition(0, i - lineOffset);
 
-                string lineCountString = $"{i + 1}".PadRight(padding, ' ') + "| ";
-                if (i < lines.Count)
+            if (SizeChanged())
+            {
+                drawAll = true;
+                inputHandler.WriteStatus(string.Empty);
+            }
+
+            if (LineOffset < 0 || CursorPosition.Y < 0 || CursorPosition.Y < 0)
+            {
+                LineOffset = 0;
+                CursorPosition.Y = 0;
+                CursorPosition.X = 0;
+            }
+
+            for (int i = LineOffset; i < Console.WindowHeight + LineOffset - 2; i++)
+            {
+                Console.SetCursorPosition(0, i - LineOffset);
+
+                string lineCountString = $"{i + 1}".PadRight(GetSpacing(), ' ') + "| ";
+                if (i < Lines.Count)
                 {
-                    if (cursorPosition.Y == i || drawAll)
+                    if (CursorPosition.Y == i || drawAll)
                     {
                         Console.Write(lineCountString);
-                        string printLine = $"{lines[i].Substring(0, Math.Min(lines[i].Length, Console.WindowWidth))}".TrimEnd();
+                        string printLine = $"{Lines[i].Substring(0, Math.Min(Lines[i].Length, Console.WindowWidth))}".TrimEnd();
                         syntaxHighlighter.Write(printLine);
                         Console.Write(new string(' ', Math.Max(Console.WindowWidth - lineCountString.Length - printLine.Length, 0)));
                     }
                 }
-                else if (drawAll || cursorPosition.Y == i)
+                else if (drawAll || CursorPosition.Y == i)
                 {
                     Console.Write(lineCountString + new string(' ', Console.WindowWidth - lineCountString.Length));
                 }
@@ -80,233 +95,12 @@ namespace YesNt.CodeEditor
             Console.SetCursorPosition(0, Console.WindowHeight - 2);
             Console.Write(">>>" + new string(' ', Console.WindowWidth - 3));
 
-            Console.SetCursorPosition(Math.Min(cursorPosition.X + padding + 2, Console.WindowWidth - 1), cursorPosition.Y - lineOffset);
+            Console.SetCursorPosition(Math.Min(CursorPosition.X + GetSpacing() + 2, Console.WindowWidth - 1), CursorPosition.Y - LineOffset);
+
             Console.CursorVisible = true;
         }
 
-        private bool HandleInput()
-        {
-            if (mode == Mode.Edit)
-            {
-                ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-
-                if ((ConsoleModifiers.Alt & keyInfo.Modifiers) != 0 && keyInfo.Key == ConsoleKey.C)
-                {
-                    mode = Mode.Command;
-                }
-                else if (keyInfo.Key == ConsoleKey.DownArrow)
-                {
-                    cursorPosition.Y++;
-                    if (cursorPosition.Y - lineOffset >= Console.WindowHeight - 3)
-                    {
-                        lineOffset++;
-                        Display(true);
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.UpArrow)
-                {
-                    if (cursorPosition.Y > 0)
-                    {
-                        cursorPosition.Y--;
-                        if (cursorPosition.Y - lineOffset < 0 && lineOffset > 0)
-                        {
-                            lineOffset--;
-                            Display(true);
-                        }
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.LeftArrow)
-                {
-                    if (cursorPosition.X > 0)
-                    {
-                        cursorPosition.X--;
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.RightArrow)
-                {
-                    if (cursorPosition.X + 6 < Console.WindowWidth - 1)
-                    {
-                        cursorPosition.X++;
-                    }
-                }
-                else if (keyInfo.Key == ConsoleKey.Enter)
-                {
-                    while (lines.Count <= cursorPosition.Y)
-                    {
-                        lines.Add("");
-                    }
-                    lines.Insert(cursorPosition.Y, "");
-
-                    string line = lines[cursorPosition.Y + 1];
-
-                    lines[cursorPosition.Y] = line.Substring(0, Math.Min(cursorPosition.X, line.Length));
-                    lines[cursorPosition.Y + 1] = line.Substring(Math.Min(cursorPosition.X, line.Length));
-
-                    cursorPosition.X = 0;
-                    cursorPosition.Y++;
-
-                    if (cursorPosition.Y - lineOffset >= Console.WindowHeight - 3)
-                    {
-                        lineOffset++;
-                    }
-                    Display(true);
-                }
-                else
-                {
-                    while (lines.Count <= cursorPosition.Y)
-                    {
-                        lines.Add("");
-                    }
-
-                    while (lines[cursorPosition.Y].Length <= cursorPosition.X)
-                    {
-                        lines[cursorPosition.Y] += " ";
-                    }
-
-                    if (keyInfo.Key == ConsoleKey.Backspace)
-                    {
-                        if (cursorPosition.X > 0)
-                        {
-                            lines[cursorPosition.Y] = lines[cursorPosition.Y].Remove(cursorPosition.X - 1, 1);
-                            cursorPosition.X--;
-                        }
-                        else
-                        {
-                            if (cursorPosition.Y > 0)
-                            {
-                                if (string.IsNullOrWhiteSpace(lines[cursorPosition.Y - 1]))
-                                {
-                                    lines.RemoveAt(--cursorPosition.Y);
-                                }
-                                else
-                                {
-                                    cursorPosition.Y--;
-                                    cursorPosition.X = lines[cursorPosition.Y].TrimEnd().Length;
-                                    lines[cursorPosition.Y] += lines[cursorPosition.Y + 1];
-                                    lines.RemoveAt(cursorPosition.Y + 1);
-                                }
-                                if (cursorPosition.Y - lineOffset < 0 && lineOffset > 0)
-                                {
-                                    lineOffset--;
-                                }
-                                Display(true);
-                            }
-                        }
-
-                        while (lines.Count > 0 && string.IsNullOrWhiteSpace(lines[lines.Count - 1]))
-                        {
-                            lines.RemoveAt(lines.Count - 1);
-                        }
-                    }
-                    else
-                    {
-                        char input = keyInfo.KeyChar;
-                        if (!char.IsControl(input))
-                        {
-                            lines[cursorPosition.Y] = lines[cursorPosition.Y].Insert(cursorPosition.X, input.ToString());
-                            cursorPosition.X++;
-                        }
-                    }
-                }
-            }
-            else if (mode == Mode.Command)
-            {
-                Console.SetCursorPosition(3, Console.WindowHeight - 2);
-
-                string input = Console.ReadLine() ?? string.Empty;
-                string command = input.Split(' ')[0].Trim();
-                string path;
-
-                switch (command)
-                {
-                    case "edit":
-                        WriteStatus(string.Empty);
-                        mode = Mode.Edit;
-                        break;
-
-                    case "save":
-                        Save(input, false);
-                        break;
-
-                    case "run":
-                        if (Save(input, true))
-                        {
-                            mode = Mode.Debug;
-                            Console.Clear();
-                            yesNtInterpreter.Execute(currentPath);
-                            while (Console.KeyAvailable)
-                            {
-                                Console.ReadKey(true);
-                            }
-                            Console.ReadKey();
-                            WriteStatus(string.Empty);
-                            mode = Mode.Command;
-                        }
-                        break;
-
-                    case "debug":
-                        if (Save(input, true))
-                        {
-                            mode = Mode.Debug;
-                            Console.Clear();
-                            yesNtInterpreter.Execute(currentPath, true);
-                            while (Console.KeyAvailable)
-                            {
-                                Console.ReadKey(true);
-                            }
-                            Console.ReadKey();
-                            WriteStatus(string.Empty);
-                            mode = Mode.Command;
-                        }
-                        break;
-
-                    case "load":
-                        if (input.Split(' ').Length == 2)
-                        {
-                            path = input.Split(' ')[1];
-                        }
-                        else
-                        {
-                            WriteStatus("Invalid arguments!");
-                            break;
-                        }
-
-                        try
-                        {
-                            Load(path);
-                        }
-                        catch (Exception ex)
-                        {
-                            WriteStatus(ex.Message);
-                        }
-                        lineOffset = 0;
-                        cursorPosition.X = 0;
-                        cursorPosition.Y = 0;
-                        break;
-
-                    case "new":
-
-                        lineOffset = 0;
-                        cursorPosition.X = 0;
-                        cursorPosition.Y = 0;
-                        currentPath = string.Empty;
-                        lines.Clear();
-                        WriteStatus(string.Empty);
-                        break;
-
-                    case "exit":
-                        return false;
-
-                    default:
-                        WriteStatus("Command not found!");
-                        break;
-                }
-                Display(true);
-            }
-            return true;
-        }
-
-        private bool Load(string path)
+        public bool Load(string path)
         {
             if (string.IsNullOrEmpty(Path.GetExtension(path)))
             {
@@ -315,25 +109,25 @@ namespace YesNt.CodeEditor
 
             if (!File.Exists(path))
             {
-                WriteStatus("File does not exist!");
+                inputHandler.WriteStatus("File does not exist!");
                 return false;
             }
 
-            lines.Clear();
+            Lines.Clear();
             foreach (string line in File.ReadAllLines(path))
             {
-                lines.Add(line.Replace("\n", ""));
+                Lines.Add(line.Replace("\n", ""));
             }
-            currentPath = path;
-            WriteStatus("File Loaded!");
+            CurrentPath = path;
+            inputHandler.WriteStatus("File Loaded!");
             return true;
         }
 
-        private bool Save(string input, bool loadIfExists)
+        public bool Save(string input, bool loadIfExists)
         {
             string text = "";
 
-            foreach (string line in lines)
+            foreach (string line in Lines)
             {
                 text += line + "\n";
             }
@@ -344,7 +138,7 @@ namespace YesNt.CodeEditor
             {
                 path = input.Split(' ')[1];
 
-                if (currentPath.Trim() != path.Trim() && loadIfExists)
+                if (CurrentPath.Trim() != path.Trim() && loadIfExists)
                 {
                     if (Load(path))
                     {
@@ -355,20 +149,20 @@ namespace YesNt.CodeEditor
                         return false;
                     }
                 }
-                currentPath = path;
+                CurrentPath = path;
             }
-            else if (!string.IsNullOrWhiteSpace(currentPath))
+            else if (!string.IsNullOrWhiteSpace(CurrentPath))
             {
-                path = currentPath;
+                path = CurrentPath;
             }
             else if (input.Split(' ').Length > 2)
             {
-                WriteStatus("Invalid arguments!");
+                inputHandler.WriteStatus("Invalid arguments!");
                 return false;
             }
             else
             {
-                WriteStatus("File path is empty!");
+                inputHandler.WriteStatus("File path is empty!");
                 return false;
             }
 
@@ -380,20 +174,14 @@ namespace YesNt.CodeEditor
             try
             {
                 File.WriteAllText(path, text);
-                WriteStatus("File Saved!");
+                inputHandler.WriteStatus("File Saved!");
                 return true;
             }
             catch (Exception ex)
             {
-                WriteStatus(ex.Message);
+                inputHandler.WriteStatus(ex.Message);
                 return false;
             }
-        }
-
-        private void WriteStatus(string input)
-        {
-            Console.SetCursorPosition(0, Console.WindowHeight - 1);
-            Console.Write(input + new string(' ', Console.WindowWidth - input.Length - 1));
         }
 
         private void YesNtInterpreter_OnDebugOutput(string output)
@@ -403,32 +191,60 @@ namespace YesNt.CodeEditor
 
         private void YesNtInterpreter_OnLineExecuted(Interpreter.Runtime.DebugEventArgs e)
         {
-            Console.ForegroundColor = ConsoleColor.Magenta;
-            if (e.OriginalLine == e.CurrentLine)
+            lock (Console.Out)
             {
-                Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.CurrentLine}] ==>");
-            }
-            else
-            {
-                Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
-            }
-            Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.Magenta;
+                if (e.OriginalLine == e.CurrentLine)
+                {
+                    Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.CurrentLine}] ==>");
+                }
+                else
+                {
+                    Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
+                }
+                Console.ResetColor();
 
-            foreach (string output in debugOutput)
-            {
-                Console.Write(output);
+                string[] outputs = debugOutput.ToArray();
+                debugOutput.Clear();
+
+                foreach (string output in outputs)
+                {
+                    Console.Write(output);
+                }
             }
-            debugOutput.Clear();
         }
 
         private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
-            if (mode == Mode.Debug)
+            switch (EditMode)
             {
-                yesNtInterpreter.Stop();
-                mode = Mode.Command;
+                case Mode.Debug:
+                    yesNtInterpreter.Stop();
+                    EditMode = Mode.Command;
+                    break;
             }
+        }
+
+        public int GetSpacing()
+        {
+            int padding = (Console.WindowHeight + LineOffset - 3).ToString().Length;
+            padding = Math.Max(padding, Lines.Count.ToString().Length);
+            padding += 1;
+            return padding;
+        }
+
+        private Point oldSize = new Point(0, 0);
+
+        private bool SizeChanged()
+        {
+            if (oldSize.X != Console.WindowWidth && oldSize.Y != Console.WindowHeight)
+            {
+                oldSize.X = Console.WindowWidth;
+                oldSize.Y = Console.WindowHeight;
+                return true;
+            }
+            return false;
         }
     }
 
