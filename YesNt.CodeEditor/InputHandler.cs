@@ -25,6 +25,21 @@ namespace YesNt.CodeEditor
                             textEditor.EditMode = Mode.Command;
                             break;
 
+                        case ConsoleKey.B:
+                            int position = textEditor.Lines.Count;
+                            textEditor.CursorPosition.Y = position - 1;
+                            textEditor.LineOffset = Math.Max(position - Console.WindowHeight + 3, 0);
+
+                            textEditor.Display(true);
+                            break;
+
+                        case ConsoleKey.T:
+                            textEditor.CursorPosition.Y = 0;
+                            textEditor.LineOffset = 0;
+
+                            textEditor.Display(true);
+                            break;
+
                         case ConsoleKey.S:
                             textEditor.CursorPosition.X = 0;
                             break;
@@ -171,6 +186,8 @@ namespace YesNt.CodeEditor
                 string input = Console.ReadLine() ?? string.Empty;
                 string command = input.Split(' ')[0].Trim();
                 string path;
+
+                Console.CursorVisible = false;
 
                 switch (command)
                 {

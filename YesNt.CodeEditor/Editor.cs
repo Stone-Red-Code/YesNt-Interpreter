@@ -114,10 +114,7 @@ namespace YesNt.CodeEditor
             }
 
             Lines.Clear();
-            foreach (string line in File.ReadAllLines(path))
-            {
-                Lines.Add(line.Replace("\n", ""));
-            }
+            Lines.AddRange(File.ReadAllLines(path));
             CurrentPath = path;
             inputHandler.WriteStatus("File Loaded!");
             return true;
@@ -125,14 +122,6 @@ namespace YesNt.CodeEditor
 
         public bool Save(string input, bool loadIfExists)
         {
-            string text = "";
-
-            foreach (string line in Lines)
-            {
-                text += line + "\n";
-            }
-            text = text.TrimEnd('\n');
-
             string path;
             if (input.Split(' ').Length == 2)
             {
@@ -171,9 +160,14 @@ namespace YesNt.CodeEditor
                 path = Path.ChangeExtension(path, "ynt");
             }
 
+            while (Lines.Count > 0 && string.IsNullOrWhiteSpace(Lines[Lines.Count - 1]))
+            {
+                Lines.RemoveAt(Lines.Count - 1);
+            }
+
             try
             {
-                File.WriteAllText(path, text);
+                File.WriteAllLines(path, Lines);
                 inputHandler.WriteStatus("File Saved!");
                 return true;
             }
