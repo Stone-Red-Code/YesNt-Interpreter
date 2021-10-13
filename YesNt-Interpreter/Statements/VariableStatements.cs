@@ -13,7 +13,7 @@ namespace YesNt.Interpreter.Statements
             string[] parts = args.Split('=');
             if (parts.Length == 2)
             {
-                string key = parts[0].Replace("<", "").Trim();
+                string key = parts[0].Replace("<", string.Empty).Trim();
                 if (key.Contains(' '))
                 {
                     RuntimeInfo.Exit("Invalid Syntax", true);
@@ -35,6 +35,34 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
+        [Statement("!<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow, IgnoreSyntaxHighlighting = true)]
+        public void DefineGlobalVariable(string args)
+        {
+            string[] parts = args.Split('=');
+            if (parts.Length == 2)
+            {
+                string key = parts[0].Replace("!<", string.Empty).Trim();
+                if (key.Contains(' '))
+                {
+                    RuntimeInfo.Exit("Invalid Syntax", true);
+                }
+
+                if (RuntimeInfo.GloablVariables.ContainsKey(key))
+                {
+                    RuntimeInfo.GloablVariables[key] = parts[1].Trim();
+                }
+                else
+                {
+                    RuntimeInfo.GloablVariables.Add(key, parts[1].Trim());
+                }
+            }
+            else
+            {
+                RuntimeInfo.Exit("Invalid syntax", true);
+                return;
+            }
+        }
+
         [StaticStatement(ExecuteInSearchLabelMode = true)]
         public void ReadVariable()
         {
@@ -44,6 +72,11 @@ namespace YesNt.Interpreter.Statements
             }
 
             foreach (KeyValuePair<string, string> variable in RuntimeInfo.Variables)
+            {
+                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
+            }
+
+            foreach (KeyValuePair<string, string> variable in RuntimeInfo.GloablVariables)
             {
                 RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
             }

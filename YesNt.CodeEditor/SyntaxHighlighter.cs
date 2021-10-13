@@ -65,6 +65,12 @@ namespace YesNt.CodeEditor
                 input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkCyan, SearchMode.StartOfLine);
             }
 
+            matches = Regex.Matches(input, @"^!<[a-zA-Z0-9]+");
+            for (int i = 0; i < matches.Count; i++)
+            {
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
+            }
+
             foreach (string part in input.Split("\0"))
             {
                 ConsoleColor consoleColor;
@@ -88,7 +94,7 @@ namespace YesNt.CodeEditor
                 }
                 Console.ForegroundColor = consoleColor;
                 Console.Write(messagePart, consoleColor);
-                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.Gray;
             }
         }
 

@@ -13,6 +13,10 @@ namespace YesNt.CodeEditor
 
         public bool HandleInput()
         {
+            while (Console.KeyAvailable)
+            {
+                Console.ReadKey(true);
+            }
             if (textEditor.EditMode == Mode.Edit)
             {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
@@ -23,7 +27,7 @@ namespace YesNt.CodeEditor
                     {
                         case ConsoleKey.C:
                             textEditor.EditMode = Mode.Command;
-                            break;
+                            return true;
 
                         case ConsoleKey.B:
                             int position = textEditor.Lines.Count;
@@ -31,18 +35,18 @@ namespace YesNt.CodeEditor
                             textEditor.LineOffset = Math.Max(position - Console.WindowHeight + 3, 0);
 
                             textEditor.Display(true);
-                            break;
+                            return true;
 
                         case ConsoleKey.T:
                             textEditor.CursorPosition.Y = 0;
                             textEditor.LineOffset = 0;
 
                             textEditor.Display(true);
-                            break;
+                            return true;
 
                         case ConsoleKey.S:
                             textEditor.CursorPosition.X = 0;
-                            break;
+                            return true;
 
                         case ConsoleKey.E:
                             if (textEditor.Lines.Count > textEditor.CursorPosition.Y)
@@ -53,10 +57,10 @@ namespace YesNt.CodeEditor
                             {
                                 textEditor.CursorPosition.X = 0;
                             }
-                            break;
+                            return true;
                     }
                 }
-                else if (keyInfo.Key == ConsoleKey.DownArrow)
+                if (keyInfo.Key == ConsoleKey.DownArrow)
                 {
                     textEditor.CursorPosition.Y++;
                     if (textEditor.CursorPosition.Y - textEditor.LineOffset >= Console.WindowHeight - 3)
@@ -228,6 +232,7 @@ namespace YesNt.CodeEditor
                         {
                             textEditor.EditMode = Mode.Debug;
                             Console.Clear();
+                            Console.CursorVisible = true;
                             textEditor.yesNtInterpreter.Execute(textEditor.CurrentPath);
                             while (Console.KeyAvailable)
                             {
@@ -244,6 +249,7 @@ namespace YesNt.CodeEditor
                         {
                             textEditor.EditMode = Mode.Debug;
                             Console.Clear();
+                            Console.CursorVisible = true;
                             textEditor.yesNtInterpreter.Execute(textEditor.CurrentPath, true);
                             while (Console.KeyAvailable)
                             {

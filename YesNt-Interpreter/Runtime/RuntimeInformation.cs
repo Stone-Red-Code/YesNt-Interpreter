@@ -9,8 +9,11 @@ namespace YesNt.Interpreter
     internal class RuntimeInformation
     {
         private RuntimeInformation parentRuntimeInformation;
+        private static int internalTaskId = 0;
+        private int taskId = 0;
 
         public Dictionary<string, string> Variables { get; } = new();
+        public Dictionary<string, string> GloablVariables { get; set; } = new();
         public Dictionary<string, int> Labels { get; } = new();
         public List<string> Lines { get; set; } = new();
         public string CurrentLine { get; set; } = string.Empty;
@@ -22,6 +25,8 @@ namespace YesNt.Interpreter
         public bool IsDebugMode { get; set; } = false;
         public string CurrentFilePath { get; set; } = string.Empty;
         public bool IsTask => ParentRuntimeInformation is not null;
+
+        public int TaskId => IsTask ? taskId : 0;
 
         public RuntimeInformation ParentRuntimeInformation
         {
@@ -126,6 +131,7 @@ namespace YesNt.Interpreter
         {
             Lines.Clear();
             Variables.Clear();
+            GloablVariables.Clear();
             Labels.Clear();
             LabelStack.Clear();
             ParentRuntimeInformation = null;
@@ -136,6 +142,8 @@ namespace YesNt.Interpreter
             StopAllTasks = false;
             IsDebugMode = false;
             LineNumber = 0;
+            taskId = internalTaskId + 1;
+            internalTaskId++;
         }
     }
 }

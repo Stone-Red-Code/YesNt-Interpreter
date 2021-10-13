@@ -46,7 +46,7 @@ namespace YesNt.Interpreter.Statements
             {
                 YesNtInterpreter interpreter = new YesNtInterpreter();
                 interpreter.Initialize();
-                interpreter.Execute(lines, lineNumer, RuntimeInfo);
+                interpreter.Execute(lines, RuntimeInfo.GloablVariables, lineNumer, RuntimeInfo);
             });
 
             RuntimeInfo.CurrentLine = string.Empty;

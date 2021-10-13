@@ -96,13 +96,14 @@ namespace YesNt.Interpreter
             Execute();
         }
 
-        internal void Execute(List<string> lines, int startLine, RuntimeInformation parentRuntimeInformation)
+        internal void Execute(List<string> lines, Dictionary<string, string> gloablVariables, int startLine, RuntimeInformation parentRuntimeInformation)
         {
             runtimeInfo.Reset();
             runtimeInfo.IsDebugMode = parentRuntimeInformation.IsDebugMode;
             runtimeInfo.Lines = lines;
             runtimeInfo.LineNumber = startLine;
             runtimeInfo.ParentRuntimeInformation = parentRuntimeInformation;
+            runtimeInfo.GloablVariables = gloablVariables;
             if (parentRuntimeInformation.StopAllTasks)
             {
                 runtimeInfo.Exit($"Parent task was terminated!", parentRuntimeInformation.StopAllTasks);
@@ -125,7 +126,9 @@ namespace YesNt.Interpreter
                 DebugEventArgs debugEventArgs = new DebugEventArgs()
                 {
                     LineNumber = runtimeInfo.LineNumber + 1,
-                    OriginalLine = runtimeInfo.CurrentLine.FromSaveString()
+                    OriginalLine = runtimeInfo.CurrentLine.FromSaveString(),
+                    IsTask = runtimeInfo.IsTask,
+                    TaskId = runtimeInfo.TaskId
                 };
 
                 if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine))
@@ -216,6 +219,10 @@ namespace YesNt.Interpreter
                 else
                 {
                     runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", true);
+                }
+                if (runtimeInfo.IsDebugMode)
+                {
+                    runtimeInfo.LineExecuted(null);
                 }
             }
         }

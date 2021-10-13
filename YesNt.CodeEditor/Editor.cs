@@ -13,7 +13,6 @@ namespace YesNt.CodeEditor
         private readonly List<string> debugOutput = new();
 
         public YesNtInterpreter yesNtInterpreter { get; } = new();
-
         public int LineOffset { get; set; } = 0;
         public List<string> Lines { get; } = new();
         public Point CursorPosition { get; } = new(0, 0);
@@ -47,12 +46,15 @@ namespace YesNt.CodeEditor
             {
                 Display(false);
             } while (inputHandler.HandleInput());
+
             Console.Clear();
         }
 
         public void Display(bool drawAll)
         {
             Console.CursorVisible = false;
+            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.BackgroundColor = ConsoleColor.Black;
 
             Console.SetCursorPosition(0, 0);
 
@@ -138,6 +140,10 @@ namespace YesNt.CodeEditor
                         return false;
                     }
                 }
+                if (string.IsNullOrEmpty(Path.GetExtension(path)))
+                {
+                    path = Path.ChangeExtension(path, "ynt");
+                }
                 CurrentPath = path;
             }
             else if (!string.IsNullOrWhiteSpace(CurrentPath))
@@ -151,7 +157,7 @@ namespace YesNt.CodeEditor
             }
             else
             {
-                inputHandler.WriteStatus("File path is empty!");
+                inputHandler.WriteStatus("File path is empty! (Save the file before you can use this command)");
                 return false;
             }
 
@@ -187,17 +193,22 @@ namespace YesNt.CodeEditor
         {
             lock (Console.Out)
             {
-                Console.ForegroundColor = ConsoleColor.Magenta;
-                if (e.OriginalLine == e.CurrentLine)
+                if (e is not null)
                 {
-                    Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.CurrentLine}] ==>");
-                }
-                else
-                {
-                    Console.WriteLine($"{Environment.NewLine}[{e.LineNumber}] [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
-                }
-                Console.ResetColor();
+                    Console.ForegroundColor = ConsoleColor.Magenta;
 
+                    string taskId = e.IsTask ? $"[Task: {e.TaskId}] " : string.Empty;
+                    if (e.OriginalLine == e.CurrentLine)
+                    {
+                        Console.WriteLine($"{Environment.NewLine}{taskId}[{e.LineNumber}] [{e.CurrentLine}] ==>");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{Environment.NewLine}{taskId}[{e.LineNumber}] [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
+                    }
+                    Console.ForegroundColor = ConsoleColor.Gray;
+
+                }
                 string[] outputs = debugOutput.ToArray();
                 debugOutput.Clear();
 
