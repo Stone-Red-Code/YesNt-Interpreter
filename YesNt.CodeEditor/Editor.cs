@@ -197,17 +197,18 @@ namespace YesNt.CodeEditor
                 {
                     Console.ForegroundColor = ConsoleColor.Magenta;
 
-                    string taskId = e.IsTask ? $"[Task: {e.TaskId}] " : string.Empty;
+                    string sharedString = (Console.CursorLeft != 0) ? Environment.NewLine : string.Empty;
+                    sharedString += e.IsTask ? $"[Task: {e.TaskId}] " : string.Empty + $"[{e.LineNumber}]";
+
                     if (e.OriginalLine == e.CurrentLine)
                     {
-                        Console.WriteLine($"{Environment.NewLine}{taskId}[{e.LineNumber}] [{e.CurrentLine}] ==>");
+                        Console.WriteLine($"{sharedString}[{e.CurrentLine}] ==>");
                     }
                     else
                     {
-                        Console.WriteLine($"{Environment.NewLine}{taskId}[{e.LineNumber}] [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
+                        Console.WriteLine($"{sharedString} [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
                     }
                     Console.ForegroundColor = ConsoleColor.Gray;
-
                 }
                 string[] outputs = debugOutput.ToArray();
                 debugOutput.Clear();

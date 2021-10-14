@@ -4,7 +4,7 @@ namespace YesNt.CodeEditor
 {
     internal class InputHandler
     {
-        private TextEditor textEditor;
+        private readonly TextEditor textEditor;
 
         public InputHandler(TextEditor textEditor)
         {
