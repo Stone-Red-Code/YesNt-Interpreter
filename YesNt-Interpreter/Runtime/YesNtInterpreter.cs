@@ -29,9 +29,12 @@ namespace YesNt.Interpreter
                         Name = s.Key.Name,
                         SearchMode = s.Key.SearchMode,
                         SpaceAround = s.Key.SpaceAround,
-                        IgnoreSyntaxHighlighting = s.Key.IgnoreSyntaxHighlighting
+                        Color = s.Key.Color,
+                        IgnoreSyntaxHighlighting = s.Key.IgnoreSyntaxHighlighting,
+                        Seperator = s.Key.Seperator
                     };
                 }).ToList();
+
                 return new ReadOnlyCollection<StatementInformation>(informations);
             }
         }
@@ -179,9 +182,9 @@ namespace YesNt.Interpreter
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
                     }
-                    else if (statementAttribute.SearchMode == SearchMode.Contains && $"{runtimeInfo.CurrentLine} ".Contains(name))
+                    else if (statementAttribute.SearchMode == SearchMode.Contains && $" {runtimeInfo.CurrentLine} ".Contains(name))
                     {
-                        runtimeInfo.CurrentLine = $"{runtimeInfo.CurrentLine} ";
+                        runtimeInfo.CurrentLine = $" {runtimeInfo.CurrentLine} ";
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
                         statement.Value.Invoke(copyLine);
                         statementFound = true;

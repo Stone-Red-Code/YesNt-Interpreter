@@ -8,19 +8,19 @@ namespace YesNt.Interpreter.Statements
 {
     internal class ConsoleStatements : StatementRuntimeInformation
     {
-        [Statement("cwl", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+        [Statement("cwl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkGreen, Priority = Priority.VeryLow)]
         public void WriteLine(string args)
         {
             RuntimeInfo.WriteLine(args);
         }
 
-        [Statement("cw", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+        [Statement("cw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkGreen, Priority = Priority.VeryLow)]
         public void Write(string args)
         {
             RuntimeInfo.Write(args);
         }
 
-        [Statement("%crl", SearchMode.Contains, SpaceAround.End, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%crl", SearchMode.Contains, SpaceAround.End, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void ReadLine(string args)
         {
             args += " ";
@@ -37,7 +37,7 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
 
-        [Statement("%cr", SearchMode.Contains, SpaceAround.End, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%cr", SearchMode.Contains, SpaceAround.End, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void ReadKey(string args)
         {
             args += " ";
@@ -49,7 +49,7 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
 
-        [Statement("cls", SearchMode.Exact, SpaceAround.None)]
+        [Statement("cls", SearchMode.Exact, SpaceAround.None, ConsoleColor.Magenta)]
         public void Clear(string args)
         {
             Console.Clear();

@@ -1,4 +1,6 @@
-﻿using YesNt.Interpreter.Attributes;
+﻿using System;
+
+using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Utilities;
 
@@ -6,7 +8,7 @@ namespace YesNt.Interpreter.Statements
 {
     internal class CodeFlowStatements : StatementRuntimeInformation
     {
-        [Statement("jmp", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+        [Statement("jmp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow)]
         public void Jump(string args)
         {
             string key = args.Trim();
@@ -26,7 +28,7 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("jif", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+        [Statement("jif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Seperator = "|")]
         public void JumpIf(string args)
         {
             string[] parts = args.Split('|');
@@ -65,7 +67,7 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ExecuteInSearchLabelMode = true)]
+        [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchLabelMode = true)]
         public void FindLabel(string args)
         {
             string key = args.Trim();
@@ -84,7 +86,12 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("ret", SearchMode.Exact, SpaceAround.None)]
+        [Statement("fnc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchLabelMode = true)]
+        public void FindFunction(string args)
+        {
+        }
+
+        [Statement("ret", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
         public void Return(string _)
         {
             if (RuntimeInfo.LabelStack.Count > 0)
@@ -97,13 +104,13 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("end", SearchMode.Exact, SpaceAround.None)]
+        [Statement("end", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
         public void End(string _)
         {
             RuntimeInfo.Exit("Planned termination by code", false);
         }
 
-        [Statement("trm", SearchMode.Exact, SpaceAround.None)]
+        [Statement("trm", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
         public void Terminate(string _)
         {
             RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);

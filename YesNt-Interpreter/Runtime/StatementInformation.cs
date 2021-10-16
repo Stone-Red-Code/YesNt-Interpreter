@@ -1,4 +1,6 @@
-﻿using YesNt.Interpreter.Enums;
+﻿using System;
+
+using YesNt.Interpreter.Enums;
 
 namespace YesNt.Interpreter.Runtime
 {
@@ -7,6 +9,8 @@ namespace YesNt.Interpreter.Runtime
         public string Name { get; internal set; }
         public SearchMode SearchMode { get; internal set; }
         public SpaceAround SpaceAround { get; internal set; }
+        public ConsoleColor Color { get; internal set; }
         public bool IgnoreSyntaxHighlighting { get; internal set; }
+        public string Seperator { get; set; }
     }
 }

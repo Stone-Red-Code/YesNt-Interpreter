@@ -206,7 +206,7 @@ namespace YesNt.CodeEditor
                     }
                     else
                     {
-                        Console.WriteLine($"{sharedString} [{e.OriginalLine}] => [{e.CurrentLine}] ==>");
+                        Console.WriteLine($"{sharedString}[{e.OriginalLine}] => [{e.CurrentLine}] ==>");
                     }
                     Console.ForegroundColor = ConsoleColor.Gray;
                 }
@@ -240,7 +240,7 @@ namespace YesNt.CodeEditor
             return padding;
         }
 
-        private Point oldSize = new Point(0, 0);
+        private readonly Point oldSize = new Point(0, 0);
 
         private bool SizeChanged()
         {

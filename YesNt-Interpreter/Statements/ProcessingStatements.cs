@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ namespace YesNt.Interpreter.Statements
 {
     internal class ProcessingStatements : StatementRuntimeInformation
     {
-        [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, Priority = Priority.High, ExecuteInSearchLabelMode = true)]
+        [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High, ExecuteInSearchLabelMode = true)]
         public void Calculate(string args)
         {
             MatchCollection matches = Regex.Matches(args, @"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
@@ -30,13 +31,13 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.CurrentLine = args;
         }
 
-        [Statement("!eval", SearchMode.EndOfLine, SpaceAround.Start, Priority = Priority.VeryHigh)]
+        [Statement("!eval", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
         public void Evaluate(string args)
         {
             RuntimeInfo.CurrentLine = args.FromSaveString();
         }
 
-        [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, Priority = Priority.VeryHigh)]
+        [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
         public void RunTask(string line)
         {
             int lineNumer = RuntimeInfo.LineNumber;
@@ -52,14 +53,14 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.CurrentLine = string.Empty;
         }
 
-        [Statement("slp", SearchMode.StartOfLine, SpaceAround.End)]
+        [Statement("slp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
         public void Sleep(string args)
         {
             _ = int.TryParse(args, out int millisecondsTimeout);
             ConsoleExtentions.Sleep(millisecondsTimeout, RuntimeInfo);
         }
 
-        [Statement("imp", SearchMode.StartOfLine, SpaceAround.End)]
+        [Statement("imp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
         public void Import(string path)
         {
             if (string.IsNullOrEmpty(Path.GetExtension(path)))

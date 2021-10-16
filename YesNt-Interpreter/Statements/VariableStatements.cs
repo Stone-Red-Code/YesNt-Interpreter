@@ -7,7 +7,7 @@ namespace YesNt.Interpreter.Statements
 {
     internal class VariableStatements : StatementRuntimeInformation
     {
-        [Statement("<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow, IgnoreSyntaxHighlighting = true)]
+        [Statement("<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
         public void DefineVariable(string args)
         {
             string[] parts = args.Split('=');
@@ -35,7 +35,7 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("!<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow, IgnoreSyntaxHighlighting = true)]
+        [Statement("!<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
         public void DefineGlobalVariable(string args)
         {
             string[] parts = args.Split('=');

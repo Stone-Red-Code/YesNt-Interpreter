@@ -37,19 +37,51 @@ namespace YesNt.CodeEditor
                 input = input.TrimEnd();
                 if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
                 {
-                    input = AddColorInformation(input, input.Substring(0, name.Length), ConsoleColor.DarkGreen, statement.SearchMode);
+                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    {
+                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Seperator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input.Substring(0, name.Length), statement.Color, statement.SearchMode);
                 }
-                if (statement.SearchMode == SearchMode.Contains && $"{input} ".Contains(name))
+                if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
                 {
-                    input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), ConsoleColor.Green, statement.SearchMode);
+                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    {
+                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Seperator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), statement.Color, statement.SearchMode);
                 }
                 if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
                 {
-                    input = AddColorInformation(input, input.Substring(input.Length - name.Length), ConsoleColor.DarkYellow, statement.SearchMode);
+                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    {
+                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Seperator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input.Substring(input.Length - name.Length), statement.Color, statement.SearchMode);
                 }
                 if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
                 {
-                    input = AddColorInformation(input, input, ConsoleColor.Red, statement.SearchMode);
+                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    {
+                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Seperator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
                 }
             }
 
