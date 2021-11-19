@@ -233,7 +233,7 @@ namespace YesNt.CodeEditor
                             textEditor.EditMode = Mode.Debug;
                             Console.Clear();
                             Console.CursorVisible = true;
-                            textEditor.yesNtInterpreter.Execute(textEditor.CurrentPath);
+                            textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath);
                             while (Console.KeyAvailable)
                             {
                                 Console.ReadKey(true);
@@ -250,7 +250,7 @@ namespace YesNt.CodeEditor
                             textEditor.EditMode = Mode.Debug;
                             Console.Clear();
                             Console.CursorVisible = true;
-                            textEditor.yesNtInterpreter.Execute(textEditor.CurrentPath, true);
+                            textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, true);
                             while (Console.KeyAvailable)
                             {
                                 Console.ReadKey(true);

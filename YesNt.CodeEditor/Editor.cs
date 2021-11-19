@@ -12,7 +12,7 @@ namespace YesNt.CodeEditor
         private readonly SyntaxHighlighter syntaxHighlighter;
         private readonly List<string> debugOutput = new();
 
-        public YesNtInterpreter yesNtInterpreter { get; } = new();
+        public YesNtInterpreter YesNtInterpreter { get; } = new();
         public int LineOffset { get; set; } = 0;
         public List<string> Lines { get; } = new();
         public Point CursorPosition { get; } = new(0, 0);
@@ -29,10 +29,10 @@ namespace YesNt.CodeEditor
 
         public TextEditor()
         {
-            yesNtInterpreter.Initialize();
-            yesNtInterpreter.OnDebugOutput += YesNtInterpreter_OnDebugOutput;
-            yesNtInterpreter.OnLineExecuted += YesNtInterpreter_OnLineExecuted;
-            syntaxHighlighter = new(yesNtInterpreter.StatementInformation);
+            YesNtInterpreter.Initialize();
+            YesNtInterpreter.OnDebugOutput += YesNtInterpreter_OnDebugOutput;
+            YesNtInterpreter.OnLineExecuted += YesNtInterpreter_OnLineExecuted;
+            syntaxHighlighter = new(YesNtInterpreter.StatementInformation);
             inputHandler = new InputHandler(this);
             Console.CancelKeyPress += Console_CancelKeyPress;
         }
@@ -198,7 +198,7 @@ namespace YesNt.CodeEditor
                     Console.ForegroundColor = ConsoleColor.Magenta;
 
                     string sharedString = (Console.CursorLeft != 0) ? Environment.NewLine : string.Empty;
-                    sharedString += e.IsTask ? $"[Task: {e.TaskId}] " : string.Empty + $"[{e.LineNumber}]";
+                    sharedString += (e.IsTask ? $"[Task: {e.TaskId}]" : string.Empty) + $"[{e.LineNumber}]";
 
                     if (e.OriginalLine == e.CurrentLine)
                     {
@@ -226,7 +226,7 @@ namespace YesNt.CodeEditor
             switch (EditMode)
             {
                 case Mode.Debug:
-                    yesNtInterpreter.Stop();
+                    YesNtInterpreter.Stop();
                     EditMode = Mode.Command;
                     break;
             }

@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\YesNt-Interpreter\YesNt.Interpreter.csproj" />
+    <ProjectReference Include="..\YesNt.Interpreter\YesNt.Interpreter.csproj" />
   </ItemGroup>
 
 </Project>

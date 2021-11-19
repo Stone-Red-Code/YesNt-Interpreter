@@ -11,22 +11,46 @@ namespace YesNt.Interpreter
         private RuntimeInformation parentRuntimeInformation;
         private static int internalTaskId = 0;
         private int taskId = 0;
+        private readonly Dictionary<string, string> topVariables = new();
 
-        public Dictionary<string, string> Variables { get; } = new();
         public Dictionary<string, string> GloablVariables { get; set; } = new();
         public Dictionary<string, int> Labels { get; } = new();
+        public Dictionary<string, int> Functions { get; } = new();
+        public Stack<FunctionScope> FunctionCallStack { get; } = new();
         public List<string> Lines { get; set; } = new();
         public string CurrentLine { get; set; } = string.Empty;
-        public Stack<int> LabelStack { get; set; } = new();
         public string SearchLabel { get; set; } = string.Empty;
+        public string SearchFunction { get; set; } = string.Empty;
         public int LineNumber { get; set; } = 0;
         public bool Stop { get; private set; } = false;
         public bool StopAllTasks { get; private set; } = false;
         public bool IsDebugMode { get; set; } = false;
         public string CurrentFilePath { get; set; } = string.Empty;
         public bool IsTask => ParentRuntimeInformation is not null;
-
         public int TaskId => IsTask ? taskId : 0;
+
+        public bool InternalIsInFunction { get; private set; } = false;
+
+        public bool IsInFunction
+        {
+            get => InternalIsInFunction || FunctionCallStack.Count > 0;
+            set => InternalIsInFunction = value;
+        }
+
+        public Dictionary<string, string> Variables
+        {
+            get
+            {
+                if (FunctionCallStack.Count == 0)
+                {
+                    return topVariables;
+                }
+                else
+                {
+                    return FunctionCallStack.Peek().Variables;
+                }
+            }
+        }
 
         public RuntimeInformation ParentRuntimeInformation
         {
@@ -40,6 +64,8 @@ namespace YesNt.Interpreter
                 }
             }
         }
+
+        public bool IsSearching => !string.IsNullOrWhiteSpace(SearchLabel + SearchFunction) || IsInFunction && FunctionCallStack.Count == 0;
 
         private event Action<string, bool> OnExit;
 
@@ -104,7 +130,7 @@ namespace YesNt.Interpreter
         {
             if (!Stop)
             {
-                WriteLine($"{Environment.NewLine}[{(IsTask ? "A child task" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]", true);
+                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task: {TaskId}" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]", true);
                 Stop = true;
             }
             if (stopAllTasks == true && StopAllTasks == false)
@@ -129,18 +155,22 @@ namespace YesNt.Interpreter
 
         public void Reset()
         {
+            topVariables.Clear();
             Lines.Clear();
-            Variables.Clear();
             GloablVariables.Clear();
             Labels.Clear();
-            LabelStack.Clear();
+            Functions.Clear();
+            FunctionCallStack.Clear();
             ParentRuntimeInformation = null;
             SearchLabel = string.Empty;
+            SearchFunction = string.Empty;
             CurrentFilePath = string.Empty;
             CurrentLine = string.Empty;
             Stop = false;
             StopAllTasks = false;
             IsDebugMode = false;
+            IsInFunction = false;
+            InternalIsInFunction = false;
             LineNumber = 0;
             taskId = internalTaskId + 1;
             internalTaskId++;

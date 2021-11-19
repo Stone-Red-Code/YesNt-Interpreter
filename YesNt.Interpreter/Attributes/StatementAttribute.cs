@@ -12,7 +12,7 @@ namespace YesNt.Interpreter.Attributes
         public SpaceAround SpaceAround { get; }
         public ConsoleColor Color { get; set; }
         public Priority Priority { get; set; } = Priority.Normal;
-        public bool ExecuteInSearchLabelMode { get; set; }
+        public bool ExecuteInSearchMode { get; set; }
         public bool KeepStatementInArgs { get; set; }
         public bool IgnoreSyntaxHighlighting { get; }
         public string Seperator { get; set; }

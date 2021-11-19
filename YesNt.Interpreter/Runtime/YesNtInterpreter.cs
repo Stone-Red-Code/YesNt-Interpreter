@@ -142,7 +142,7 @@ namespace YesNt.Interpreter
                 foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
                 {
                     StaticStatementAttribute staticStatementAttribute = staticStatement.Key;
-                    if (staticStatementAttribute.ExecuteInSearchLabelMode == false && !string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
+                    if (staticStatementAttribute.ExecuteInSearchLabelMode == false && runtimeInfo.IsSearching)
                     {
                         continue;
                     }
@@ -151,13 +151,13 @@ namespace YesNt.Interpreter
                 }
 
                 bool statementFound = false;
-                bool searchingLabel = string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel);
+                bool notSearchingLabel = !runtimeInfo.IsSearching;
 
                 foreach (KeyValuePair<StatementAttribute, Action<string>> statement in statements)
                 {
                     StatementAttribute statementAttribute = statement.Key;
 
-                    if (statementAttribute.ExecuteInSearchLabelMode == false && !string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
+                    if (statementAttribute.ExecuteInSearchMode == false && runtimeInfo.IsSearching)
                     {
                         statementFound = true;
                         continue;
@@ -184,10 +184,21 @@ namespace YesNt.Interpreter
                     }
                     else if (statementAttribute.SearchMode == SearchMode.Contains && $" {runtimeInfo.CurrentLine} ".Contains(name))
                     {
+                        bool leadingWhitespace = runtimeInfo.CurrentLine.StartsWith(' ');
+
                         runtimeInfo.CurrentLine = $" {runtimeInfo.CurrentLine} ";
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
+
+                        if (!leadingWhitespace)
+                        {
+                            runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.Trim();
+                        }
+                        else
+                        {
+                            runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.TrimEnd();
+                        }
                     }
                     else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
                     {
@@ -206,7 +217,7 @@ namespace YesNt.Interpreter
                 {
                     runtimeInfo.Exit("Invalid statement", true);
                 }
-                if (runtimeInfo.IsDebugMode && searchingLabel)
+                if (runtimeInfo.IsDebugMode && notSearchingLabel)
                 {
                     debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSaveString();
                     runtimeInfo.LineExecuted(debugEventArgs);
@@ -215,14 +226,19 @@ namespace YesNt.Interpreter
 
             if (runtimeInfo.Stop == false)
             {
-                if (string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
-                {
-                    runtimeInfo.Exit("End of file", false);
-                }
-                else
+                if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
                 {
                     runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", true);
                 }
+                else if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchFunction))
+                {
+                    runtimeInfo.Exit($"Function \"{runtimeInfo.SearchLabel}\" not found", true);
+                }
+                else
+                {
+                    runtimeInfo.Exit("End of file", false);
+                }
+
                 if (runtimeInfo.IsDebugMode)
                 {
                     runtimeInfo.LineExecuted(null);

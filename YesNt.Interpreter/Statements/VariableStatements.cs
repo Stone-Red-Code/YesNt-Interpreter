@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -13,7 +14,7 @@ namespace YesNt.Interpreter.Statements
             string[] parts = args.Split('=');
             if (parts.Length == 2)
             {
-                string key = parts[0].Replace("<", string.Empty).Trim();
+                string key = parts[0].Trim();
                 if (key.Contains(' '))
                 {
                     RuntimeInfo.Exit("Invalid Syntax", true);
@@ -41,7 +42,7 @@ namespace YesNt.Interpreter.Statements
             string[] parts = args.Split('=');
             if (parts.Length == 2)
             {
-                string key = parts[0].Replace("!<", string.Empty).Trim();
+                string key = parts[0].Trim();
                 if (key.Contains(' '))
                 {
                     RuntimeInfo.Exit("Invalid Syntax", true);
@@ -63,6 +64,25 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
+        [Statement("del", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.Red, Priority = Priority.VeryLow)]
+        public void DeleteVariable(string args)
+        {
+            string key = args.Trim();
+
+            if (RuntimeInfo.Variables.ContainsKey(key))
+            {
+                RuntimeInfo.Variables.Remove(key);
+            }
+            else if (RuntimeInfo.GloablVariables.ContainsKey(key))
+            {
+                RuntimeInfo.GloablVariables.Remove(key);
+            }
+            else
+            {
+                RuntimeInfo.Exit($"Variable \"{key}\" not found", true);
+            }
+        }
+
         [StaticStatement(ExecuteInSearchLabelMode = true)]
         public void ReadVariable()
         {
@@ -79,6 +99,23 @@ namespace YesNt.Interpreter.Statements
             foreach (KeyValuePair<string, string> variable in RuntimeInfo.GloablVariables)
             {
                 RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
+            }
+
+            if (RuntimeInfo.IsSearching)
+            {
+                return;
+            }
+
+            MatchCollection matches = Regex.Matches(RuntimeInfo.CurrentLine, @">[a-zA-Z0-9]+");
+
+            for (int i = 0; i < matches.Count; i++)
+            {
+                string varName = matches[i].Value.Replace(">", string.Empty);
+                if (!RuntimeInfo.Variables.ContainsKey(varName) && !RuntimeInfo.GloablVariables.ContainsKey(varName))
+                {
+                    RuntimeInfo.Exit($"Variable \"{varName}\" not found", true);
+                    return;
+                }
             }
         }
     }
