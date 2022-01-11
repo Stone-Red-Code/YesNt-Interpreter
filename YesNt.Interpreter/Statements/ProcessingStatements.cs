@@ -15,7 +15,7 @@ namespace YesNt.Interpreter.Statements
         [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High, ExecuteInSearchMode = true)]
         public void Calculate(string args)
         {
-            MatchCollection matches = Regex.Matches(args, @"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
+            MatchCollection matches = Regex.Matches(args.FromSaveString(), @"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
 
             for (int i = 0; i < matches.Count; i++)
             {
@@ -25,7 +25,7 @@ namespace YesNt.Interpreter.Statements
                     RuntimeInfo.Exit("Invalid operation", true);
                     return;
                 }
-                args = args.Replace(matches[0].Value, res);
+                args = args.FromSaveString().Replace(matches[0].Value, res);
             }
 
             RuntimeInfo.CurrentLine = args;

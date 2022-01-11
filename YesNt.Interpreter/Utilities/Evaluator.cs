@@ -74,8 +74,6 @@ namespace YesNt.Interpreter.Utilities
                 return part1 < part2;
             }
 
-
-
             return null;
         }
 
@@ -85,6 +83,8 @@ namespace YesNt.Interpreter.Utilities
             {
                 return null;
             }
+
+            input = input.FromSaveString();
 
             MatchCollection matches = Regex.Matches(input, @"\(([^()]+)\)");
             while (matches.Count > 0)
