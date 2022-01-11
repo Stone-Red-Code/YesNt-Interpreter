@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -21,23 +23,6 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.SearchLabel = key;
-            }
-        }
-
-        [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
-        public void Call(string args)
-        {
-            string key = args.Trim();
-
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber));
-
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchFunction = key;
             }
         }
 
@@ -75,6 +60,43 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
+        [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
+        public void FindLabel(string args)
+        {
+            string key = args.Trim();
+            if (RuntimeInfo.Labels.ContainsKey(key))
+            {
+                RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
+            }
+            else
+            {
+                RuntimeInfo.Labels.Add(key, RuntimeInfo.LineNumber);
+            }
+
+            if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
+            {
+                RuntimeInfo.SearchLabel = string.Empty;
+            }
+        }
+
+        [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
+        public void Call(string args)
+        {
+            string key = args.Trim();
+
+            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+            RuntimeInfo.InParametersStack.Clear();
+
+            if (RuntimeInfo.Functions.ContainsKey(key))
+            {
+                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
+            }
+            else
+            {
+                RuntimeInfo.SearchFunction = key;
+            }
+        }
+
         [Statement("cif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Seperator = "|")]
         public void CallIf(string args)
         {
@@ -99,7 +121,8 @@ namespace YesNt.Interpreter.Statements
                 return;
             }
 
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber));
+            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+            RuntimeInfo.InParametersStack.Clear();
 
             if (RuntimeInfo.Functions.ContainsKey(key))
             {
@@ -108,81 +131,6 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.SearchFunction = key;
-            }
-        }
-
-        [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
-        public void FindLabel(string args)
-        {
-            string key = args.Trim();
-            if (RuntimeInfo.Labels.ContainsKey(key))
-            {
-                RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
-            }
-            else
-            {
-                RuntimeInfo.Labels.Add(key, RuntimeInfo.LineNumber);
-            }
-
-            if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
-            {
-                RuntimeInfo.SearchLabel = string.Empty;
-            }
-        }
-
-        [Statement("fnc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
-        public void FindFunction(string args)
-        {
-            if (RuntimeInfo.InternalIsInFunction)
-            {
-                RuntimeInfo.Exit("Nested functions are not allowed", true);
-                return;
-            }
-
-            string key = args.Trim();
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
-            }
-            else
-            {
-                RuntimeInfo.Functions.Add(key, RuntimeInfo.LineNumber);
-            }
-
-            if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchFunction) && RuntimeInfo.SearchFunction == key)
-            {
-                RuntimeInfo.SearchFunction = string.Empty;
-            }
-
-            RuntimeInfo.IsInFunction = true;
-        }
-
-        [Statement("ret", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
-        public void Return(string _)
-        {
-            if (!RuntimeInfo.IsInFunction)
-            {
-                RuntimeInfo.Exit("Not in function", true);
-                return;
-            }
-
-            if (RuntimeInfo.IsSearching)
-            {
-                RuntimeInfo.IsInFunction = false;
-                return;
-            }
-            else
-            {
-                RuntimeInfo.IsInFunction = false;
-            }
-
-            if (RuntimeInfo.FunctionCallStack.Count > 0)
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.FunctionCallStack.Pop().CallerLine;
-            }
-            else
-            {
-                RuntimeInfo.Exit("No function in stack", true);
             }
         }
 

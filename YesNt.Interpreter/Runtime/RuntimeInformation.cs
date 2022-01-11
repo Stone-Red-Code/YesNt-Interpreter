@@ -17,6 +17,8 @@ namespace YesNt.Interpreter
         public Dictionary<string, int> Labels { get; } = new();
         public Dictionary<string, int> Functions { get; } = new();
         public Stack<FunctionScope> FunctionCallStack { get; } = new();
+        public Stack<string> InParametersStack { get; } = new();
+        public Stack<string> OutParametersStack { get; set; } = new();
         public List<string> Lines { get; set; } = new();
         public string CurrentLine { get; set; } = string.Empty;
         public string SearchLabel { get; set; } = string.Empty;

@@ -6,10 +6,13 @@ namespace YesNt.Interpreter.Runtime
     {
         public int CallerLine { get; }
         public Dictionary<string, string> Variables { get; } = new();
+        public Stack<string> Arguemtns { get; } = new();
+        public Stack<string> Results { get; } = new();
 
-        public FunctionScope(int callerLine)
+        public FunctionScope(int callerLine, Stack<string> arguemtns)
         {
             CallerLine = callerLine;
+            Arguemtns = arguemtns;
         }
     }
 }
