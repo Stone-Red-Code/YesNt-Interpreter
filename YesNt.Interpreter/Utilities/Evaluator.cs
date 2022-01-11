@@ -22,6 +22,32 @@ namespace YesNt.Interpreter.Utilities
                 return part1 != part2;
             }
 
+            parts = input.Split(">=");
+            if (parts.Length == 2)
+            {
+                bool succ1 = parts[0].ToStandardizedNumber(out double part1);
+                bool succ2 = parts[1].ToStandardizedNumber(out double part2);
+                if (!succ1 || !succ2)
+                {
+                    return false;
+                }
+
+                return part1 >= part2;
+            }
+
+            parts = input.Split("<=");
+            if (parts.Length == 2)
+            {
+                bool succ1 = parts[0].ToStandardizedNumber(out double part1);
+                bool succ2 = parts[1].ToStandardizedNumber(out double part2);
+                if (!succ1 || !succ2)
+                {
+                    return false;
+                }
+
+                return part1 <= part2;
+            }
+
             parts = input.Split(">");
             if (parts.Length == 2)
             {
@@ -48,31 +74,7 @@ namespace YesNt.Interpreter.Utilities
                 return part1 < part2;
             }
 
-            parts = input.Split(">=");
-            if (parts.Length == 2)
-            {
-                bool succ1 = parts[0].ToStandardizedNumber(out double part1);
-                bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
 
-                return part1 >= part2;
-            }
-
-            parts = input.Split("<=");
-            if (parts.Length == 2)
-            {
-                bool succ1 = parts[0].ToStandardizedNumber(out double part1);
-                bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
-
-                return part1 <= part2;
-            }
 
             return null;
         }
@@ -158,7 +160,14 @@ namespace YesNt.Interpreter.Utilities
                 }
             }
 
-            return number.ToString();
+            if (number % 1 == 0)
+            {
+                return number.ToString();
+            }
+            else
+            {
+                return number.ToString("F99").Trim('0');
+            }
         }
     }
 }

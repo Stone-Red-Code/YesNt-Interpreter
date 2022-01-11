@@ -35,13 +35,13 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.IsInFunction = true;
         }
 
-        [Statement("in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow)]
+        [Statement("in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void AddInParameter(string args)
         {
             RuntimeInfo.InParametersStack.Push(args);
         }
 
-        [Statement("out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow)]
+        [Statement("out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void GetOutParameter(string name)
         {
             if (RuntimeInfo.OutParametersStack.Count == 0)
@@ -53,7 +53,7 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.Variables.Add(name, RuntimeInfo.OutParametersStack.Pop());
         }
 
-        [Statement("get", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow)]
+        [Statement("get", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void GetInParameter(string args)
         {
             if (RuntimeInfo.FunctionCallStack.Count == 0)
@@ -71,7 +71,7 @@ namespace YesNt.Interpreter.Statements
             RuntimeInfo.Variables.TryAdd(args, RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop());
         }
 
-        [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow)]
+        [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void AddOutParameter(string args)
         {
             if (RuntimeInfo.FunctionCallStack.Count == 0)
