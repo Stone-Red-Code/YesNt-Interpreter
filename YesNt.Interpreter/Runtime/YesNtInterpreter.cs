@@ -176,40 +176,43 @@ namespace YesNt.Interpreter
                         _ => statementAttribute.Name
                     };
 
-                    if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name))
+                    if (statementAttribute.Seperator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Seperator))
                     {
-                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(0, name.Length);
-                        statement.Value.Invoke(copyLine);
-                        statementFound = true;
-                    }
-                    else if (statementAttribute.SearchMode == SearchMode.Contains && $" {runtimeInfo.CurrentLine} ".Contains(name))
-                    {
-                        bool leadingWhitespace = runtimeInfo.CurrentLine.StartsWith(' ');
-
-                        runtimeInfo.CurrentLine = $" {runtimeInfo.CurrentLine} ";
-                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
-                        statement.Value.Invoke(copyLine);
-                        statementFound = true;
-
-                        if (!leadingWhitespace)
+                        if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name))
                         {
-                            runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.Trim();
+                            string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(0, name.Length);
+                            statement.Value.Invoke(copyLine);
+                            statementFound = true;
                         }
-                        else
+                        else if (statementAttribute.SearchMode == SearchMode.Contains && $" {runtimeInfo.CurrentLine} ".Contains(name))
                         {
-                            runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.TrimEnd();
+                            bool leadingWhitespace = runtimeInfo.CurrentLine.StartsWith(' ');
+
+                            runtimeInfo.CurrentLine = $" {runtimeInfo.CurrentLine} ";
+                            string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
+                            statement.Value.Invoke(copyLine);
+                            statementFound = true;
+
+                            if (!leadingWhitespace)
+                            {
+                                runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.Trim();
+                            }
+                            else
+                            {
+                                runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.TrimEnd();
+                            }
                         }
-                    }
-                    else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
-                    {
-                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(runtimeInfo.CurrentLine.Length - name.Length);
-                        statement.Value.Invoke(copyLine);
-                        statementFound = true;
-                    }
-                    else if (statementAttribute.SearchMode == SearchMode.Exact && runtimeInfo.CurrentLine.Equals(name))
-                    {
-                        statement.Value.Invoke(runtimeInfo.CurrentLine);
-                        statementFound = true;
+                        else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
+                        {
+                            string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(runtimeInfo.CurrentLine.Length - name.Length);
+                            statement.Value.Invoke(copyLine);
+                            statementFound = true;
+                        }
+                        else if (statementAttribute.SearchMode == SearchMode.Exact && runtimeInfo.CurrentLine.Equals(name))
+                        {
+                            statement.Value.Invoke(runtimeInfo.CurrentLine);
+                            statementFound = true;
+                        }
                     }
                 }
 
@@ -232,7 +235,7 @@ namespace YesNt.Interpreter
                 }
                 else if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchFunction))
                 {
-                    runtimeInfo.Exit($"Function \"{runtimeInfo.SearchLabel}\" not found", true);
+                    runtimeInfo.Exit($"Function \"{runtimeInfo.SearchFunction}\" not found", true);
                 }
                 else
                 {

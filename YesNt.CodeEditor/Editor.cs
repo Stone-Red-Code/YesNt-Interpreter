@@ -81,7 +81,7 @@ namespace YesNt.CodeEditor
                     if (CursorPosition.Y == i || drawAll)
                     {
                         Console.Write(lineCountString);
-                        string printLine = $"{Lines[i].Substring(0, Math.Min(Lines[i].Length, Console.WindowWidth))}".TrimEnd();
+                        string printLine = $"{Lines[i][..Math.Min(Lines[i].Length, Console.WindowWidth)]}".TrimEnd();
                         syntaxHighlighter.Write(printLine);
                         Console.Write(new string(' ', Math.Max(Console.WindowWidth - lineCountString.Length - printLine.Length, 0)));
                     }
@@ -166,7 +166,7 @@ namespace YesNt.CodeEditor
                 path = Path.ChangeExtension(path, "ynt");
             }
 
-            while (Lines.Count > 0 && string.IsNullOrWhiteSpace(Lines[Lines.Count - 1]))
+            while (Lines.Count > 0 && string.IsNullOrWhiteSpace(Lines[^1]))
             {
                 Lines.RemoveAt(Lines.Count - 1);
             }

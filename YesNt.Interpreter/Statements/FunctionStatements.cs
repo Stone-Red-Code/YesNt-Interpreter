@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -57,6 +59,38 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.Variables.Add(args, RuntimeInfo.OutParametersStack.Pop());
+            }
+        }
+
+        [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Seperator = "|")]
+        public void Call(string args)
+        {
+            string[] parts = args.Split('|');
+            if (parts.Length != 2)
+            {
+                RuntimeInfo.Exit("Invalid syntax", true);
+                return;
+            }
+
+            string key = parts[0].Trim();
+            string[] functionArgumets = parts[1].Split(',');
+
+            foreach (string argumanet in functionArgumets)
+            {
+                RuntimeInfo.InParametersStack.Push(argumanet.Trim());
+            }
+
+            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+            RuntimeInfo.InParametersStack.Clear();
+            RuntimeInfo.CurrentLine = string.Empty;
+
+            if (RuntimeInfo.Functions.ContainsKey(key))
+            {
+                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
+            }
+            else
+            {
+                RuntimeInfo.SearchFunction = key;
             }
         }
 

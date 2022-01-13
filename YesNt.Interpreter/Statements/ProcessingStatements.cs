@@ -93,5 +93,41 @@ namespace YesNt.Interpreter.Statements
                 RuntimeInfo.Exit($"Could not find file {path}", true);
             }
         }
+
+        [Statement("mod", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Seperator = "|")]
+        public void GetModulo(string args)
+        {
+            string[] parts = args.Split('|');
+            if (parts.Length != 2)
+            {
+                RuntimeInfo.Exit("Invalid syntax", true);
+                return;
+            }
+
+            string[] nums = parts[1].Split(',');
+            if (nums.Length != 2)
+            {
+                RuntimeInfo.Exit("Invalid arguments", true);
+                return;
+            }
+
+            string variableName = parts[0].Trim();
+
+            if (ulong.TryParse(nums[0], out ulong num1) && ulong.TryParse(nums[1], out ulong num2))
+            {
+                if (RuntimeInfo.Variables.ContainsKey(variableName))
+                {
+                    RuntimeInfo.Variables[variableName] = (num1 % num2).ToString();
+                }
+                else
+                {
+                    RuntimeInfo.Variables.Add(variableName, (num1 % num2).ToString());
+                }
+            }
+            else
+            {
+                RuntimeInfo.Exit("Invalid arguments", true);
+            }
+        }
     }
 }
