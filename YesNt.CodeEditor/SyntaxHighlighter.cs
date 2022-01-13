@@ -10,7 +10,7 @@ namespace YesNt.CodeEditor
 {
     internal class SyntaxHighlighter
     {
-        private ReadOnlyCollection<StatementInformation> statementInformation;
+        private readonly ReadOnlyCollection<StatementInformation> statementInformation;
 
         public SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
         {
@@ -45,7 +45,7 @@ namespace YesNt.CodeEditor
                     {
                         continue;
                     }
-                    input = AddColorInformation(input, input.Substring(0, name.Length), statement.Color, statement.SearchMode);
+                    input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
                 }
                 if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
                 {
@@ -69,7 +69,7 @@ namespace YesNt.CodeEditor
                     {
                         continue;
                     }
-                    input = AddColorInformation(input, input.Substring(input.Length - name.Length), statement.Color, statement.SearchMode);
+                    input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
                 }
                 if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
                 {
@@ -103,6 +103,11 @@ namespace YesNt.CodeEditor
                 input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
             }
 
+            if (input.StartsWith('#'))
+            {
+                input = AddColorInformation(input, input, ConsoleColor.Gray, SearchMode.Exact);
+            }
+
             foreach (string part in input.Split("\0"))
             {
                 ConsoleColor consoleColor;
@@ -120,12 +125,12 @@ namespace YesNt.CodeEditor
                     consoleColor = ConsoleColor.White;
                 }
 
-                if (consoleColor == Console.BackgroundColor || consoleColor == ConsoleColor.DarkGray)
+                if (consoleColor == Console.BackgroundColor)
                 {
                     consoleColor = ConsoleColor.White;
                 }
                 Console.ForegroundColor = consoleColor;
-                Console.Write(messagePart, consoleColor);
+                Console.Write(messagePart);
                 Console.ForegroundColor = ConsoleColor.Gray;
             }
         }

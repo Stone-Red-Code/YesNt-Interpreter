@@ -244,7 +244,7 @@ namespace YesNt.CodeEditor
 
         private bool SizeChanged()
         {
-            if (oldSize.X != Console.WindowWidth && oldSize.Y != Console.WindowHeight)
+            if (oldSize.X != Console.WindowWidth || oldSize.Y != Console.WindowHeight)
             {
                 oldSize.X = Console.WindowWidth;
                 oldSize.Y = Console.WindowHeight;

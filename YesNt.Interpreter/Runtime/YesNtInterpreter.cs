@@ -99,7 +99,7 @@ namespace YesNt.Interpreter
             Execute();
         }
 
-        internal void Execute(List<string> lines, Dictionary<string, string> gloablVariables, int startLine, RuntimeInformation parentRuntimeInformation)
+        internal void Execute(List<Line> lines, Dictionary<string, string> gloablVariables, int startLine, RuntimeInformation parentRuntimeInformation)
         {
             runtimeInfo.Reset();
             runtimeInfo.IsDebugMode = parentRuntimeInformation.IsDebugMode;
@@ -124,7 +124,7 @@ namespace YesNt.Interpreter
                     break;
                 }
 
-                runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].TrimEnd().Replace("\r", string.Empty);
+                runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].Content.TrimEnd().Replace("\r", string.Empty);
 
                 DebugEventArgs debugEventArgs = new DebugEventArgs()
                 {
@@ -134,7 +134,7 @@ namespace YesNt.Interpreter
                     TaskId = runtimeInfo.TaskId
                 };
 
-                if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine))
+                if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
                 {
                     continue;
                 }
@@ -254,8 +254,12 @@ namespace YesNt.Interpreter
                 return;
             }
 
-            IEnumerable<string> lines = File.ReadAllLines(path);
-            runtimeInfo.Lines.AddRange(lines);
+            string[] lines = File.ReadAllLines(path);
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                runtimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName(path), i));
+            }
         }
     }
 }

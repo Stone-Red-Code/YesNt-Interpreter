@@ -105,8 +105,8 @@ namespace YesNt.CodeEditor
 
                     string line = textEditor.Lines[textEditor.CursorPosition.Y + 1];
 
-                    textEditor.Lines[textEditor.CursorPosition.Y] = line.Substring(0, Math.Min(textEditor.CursorPosition.X, line.Length));
-                    textEditor.Lines[textEditor.CursorPosition.Y + 1] = line.Substring(Math.Min(textEditor.CursorPosition.X, line.Length));
+                    textEditor.Lines[textEditor.CursorPosition.Y] = line[..Math.Min(textEditor.CursorPosition.X, line.Length)];
+                    textEditor.Lines[textEditor.CursorPosition.Y + 1] = line[Math.Min(textEditor.CursorPosition.X, line.Length)..];
 
                     textEditor.CursorPosition.X = 0;
                     textEditor.CursorPosition.Y++;
@@ -167,7 +167,7 @@ namespace YesNt.CodeEditor
                             }
                         }
 
-                        while (textEditor.Lines.Count > 0 && string.IsNullOrWhiteSpace(textEditor.Lines[textEditor.Lines.Count - 1]))
+                        while (textEditor.Lines.Count > 0 && string.IsNullOrWhiteSpace(textEditor.Lines[^1]))
                         {
                             textEditor.Lines.RemoveAt(textEditor.Lines.Count - 1);
                         }

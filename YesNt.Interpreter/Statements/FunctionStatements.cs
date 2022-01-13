@@ -42,41 +42,55 @@ namespace YesNt.Interpreter.Statements
         }
 
         [Statement("out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
-        public void GetOutParameter(string name)
+        public void GetOutParameter(string args)
         {
             if (RuntimeInfo.OutParametersStack.Count == 0)
             {
-                RuntimeInfo.Exit("No out parameter in stack", true);
+                RuntimeInfo.Exit("No out argument in stack", true);
                 return;
             }
 
-            RuntimeInfo.Variables.Add(name, RuntimeInfo.OutParametersStack.Pop());
+            if (RuntimeInfo.Variables.ContainsKey(args))
+            {
+                RuntimeInfo.Variables[args] = RuntimeInfo.OutParametersStack.Pop();
+            }
+            else
+            {
+                RuntimeInfo.Variables.Add(args, RuntimeInfo.OutParametersStack.Pop());
+            }
         }
 
         [Statement("get", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void GetInParameter(string args)
         {
-            if (RuntimeInfo.FunctionCallStack.Count == 0)
+            if (!RuntimeInfo.IsInFunction)
             {
-                RuntimeInfo.Exit("No function in stack", true);
+                RuntimeInfo.Exit("Statement not allowed outside of function", true);
                 return;
             }
 
             if (RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count == 0)
             {
-                RuntimeInfo.Exit("No in parameter in stack", true);
+                RuntimeInfo.Exit("No in argument in stack", true);
                 return;
             }
 
-            RuntimeInfo.Variables.TryAdd(args, RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop());
+            if (RuntimeInfo.Variables.ContainsKey(args))
+            {
+                RuntimeInfo.Variables[args] = RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop();
+            }
+            else
+            {
+                RuntimeInfo.Variables.Add(args, RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop());
+            }
         }
 
         [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
         public void AddOutParameter(string args)
         {
-            if (RuntimeInfo.FunctionCallStack.Count == 0)
+            if (!RuntimeInfo.IsInFunction)
             {
-                RuntimeInfo.Exit("No function in stack", true);
+                RuntimeInfo.Exit("Statement not allowed outside of function", true);
                 return;
             }
 
@@ -88,7 +102,7 @@ namespace YesNt.Interpreter.Statements
         {
             if (!RuntimeInfo.IsInFunction)
             {
-                RuntimeInfo.Exit("Not in function", true);
+                RuntimeInfo.Exit("Statement not allowed outside of function", true);
                 return;
             }
 

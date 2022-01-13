@@ -19,7 +19,7 @@ namespace YesNt.Interpreter
         public Stack<FunctionScope> FunctionCallStack { get; } = new();
         public Stack<string> InParametersStack { get; } = new();
         public Stack<string> OutParametersStack { get; set; } = new();
-        public List<string> Lines { get; set; } = new();
+        public List<Line> Lines { get; set; } = new();
         public string CurrentLine { get; set; } = string.Empty;
         public string SearchLabel { get; set; } = string.Empty;
         public string SearchFunction { get; set; } = string.Empty;
@@ -132,7 +132,8 @@ namespace YesNt.Interpreter
         {
             if (!Stop)
             {
-                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task: {TaskId}" : "The process")} was terminated at line {LineNumber + 1} with the message: {message}]", true);
+                Line line = Lines[Math.Min(LineNumber, Lines.Count - 1)];
+                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task: {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
                 Stop = true;
             }
             if (stopAllTasks == true && StopAllTasks == false)

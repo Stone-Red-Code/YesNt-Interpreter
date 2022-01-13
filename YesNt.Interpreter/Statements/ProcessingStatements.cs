@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
+using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Statements
@@ -41,8 +42,9 @@ namespace YesNt.Interpreter.Statements
         public void RunTask(string line)
         {
             int lineNumer = RuntimeInfo.LineNumber;
-            List<string> lines = RuntimeInfo.Lines.GetRange(0, RuntimeInfo.Lines.Count);
-            lines[lineNumer] = line;
+            List<Line> lines = RuntimeInfo.Lines.GetRange(0, RuntimeInfo.Lines.Count);
+
+            lines[lineNumer].Content = line;
             _ = Task.Run(() =>
             {
                 YesNtInterpreter interpreter = new YesNtInterpreter();
@@ -73,7 +75,12 @@ namespace YesNt.Interpreter.Statements
                 try
                 {
                     RuntimeInfo.Lines.RemoveAt(0);
-                    RuntimeInfo.Lines.InsertRange(RuntimeInfo.LineNumber, File.ReadAllLines(path));
+                    string[] lines = File.ReadAllLines(path);
+
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        RuntimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName(path), i));
+                    }
                     RuntimeInfo.LineNumber--;
                 }
                 catch
