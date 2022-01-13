@@ -165,5 +165,17 @@ namespace YesNt.Interpreter.Statements
 
             RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);
         }
+
+        [Statement("trw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+        public void Throw(string message)
+        {
+            RuntimeInfo.Exit(message, true);
+        }
+
+        [Statement("err", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+        public void Error(string message)
+        {
+            RuntimeInfo.Exit(message, false);
+        }
     }
 }
