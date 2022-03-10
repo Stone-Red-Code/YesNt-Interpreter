@@ -142,7 +142,7 @@ namespace YesNt.Interpreter
                 foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
                 {
                     StaticStatementAttribute staticStatementAttribute = staticStatement.Key;
-                    if (staticStatementAttribute.ExecuteInSearchLabelMode == false && runtimeInfo.IsSearching)
+                    if (!staticStatementAttribute.ExecuteInSearchLabelMode && runtimeInfo.IsSearching)
                     {
                         continue;
                     }
@@ -157,7 +157,7 @@ namespace YesNt.Interpreter
                 {
                     StatementAttribute statementAttribute = statement.Key;
 
-                    if (statementAttribute.ExecuteInSearchMode == false && runtimeInfo.IsSearching)
+                    if (!statementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                     {
                         statementFound = true;
                         continue;
@@ -227,7 +227,7 @@ namespace YesNt.Interpreter
                 }
             }
 
-            if (runtimeInfo.Stop == false)
+            if (!runtimeInfo.Stop)
             {
                 if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
                 {

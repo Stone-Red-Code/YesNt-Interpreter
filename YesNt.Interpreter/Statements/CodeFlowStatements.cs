@@ -41,12 +41,14 @@ namespace YesNt.Interpreter.Statements
 
             bool? result = Evaluator.EvaluateCondition(condition);
 
-            if (result != true)
+            if (result is null)
             {
-                if (result is null)
-                {
-                    RuntimeInfo.Exit("Invalid operation", true);
-                }
+                RuntimeInfo.Exit("Invalid operation", true);
+                return;
+            }
+
+            if (result == false)
+            {
                 return;
             }
 
@@ -112,12 +114,14 @@ namespace YesNt.Interpreter.Statements
 
             bool? result = Evaluator.EvaluateCondition(condition);
 
-            if (result != true)
+            if (result is null)
             {
-                if (result is null)
-                {
-                    RuntimeInfo.Exit("Invalid operation", true);
-                }
+                RuntimeInfo.Exit("Invalid operation", true);
+                return;
+            }
+
+            if (result == false)
+            {
                 return;
             }
 

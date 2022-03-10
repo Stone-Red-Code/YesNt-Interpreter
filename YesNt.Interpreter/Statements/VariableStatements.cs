@@ -32,7 +32,6 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.Exit("Invalid syntax", true);
-                return;
             }
         }
 
@@ -60,7 +59,6 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.Exit("Invalid syntax", true);
-                return;
             }
         }
 

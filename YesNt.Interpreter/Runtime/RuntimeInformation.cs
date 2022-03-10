@@ -91,7 +91,7 @@ namespace YesNt.Interpreter
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation.WriteLine(output.FromSaveString(), forceWrite);
+                    parentRuntimeInformation!.WriteLine(output.FromSaveString(), forceWrite);
                 }
                 else
                 {
@@ -115,7 +115,7 @@ namespace YesNt.Interpreter
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation.Write(output.FromSaveString(), forceWrite);
+                    parentRuntimeInformation!.Write(output.FromSaveString(), forceWrite);
                 }
                 else
                 {
@@ -133,10 +133,10 @@ namespace YesNt.Interpreter
             if (!Stop)
             {
                 Line line = Lines[Math.Min(LineNumber, Lines.Count - 1)];
-                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task: {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
+                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
                 Stop = true;
             }
-            if (stopAllTasks == true && StopAllTasks == false)
+            if (stopAllTasks && !StopAllTasks)
             {
                 StopAllTasks = true;
                 OnExit?.Invoke(message, StopAllTasks);
@@ -176,7 +176,9 @@ namespace YesNt.Interpreter
             InternalIsInFunction = false;
             LineNumber = 0;
             taskId = internalTaskId + 1;
+#pragma warning disable S2696 // Instance members should not write to "static" fields
             internalTaskId++;
+#pragma warning restore S2696 // Instance members should not write to "static" fields
         }
     }
 }
