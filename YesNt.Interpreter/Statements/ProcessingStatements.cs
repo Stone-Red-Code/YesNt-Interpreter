@@ -74,7 +74,7 @@ namespace YesNt.Interpreter.Statements
             {
                 try
                 {
-                    RuntimeInfo.Lines.RemoveAt(0);
+                    RuntimeInfo.Lines.RemoveAt(RuntimeInfo.LineNumber);
                     string[] lines = File.ReadAllLines(path);
 
                     for (int i = 0; i < lines.Length; i++)
@@ -85,12 +85,12 @@ namespace YesNt.Interpreter.Statements
                 }
                 catch
                 {
-                    RuntimeInfo.Exit($"Could not load file {path}", true);
+                    RuntimeInfo.Exit($"Could not load file \"{path}\"", true);
                 }
             }
             else
             {
-                RuntimeInfo.Exit($"Could not find file {path}", true);
+                RuntimeInfo.Exit($"Could not find file \"{path}\"", true);
             }
         }
 

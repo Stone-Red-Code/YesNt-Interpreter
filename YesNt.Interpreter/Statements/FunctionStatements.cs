@@ -62,6 +62,15 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
+        [Statement("%iso", SearchMode.Contains, SpaceAround.End, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        public void CheckIfOutParameterAvalible(string args)
+        {
+            args += " ";
+            args = args.Replace("%iso ", $"{RuntimeInfo.OutParametersStack.Count > 0} ");
+
+            RuntimeInfo.CurrentLine = args.TrimEnd();
+        }
+
         [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Seperator = "|")]
         public void Call(string args)
         {
@@ -117,6 +126,21 @@ namespace YesNt.Interpreter.Statements
             {
                 RuntimeInfo.Variables.Add(args, RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop());
             }
+        }
+
+        [Statement("%isi", SearchMode.Contains, SpaceAround.End, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        public void CheckIfInParameterAvalible(string args)
+        {
+            if (!RuntimeInfo.IsInFunction)
+            {
+                RuntimeInfo.Exit("Statement not allowed outside of function", true);
+                return;
+            }
+
+            args += " ";
+            args = args.Replace("%isi ", $"{RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count > 0} ");
+
+            RuntimeInfo.CurrentLine = args.TrimEnd();
         }
 
         [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]

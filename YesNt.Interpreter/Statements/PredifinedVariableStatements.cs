@@ -27,8 +27,6 @@ namespace YesNt.Interpreter.Statements
         public void GetPi(string args)
         {
             args += " ";
-
-
             args = args.Replace("%pi ", $"{Math.PI} ");
 
             RuntimeInfo.CurrentLine = args.TrimEnd();

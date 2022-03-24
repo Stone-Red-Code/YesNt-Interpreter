@@ -6,6 +6,15 @@ namespace YesNt.Interpreter.Utilities
     {
         public static bool? EvaluateCondition(string input)
         {
+            if (input.ToLower().FromSaveString().Trim() == "true")
+            {
+                return true;
+            }
+            else if (input.ToLower().FromSaveString().Trim() == "false")
+            {
+                return false;
+            }
+
             string[] parts = input.Split("==");
             if (parts.Length == 2)
             {
