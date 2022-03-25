@@ -13,10 +13,14 @@ namespace YesNt.Interpreter.Statements
 {
     internal class ProcessingStatements : StatementRuntimeInformation
     {
+        private static readonly Regex calculationRegex = new Regex(@"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\%(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\^(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
+
+        //new Regex(@"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
+
         [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High, ExecuteInSearchMode = true)]
         public void Calculate(string args)
         {
-            MatchCollection matches = Regex.Matches(args.FromSaveString(), @"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
+            MatchCollection matches = calculationRegex.Matches(args.FromSaveString());
 
             for (int i = 0; i < matches.Count; i++)
             {
@@ -44,7 +48,9 @@ namespace YesNt.Interpreter.Statements
             int lineNumer = RuntimeInfo.LineNumber;
             List<Line> lines = RuntimeInfo.Lines.GetRange(0, RuntimeInfo.Lines.Count);
 
-            lines[lineNumer].Content = line;
+            Line oldLine = lines[lineNumer];
+
+            lines[lineNumer] = new Line(line, oldLine.FileName, oldLine.LineNumber);
             _ = Task.Run(() =>
             {
                 YesNtInterpreter interpreter = new YesNtInterpreter();

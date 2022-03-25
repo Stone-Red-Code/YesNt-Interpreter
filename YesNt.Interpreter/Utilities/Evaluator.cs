@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
 namespace YesNt.Interpreter.Utilities
 {
@@ -115,20 +116,15 @@ namespace YesNt.Interpreter.Utilities
             {
                 string part = p;
 
-                switch (op)
+                part = op switch
                 {
-                    case '+':
-                        part = Calculate(part, '-');
-                        break;
-
-                    case '-':
-                        part = Calculate(part, '*');
-                        break;
-
-                    case '*':
-                        part = Calculate(part, '/');
-                        break;
-                }
+                    '+' => Calculate(part, '-'),
+                    '-' => Calculate(part, '*'),
+                    '*' => Calculate(part, '/'),
+                    '/' => Calculate(part, '%'),
+                    '%' => Calculate(part, '^'),
+                    _ => part
+                };
 
                 if (part is null)
                 {
@@ -160,6 +156,14 @@ namespace YesNt.Interpreter.Utilities
                             case '/':
                                 number /= num;
                                 break;
+
+                            case '%':
+                                number %= num;
+                                break;
+
+                            case '^':
+                                number = Math.Pow(number, num);
+                                break;
                         }
                     }
                 }
@@ -169,14 +173,7 @@ namespace YesNt.Interpreter.Utilities
                 }
             }
 
-            if (number % 1 == 0)
-            {
-                return number.ToString();
-            }
-            else
-            {
-                return number.ToString("F99").Trim('0');
-            }
+            return number.ToString();
         }
     }
 }
