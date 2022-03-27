@@ -39,7 +39,7 @@ namespace YesNt.Interpreter.Statements
 
             while (args.Contains("%rnd "))
             {
-                args = args.ReplaceFirstOccurrence("%rnd ", $"{random.Next() % 2} ");
+                args = args.ReplaceFirstOccurrence("%rnd ", $"{random.Next(32767, int.MaxValue)} ");
             }
 
             RuntimeInfo.CurrentLine = args.TrimEnd();

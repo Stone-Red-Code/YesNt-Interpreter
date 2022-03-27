@@ -20,92 +20,95 @@ namespace YesNt.CodeEditor
         public void Write(string input)
         {
             input = input.Replace("\0", string.Empty);
-            foreach (StatementInformation statement in statementInformation)
-            {
-                if (statement.IgnoreSyntaxHighlighting)
-                {
-                    continue;
-                }
-
-                string name = statement.SpaceAround switch
-                {
-                    SpaceAround.StartEnd => $" {statement.Name.Trim()} ",
-                    SpaceAround.Start => $" {statement.Name.Trim()}",
-                    SpaceAround.End => $"{statement.Name.Trim()} ",
-                    _ => statement.Name
-                };
-                input = input.TrimEnd();
-                if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
-                {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                    {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                    }
-                    else if (statement.Seperator is not null)
-                    {
-                        continue;
-                    }
-                    input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
-                }
-                if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
-                {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                    {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                    }
-                    else if (statement.Seperator is not null)
-                    {
-                        continue;
-                    }
-                    input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), statement.Color, statement.SearchMode);
-                }
-                if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
-                {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                    {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                    }
-                    else if (statement.Seperator is not null)
-                    {
-                        continue;
-                    }
-                    input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
-                }
-                if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
-                {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                    {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                    }
-                    else if (statement.Seperator is not null)
-                    {
-                        continue;
-                    }
-                    input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
-                }
-            }
-
-            MatchCollection matches = Regex.Matches(input, @">[a-zA-Z0-9]+");
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
-            }
-
-            matches = Regex.Matches(input, @"^<[a-zA-Z0-9]+");
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkCyan, SearchMode.StartOfLine);
-            }
-
-            matches = Regex.Matches(input, @"^!<[a-zA-Z0-9]+");
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
-            }
 
             if (input.StartsWith('#'))
             {
                 input = AddColorInformation(input, input, ConsoleColor.Gray, SearchMode.Exact);
+            }
+            else
+            {
+                foreach (StatementInformation statement in statementInformation)
+                {
+                    if (statement.IgnoreSyntaxHighlighting)
+                    {
+                        continue;
+                    }
+
+                    string name = statement.SpaceAround switch
+                    {
+                        SpaceAround.StartEnd => $" {statement.Name.Trim()} ",
+                        SpaceAround.Start => $" {statement.Name.Trim()}",
+                        SpaceAround.End => $"{statement.Name.Trim()} ",
+                        _ => statement.Name
+                    };
+                    input = input.TrimEnd();
+                    if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
+                    {
+                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                        {
+                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        }
+                        else if (statement.Seperator is not null)
+                        {
+                            continue;
+                        }
+                        input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
+                    }
+                    if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
+                    {
+                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                        {
+                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        }
+                        else if (statement.Seperator is not null)
+                        {
+                            continue;
+                        }
+                        input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), statement.Color, statement.SearchMode);
+                    }
+                    if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
+                    {
+                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                        {
+                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        }
+                        else if (statement.Seperator is not null)
+                        {
+                            continue;
+                        }
+                        input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
+                    }
+                    if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
+                    {
+                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                        {
+                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        }
+                        else if (statement.Seperator is not null)
+                        {
+                            continue;
+                        }
+                        input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
+                    }
+                }
+
+                MatchCollection matches = Regex.Matches(input, @">[a-zA-Z0-9]+");
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
+                }
+
+                matches = Regex.Matches(input, @"^<[a-zA-Z0-9]+");
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkCyan, SearchMode.StartOfLine);
+                }
+
+                matches = Regex.Matches(input, @"^!<[a-zA-Z0-9]+");
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
+                }
             }
 
             foreach (string part in input.Split("\0"))
