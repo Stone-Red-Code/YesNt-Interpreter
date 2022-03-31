@@ -10,36 +10,31 @@ namespace YesNt.Interpreter.Statements
     {
         private readonly Random random = new Random();
 
-        [Statement("%tim", SearchMode.Contains, SpaceAround.End, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%tim", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void GetUnixTimestamp(string args)
         {
-            args += " ";
-
-            while (args.Contains("%tim "))
+            while (args.Contains("%tim"))
             {
-                args = args.ReplaceFirstOccurrence("%tim ", $"{DateTimeOffset.Now.ToUnixTimeSeconds()}");
+                args = args.ReplaceFirstOccurrence("%tim", $"{DateTimeOffset.Now.ToUnixTimeSeconds()}");
             }
 
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
 
-        [Statement("%pi", SearchMode.Contains, SpaceAround.End, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%pi", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void GetPi(string args)
         {
-            args += " ";
-            args = args.Replace("%pi ", $"{Math.PI} ");
+            args = args.Replace("%pi", $"{Math.PI}");
 
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
 
-        [Statement("%rnd", SearchMode.Contains, SpaceAround.End, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%rnd", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void GetRandom(string args)
         {
-            args += " ";
-
-            while (args.Contains("%rnd "))
+            while (args.Contains("%rnd"))
             {
-                args = args.ReplaceFirstOccurrence("%rnd ", $"{random.Next(32767, int.MaxValue)} ");
+                args = args.ReplaceFirstOccurrence("%rnd", $"{random.Next(32767, int.MaxValue)}");
             }
 
             RuntimeInfo.CurrentLine = args.TrimEnd();

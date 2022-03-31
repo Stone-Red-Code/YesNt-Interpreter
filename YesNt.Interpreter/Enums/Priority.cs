@@ -2,6 +2,7 @@
 {
     internal enum Priority
     {
+        PreProcessing,
         Highest,
         VeryHigh,
         High,

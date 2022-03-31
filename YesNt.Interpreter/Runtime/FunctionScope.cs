@@ -6,6 +6,7 @@ namespace YesNt.Interpreter.Runtime
     {
         public int CallerLine { get; }
         public Dictionary<string, string> Variables { get; } = new();
+        public Dictionary<string, int> Labels { get; } = new();
         public Stack<string> Arguemtns { get; }
         public Stack<string> Results { get; } = new();
 

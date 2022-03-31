@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -50,7 +51,8 @@ namespace YesNt.Interpreter.Statements
         }
 
         [Statement("cls", SearchMode.Exact, SpaceAround.None, ConsoleColor.Magenta)]
-        public void Clear(string args)
+        [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Won't work if static")]
+        public void Clear(string _)
         {
             Console.Clear();
         }

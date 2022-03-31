@@ -61,7 +61,7 @@ namespace YesNt.CodeEditor
             if (SizeChanged())
             {
                 drawAll = true;
-                inputHandler.WriteStatus(string.Empty);
+                InputHandler.WriteStatus(string.Empty);
             }
 
             if (LineOffset < 0 || CursorPosition.Y < 0 || CursorPosition.Y < 0)
@@ -111,14 +111,14 @@ namespace YesNt.CodeEditor
 
             if (!File.Exists(path))
             {
-                inputHandler.WriteStatus("File does not exist!");
+                InputHandler.WriteStatus("File does not exist!");
                 return false;
             }
 
             Lines.Clear();
             Lines.AddRange(File.ReadAllLines(path));
             CurrentPath = path;
-            inputHandler.WriteStatus("File Loaded!");
+            InputHandler.WriteStatus("File Loaded!");
             return true;
         }
 
@@ -152,12 +152,12 @@ namespace YesNt.CodeEditor
             }
             else if (input.Split(' ').Length > 2)
             {
-                inputHandler.WriteStatus("Invalid arguments!");
+                InputHandler.WriteStatus("Invalid arguments!");
                 return false;
             }
             else
             {
-                inputHandler.WriteStatus("File path is empty! (Save the file before you can use this command)");
+                InputHandler.WriteStatus("File path is empty! (Save the file before you can use this command)");
                 return false;
             }
 
@@ -174,12 +174,12 @@ namespace YesNt.CodeEditor
             try
             {
                 File.WriteAllLines(path, Lines);
-                inputHandler.WriteStatus("File Saved!");
+                InputHandler.WriteStatus("File Saved!");
                 return true;
             }
             catch (Exception ex)
             {
-                inputHandler.WriteStatus(ex.Message);
+                InputHandler.WriteStatus(ex.Message);
                 return false;
             }
         }
