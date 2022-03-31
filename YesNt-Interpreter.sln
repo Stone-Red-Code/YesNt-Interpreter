@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YesNt.Interpreter.Tests", "YesNt.Interpreter.Tests\YesNt.Interpreter.Tests.csproj", "{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{E40573DB-912A-4871-BB65-3EE6E7D72E79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E40573DB-912A-4871-BB65-3EE6E7D72E79}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E40573DB-912A-4871-BB65-3EE6E7D72E79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

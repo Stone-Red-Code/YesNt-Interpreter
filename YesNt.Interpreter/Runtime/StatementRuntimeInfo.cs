@@ -1,4 +1,4 @@
-﻿namespace YesNt.Interpreter
+﻿namespace YesNt.Interpreter.Runtime
 {
     internal abstract class StatementRuntimeInformation
     {

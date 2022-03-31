@@ -7,10 +7,9 @@ using System.Reflection;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
-using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
-namespace YesNt.Interpreter
+namespace YesNt.Interpreter.Runtime
 {
     public class YesNtInterpreter
     {

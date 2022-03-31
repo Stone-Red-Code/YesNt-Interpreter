@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-using YesNt.Interpreter;
+using YesNt.Interpreter.Runtime;
 
 namespace YesNt.CodeEditor
 {

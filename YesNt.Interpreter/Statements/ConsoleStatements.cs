@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
+using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Statements

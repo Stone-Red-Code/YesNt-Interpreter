@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Threading;
 
+using YesNt.Interpreter.Runtime;
+
 namespace YesNt.Interpreter.Utilities
 {
     internal static class ConsoleExtentions

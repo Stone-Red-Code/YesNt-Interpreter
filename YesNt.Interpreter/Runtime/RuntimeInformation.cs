@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
-namespace YesNt.Interpreter
+namespace YesNt.Interpreter.Runtime
 {
     internal class RuntimeInformation
     {

@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
+using YesNt.Interpreter.Runtime;
 
 namespace YesNt.Interpreter.Statements
 {

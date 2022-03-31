@@ -1,5 +1,7 @@
 ﻿using System;
 
+using YesNt.Interpreter.Runtime;
+
 namespace YesNt.Interpreter
 {
     internal static class Program
