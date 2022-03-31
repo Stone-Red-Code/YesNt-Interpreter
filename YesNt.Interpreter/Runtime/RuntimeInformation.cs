@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
@@ -11,10 +12,11 @@ namespace YesNt.Interpreter
         private RuntimeInformation parentRuntimeInformation;
         private static int internalTaskId = 0;
         private int taskId = 0;
+
         private readonly Dictionary<string, string> topVariables = new();
+        private readonly Dictionary<string, int> topLabels = new();
 
         public Dictionary<string, string> GloablVariables { get; set; } = new();
-        public Dictionary<string, int> Labels { get; } = new();
         public Dictionary<string, int> Functions { get; } = new();
         public Stack<FunctionScope> FunctionCallStack { get; } = new();
         public Stack<string> InParametersStack { get; } = new();
@@ -30,8 +32,7 @@ namespace YesNt.Interpreter
         public string CurrentFilePath { get; set; } = string.Empty;
         public bool IsTask => ParentRuntimeInformation is not null;
         public int TaskId => IsTask ? taskId : 0;
-
-        public bool InternalIsInFunction { get; private set; } = false;
+        public bool InternalIsInFunction { get; set; }
 
         public bool IsInFunction
         {
@@ -54,6 +55,21 @@ namespace YesNt.Interpreter
             }
         }
 
+        public Dictionary<string, int> Labels
+        {
+            get
+            {
+                if (FunctionCallStack.Count == 0)
+                {
+                    return topLabels;
+                }
+                else
+                {
+                    return FunctionCallStack.Peek().Labels;
+                }
+            }
+        }
+
         public RuntimeInformation ParentRuntimeInformation
         {
             get => parentRuntimeInformation;
@@ -68,6 +84,7 @@ namespace YesNt.Interpreter
         }
 
         public bool IsSearching => !string.IsNullOrWhiteSpace(SearchLabel + SearchFunction) || IsInFunction && FunctionCallStack.Count == 0;
+        public bool IsLocalSearch { get; set; }
 
         private event Action<string, bool> OnExit;
 
@@ -75,9 +92,9 @@ namespace YesNt.Interpreter
 
         public event Action<DebugEventArgs> OnLineExecuted;
 
-        private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopChildTasks)
+        private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopAllTasks)
         {
-            Exit($"Terminated by parent task", stopChildTasks);
+            Exit($"Terminated by parent task", stopAllTasks);
         }
 
         public void WriteLine(string output, bool forceWrite = false)
@@ -134,6 +151,13 @@ namespace YesNt.Interpreter
             {
                 Line line = Lines[Math.Min(LineNumber, Lines.Count - 1)];
                 WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
+                while (FunctionCallStack.Count > 0)
+                {
+                    int stackLineNumber = FunctionCallStack.Pop().CallerLine;
+                    Line stackLine = (ParentRuntimeInformation?.Lines ?? Lines).ElementAt(stackLineNumber);
+                    WriteLine($"    at line {stackLine.LineNumber + 1} in the file \"{stackLine.FileName}\"", true);
+                }
+
                 Stop = true;
             }
             if (stopAllTasks && !StopAllTasks)
@@ -173,7 +197,7 @@ namespace YesNt.Interpreter
             StopAllTasks = false;
             IsDebugMode = false;
             IsInFunction = false;
-            InternalIsInFunction = false;
+            IsLocalSearch = false;
             LineNumber = 0;
             taskId = internalTaskId + 1;
 #pragma warning disable S2696 // Instance members should not write to "static" fields

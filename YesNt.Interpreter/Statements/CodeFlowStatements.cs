@@ -23,6 +23,7 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.SearchLabel = key;
+                RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
             }
         }
 
@@ -59,6 +60,7 @@ namespace YesNt.Interpreter.Statements
             else
             {
                 RuntimeInfo.SearchLabel = key;
+                RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
             }
         }
 
@@ -78,6 +80,7 @@ namespace YesNt.Interpreter.Statements
             if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
             {
                 RuntimeInfo.SearchLabel = string.Empty;
+                RuntimeInfo.IsLocalSearch = false;
             }
         }
 
@@ -125,7 +128,7 @@ namespace YesNt.Interpreter.Statements
                 return;
             }
 
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
             RuntimeInfo.InParametersStack.Clear();
 
             if (RuntimeInfo.Functions.ContainsKey(key))
@@ -144,6 +147,11 @@ namespace YesNt.Interpreter.Statements
             if (RuntimeInfo.IsSearching)
             {
                 RuntimeInfo.IsInFunction = false;
+                if (RuntimeInfo.IsLocalSearch)
+                {
+                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                }
+
                 return;
             }
             else
@@ -160,6 +168,11 @@ namespace YesNt.Interpreter.Statements
             if (RuntimeInfo.IsSearching)
             {
                 RuntimeInfo.IsInFunction = false;
+                if (RuntimeInfo.IsLocalSearch)
+                {
+                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                }
+
                 return;
             }
             else

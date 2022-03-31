@@ -81,8 +81,8 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [StaticStatement(ExecuteInSearchLabelMode = true)]
-        public void ReadVariable()
+        [Statement(">", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest)]
+        public void ReadVariable(string _)
         {
             if (!RuntimeInfo.CurrentLine.Contains('>'))
             {
