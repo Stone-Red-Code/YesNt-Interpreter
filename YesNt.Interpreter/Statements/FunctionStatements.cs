@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -62,11 +61,11 @@ namespace YesNt.Interpreter.Statements
             }
         }
 
-        [Statement("%iso", SearchMode.Contains, SpaceAround.End, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+        [Statement("%iso", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
         public void CheckIfOutParameterAvalible(string args)
         {
             args += " ";
-            args = args.Replace("%iso ", $"{RuntimeInfo.OutParametersStack.Count > 0} ");
+            args = args.Replace("%iso", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
 
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
@@ -89,7 +88,7 @@ namespace YesNt.Interpreter.Statements
                 RuntimeInfo.InParametersStack.Push(argumanet.Trim());
             }
 
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
             RuntimeInfo.InParametersStack.Clear();
             RuntimeInfo.CurrentLine = string.Empty;
 
@@ -138,7 +137,7 @@ namespace YesNt.Interpreter.Statements
             }
 
             args += " ";
-            args = args.Replace("%isi ", $"{RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count > 0} ");
+            args = args.Replace("%isi", (RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count > 0).ToString());
 
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
@@ -167,6 +166,11 @@ namespace YesNt.Interpreter.Statements
             if (RuntimeInfo.IsSearching)
             {
                 RuntimeInfo.IsInFunction = false;
+
+                if (RuntimeInfo.IsLocalSearch)
+                {
+                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                }
                 return;
             }
             else
@@ -178,7 +182,7 @@ namespace YesNt.Interpreter.Statements
             {
                 FunctionScope functionScope = RuntimeInfo.FunctionCallStack.Pop();
 
-                RuntimeInfo.OutParametersStack = functionScope.Results;
+                RuntimeInfo.OutParametersStack = new Stack<string>(functionScope.Results);
                 RuntimeInfo.LineNumber = functionScope.CallerLine;
             }
             else

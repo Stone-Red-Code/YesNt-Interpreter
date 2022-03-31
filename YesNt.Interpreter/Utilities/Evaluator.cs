@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace YesNt.Interpreter.Utilities
@@ -87,7 +88,18 @@ namespace YesNt.Interpreter.Utilities
             return null;
         }
 
-        public static string Calculate(string input, char op = '+')
+        public static string Calculate(string input)
+        {
+            input = Regex.Replace(input, @"(\+ +\+)+", "+");
+            input = Regex.Replace(input, @"(\- +\-)+", "+");
+            input = Regex.Replace(input, @"(\- +\+)+", "-");
+            input = Regex.Replace(input, @"(\+ +\-)+", "-");
+
+            string yes = Calculate(input, '+');
+            return yes;
+        }
+
+        private static string Calculate(string input, char op)
         {
             if (input is null)
             {
@@ -109,6 +121,13 @@ namespace YesNt.Interpreter.Utilities
             }
 
             string[] parts = input.Split(op);
+
+            //Weird fix
+            if (parts.Length >= 2 && string.IsNullOrWhiteSpace(parts[0]))
+            {
+                parts[1] = $"{op}{parts[1]}";
+                parts = parts.Skip(1).ToArray();
+            }
 
             double number = double.NaN;
 
@@ -173,7 +192,7 @@ namespace YesNt.Interpreter.Utilities
                 }
             }
 
-            return number.ToString();
+            return number.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }

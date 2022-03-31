@@ -99,6 +99,19 @@ namespace YesNt.Interpreter
             Execute();
         }
 
+        public void Execute(List<string> lines, bool isDebugMode = false)
+        {
+            runtimeInfo.Reset();
+            runtimeInfo.IsDebugMode = isDebugMode;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                runtimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName("#Memory#"), i));
+            }
+
+            Execute();
+        }
+
         internal void Execute(List<Line> lines, Dictionary<string, string> gloablVariables, int startLine, RuntimeInformation parentRuntimeInformation)
         {
             runtimeInfo.Reset();
@@ -142,7 +155,7 @@ namespace YesNt.Interpreter
                 foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
                 {
                     StaticStatementAttribute staticStatementAttribute = staticStatement.Key;
-                    if (!staticStatementAttribute.ExecuteInSearchLabelMode && runtimeInfo.IsSearching)
+                    if (!staticStatementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                     {
                         continue;
                     }

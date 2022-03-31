@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace YesNt.CodeEditor
 {
@@ -124,10 +125,13 @@ namespace YesNt.CodeEditor
                         textEditor.Lines.Add("");
                     }
 
-                    while (textEditor.Lines[textEditor.CursorPosition.Y].Length <= textEditor.CursorPosition.X)
+                    StringBuilder lineBuilder = new StringBuilder(textEditor.Lines[textEditor.CursorPosition.Y]);
+                    while (lineBuilder.Length <= textEditor.CursorPosition.X)
                     {
-                        textEditor.Lines[textEditor.CursorPosition.Y] += " ";
+                        lineBuilder.Append(' ');
                     }
+
+                    textEditor.Lines[textEditor.CursorPosition.Y] = lineBuilder.ToString();
 
                     if (keyInfo.Key == ConsoleKey.Backspace)
                     {
@@ -307,7 +311,7 @@ namespace YesNt.CodeEditor
             return true;
         }
 
-        public void WriteStatus(string input)
+        internal static void WriteStatus(string input)
         {
             Console.SetCursorPosition(0, Console.WindowHeight - 1);
             Console.Write(input + new string(' ', Console.WindowWidth - input.Length - 1));

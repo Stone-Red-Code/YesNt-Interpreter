@@ -27,6 +27,12 @@ namespace YesNt.CodeEditor
             }
             else
             {
+                MatchCollection matches = Regex.Matches(input, @"!!.");
+                for (int i = 0; i < matches.Count; i++)
+                {
+                    input = AddColorInformation(input, matches[i].Value, Console.ForegroundColor, SearchMode.Contains);
+                }
+
                 foreach (StatementInformation statement in statementInformation)
                 {
                     if (statement.IgnoreSyntaxHighlighting)
@@ -92,7 +98,7 @@ namespace YesNt.CodeEditor
                     }
                 }
 
-                MatchCollection matches = Regex.Matches(input, @">[a-zA-Z0-9]+");
+                matches = Regex.Matches(input, @">[a-zA-Z0-9]+");
                 for (int i = 0; i < matches.Count; i++)
                 {
                     input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
@@ -134,11 +140,11 @@ namespace YesNt.CodeEditor
                 }
                 Console.ForegroundColor = consoleColor;
                 Console.Write(messagePart);
-                Console.ForegroundColor = ConsoleColor.Gray;
             }
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
 
-        private string AddColorInformation(string originalString, string value, ConsoleColor color, SearchMode searchMode)
+        private static string AddColorInformation(string originalString, string value, ConsoleColor color, SearchMode searchMode)
         {
             int spacesAtEnd = value.WhiteSpaceAtEnd();
             string reult = searchMode switch

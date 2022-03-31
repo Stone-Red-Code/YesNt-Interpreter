@@ -13,11 +13,9 @@ namespace YesNt.Interpreter.Statements
 {
     internal class ProcessingStatements : StatementRuntimeInformation
     {
-        private static readonly Regex calculationRegex = new Regex(@"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\%(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\^(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
+        private static readonly Regex calculationRegex = new Regex(@"[0-9*+().,^%/-]+[0-9*+ ().,^%/-]+[0-9*+().,^%/-]+");
 
-        //new Regex(@"((\)?)+(\(?)+[0-9]+(((\s?)+(\)?)(\s?)+\+(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\-(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\*(\s?)+(\(?)+(\s?)+|(\s?)+(\)?)(\s?)+\/(\s?)+(\(?)+(\s?)+)|[,.])(?=[0-9])+)+[0-9]+(\)?)+");
-
-        [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High, ExecuteInSearchMode = true)]
+        [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High)]
         public void Calculate(string args)
         {
             MatchCollection matches = calculationRegex.Matches(args.FromSaveString());
@@ -30,7 +28,7 @@ namespace YesNt.Interpreter.Statements
                     RuntimeInfo.Exit("Invalid operation", true);
                     return;
                 }
-                args = args.FromSaveString().Replace(matches[0].Value, res);
+                args = args.FromSaveString().Replace(matches[i].Value, res);
             }
 
             RuntimeInfo.CurrentLine = args;
@@ -40,6 +38,23 @@ namespace YesNt.Interpreter.Statements
         public void Evaluate(string args)
         {
             RuntimeInfo.CurrentLine = args.FromSaveString();
+        }
+
+        [Statement("!!", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkYellow, Priority = Priority.PreProcessing, KeepStatementInArgs = true)]
+        public void DontEvaluate(string args)
+        {
+            int index;
+            while ((index = args.IndexOf("!!")) != -1)
+            {
+                args = args.Remove(index, 2);
+                if (index < args.Length)
+                {
+                    char charToEscape = args[index];
+                    args = args.Remove(index, 1);
+                    args = args.Insert(index, charToEscape.ToString().ToSaveString());
+                }
+            }
+            RuntimeInfo.CurrentLine = args;
         }
 
         [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
