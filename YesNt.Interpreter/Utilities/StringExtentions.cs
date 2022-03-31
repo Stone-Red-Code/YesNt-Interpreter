@@ -11,14 +11,14 @@ namespace YesNt.Interpreter.Utilities
             StringBuilder output = new StringBuilder();
             foreach (char c in input)
             {
-                output.Append($"\r{c}\r");
+                output.Append($"\v{c}\v");
             }
             return output.ToString();
         }
 
         public static string FromSaveString(this string input)
         {
-            return input.Replace("\r", "");
+            return input.Replace("\v", "");
         }
 
         public static bool ToStandardizedNumber(this string input, out double result)

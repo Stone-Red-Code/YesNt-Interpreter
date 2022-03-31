@@ -87,7 +87,7 @@ namespace YesNt.Interpreter.Runtime
             staticStatements = staticStatements.OrderBy(s => s.Key.Priority).ToList();
 
             runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
-            runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted.Invoke(e);
+            runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted?.Invoke(e);
         }
 
         public void Execute(string path, bool isDebugMode = false)
@@ -138,6 +138,11 @@ namespace YesNt.Interpreter.Runtime
 
                 runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].Content.TrimEnd().Replace("\r", string.Empty);
 
+                if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
+                {
+                    continue;
+                }
+
                 DebugEventArgs debugEventArgs = new DebugEventArgs()
                 {
                     LineNumber = runtimeInfo.LineNumber + 1,
@@ -145,11 +150,6 @@ namespace YesNt.Interpreter.Runtime
                     IsTask = runtimeInfo.IsTask,
                     TaskId = runtimeInfo.TaskId
                 };
-
-                if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
-                {
-                    continue;
-                }
 
                 foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
                 {

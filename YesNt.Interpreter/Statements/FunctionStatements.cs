@@ -190,5 +190,11 @@ namespace YesNt.Interpreter.Statements
                 RuntimeInfo.Exit("No function in stack", true);
             }
         }
+
+        [Statement("ccs", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
+        public void ClearCallStack(string _)
+        {
+            RuntimeInfo.FunctionCallStack.Clear();
+        }
     }
 }
