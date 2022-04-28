@@ -9,6 +9,8 @@ namespace YesNt.Interpreter.Statements
 {
     internal class VariableStatements : StatementRuntimeInformation
     {
+        private static readonly Regex variableStatementRegex = new Regex(@">[a-zA-Z0-9]+");
+
         [Statement("<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
         public void DefineVariable(string args)
         {
@@ -105,7 +107,7 @@ namespace YesNt.Interpreter.Statements
                 return;
             }
 
-            MatchCollection matches = Regex.Matches(RuntimeInfo.CurrentLine, @">[a-zA-Z0-9]+");
+            MatchCollection matches = variableStatementRegex.Matches(RuntimeInfo.CurrentLine);
 
             for (int i = 0; i < matches.Count; i++)
             {

@@ -6,7 +6,7 @@ using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Runtime
 {
-    internal class RuntimeInformation
+    internal sealed class RuntimeInformation
     {
         private RuntimeInformation parentRuntimeInformation;
         private static int internalTaskId = 0;
