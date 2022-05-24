@@ -64,6 +64,9 @@ dotnet_naming_style.pascal_case.required_suffix =
 dotnet_naming_style.pascal_case.word_separator = 
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
+# S1172: Unused method parameters should be removed
+dotnet_diagnostic.S1172.severity = none
+
 [*.{cs,vb}]
 #### Naming styles ####
 
