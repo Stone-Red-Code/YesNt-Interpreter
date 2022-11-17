@@ -86,6 +86,8 @@ namespace YesNt.Interpreter.Statements
         [Statement("imp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
         public void Import(string path)
         {
+            path = Path.Combine(RuntimeInfo.WorkingDirectory, path);
+
             if (string.IsNullOrEmpty(Path.GetExtension(path)))
             {
                 path = Path.ChangeExtension(path, "ynt");

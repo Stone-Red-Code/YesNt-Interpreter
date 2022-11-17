@@ -258,6 +258,8 @@ namespace YesNt.Interpreter.Runtime
 
         private bool LoadFile(string path)
         {
+            path = Path.GetFullPath(path);
+
             if (!File.Exists(path))
             {
                 Console.WriteLine($"File \"{path}\" not found!");
@@ -271,6 +273,8 @@ namespace YesNt.Interpreter.Runtime
                 Console.WriteLine($"File \"{path}\" is empty!");
                 return false;
             }
+
+            runtimeInfo.WorkingDirectory = Path.GetDirectoryName(path);
 
             for (int i = 0; i < lines.Length; i++)
             {
