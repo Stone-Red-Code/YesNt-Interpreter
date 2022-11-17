@@ -23,14 +23,14 @@ namespace YesNt.Interpreter.Utilities
         public new void BeginOutputReadLine()
         {
             Stream baseStream = StandardOutput.BaseStream;
-            output = new AsyncStreamReader(this, baseStream, new UserCallBack(FixedOutputReadNotifyUser), StandardOutput.CurrentEncoding);
+            output = new AsyncStreamReader(baseStream, new UserCallBack(FixedOutputReadNotifyUser), StandardOutput.CurrentEncoding);
             output.BeginReadLine();
         }
 
         public new void BeginErrorReadLine()
         {
             Stream baseStream = StandardError.BaseStream;
-            error = new AsyncStreamReader(this, baseStream, new UserCallBack(FixedErrorReadNotifyUser), StandardError.CurrentEncoding);
+            error = new AsyncStreamReader(baseStream, new UserCallBack(FixedErrorReadNotifyUser), StandardError.CurrentEncoding);
             error.BeginReadLine();
         }
 
@@ -90,17 +90,17 @@ namespace YesNt.Interpreter.Utilities
         public virtual Encoding CurrentEncoding => encoding;
         public virtual Stream BaseStream => stream;
 
-        internal AsyncStreamReader(Process process, Stream stream, UserCallBack callback, Encoding encoding) : this(process, stream, callback, encoding, 1024)
+        internal AsyncStreamReader(Stream stream, UserCallBack callback, Encoding encoding) : this(stream, callback, encoding, 1024)
         {
         }
 
-        internal AsyncStreamReader(Process process, Stream stream, UserCallBack callback, Encoding encoding, int bufferSize)
+        internal AsyncStreamReader(Stream stream, UserCallBack callback, Encoding encoding, int bufferSize)
         {
-            Init(process, stream, callback, encoding, bufferSize);
+            Init(stream, callback, encoding, bufferSize);
             messageQueue = new Queue();
         }
 
-        private void Init(Process process, Stream stream, UserCallBack callback, Encoding encoding, int bufferSize)
+        private void Init(Stream stream, UserCallBack callback, Encoding encoding, int bufferSize)
         {
             this.stream = stream;
             this.encoding = encoding;
