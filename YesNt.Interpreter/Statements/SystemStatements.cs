@@ -62,6 +62,8 @@ namespace YesNt.Interpreter.Statements
 
         private void StartProcess(string name, string args)
         {
+            RuntimeInfo.OutParametersStack.Clear();
+
             FixedProcess process = new FixedProcess
             {
                 StartInfo = new ProcessStartInfo()
@@ -82,7 +84,7 @@ namespace YesNt.Interpreter.Statements
             process.WaitForExit();
 
             RuntimeInfo.InParametersStack.Clear();
-            RuntimeInfo.OutParametersStack.Clear();
+
             RuntimeInfo.OutParametersStack.Push(process.ExitCode.ToString());
         }
 
