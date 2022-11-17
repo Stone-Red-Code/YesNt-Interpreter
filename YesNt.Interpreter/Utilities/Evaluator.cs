@@ -8,11 +8,11 @@ internal static partial class Evaluator
 {
     public static bool? EvaluateCondition(string input)
     {
-        if (input.ToLower().FromSaveString().Trim() == "true")
+        if (input.ToLower().FromSafeString().Trim() == "true")
         {
             return true;
         }
-        else if (input.ToLower().FromSaveString().Trim() == "false")
+        else if (input.ToLower().FromSafeString().Trim() == "false")
         {
             return false;
         }
@@ -20,16 +20,16 @@ internal static partial class Evaluator
         string[] parts = input.Split("==");
         if (parts.Length == 2)
         {
-            string part1 = parts[0].FromSaveString().Trim();
-            string part2 = parts[1].FromSaveString().Trim();
+            string part1 = parts[0].FromSafeString().Trim();
+            string part2 = parts[1].FromSafeString().Trim();
             return part1 == part2;
         }
 
         parts = input.Split("!=");
         if (parts.Length == 2)
         {
-            string part1 = parts[0].FromSaveString().Trim();
-            string part2 = parts[1].FromSaveString().Trim();
+            string part1 = parts[0].FromSafeString().Trim();
+            string part2 = parts[1].FromSafeString().Trim();
             return part1 != part2;
         }
 
@@ -86,7 +86,7 @@ internal static partial class Evaluator
             return null;
         }
 
-        input = input.FromSaveString();
+        input = input.FromSafeString();
 
         MatchCollection matches = ParenthesesRegex().Matches(input);
         while (matches.Count > 0)

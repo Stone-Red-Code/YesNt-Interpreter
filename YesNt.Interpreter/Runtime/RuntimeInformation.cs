@@ -81,16 +81,16 @@ namespace YesNt.Interpreter.Runtime
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation!.WriteLine(output.FromSaveString(), forceWrite);
+                    parentRuntimeInformation!.WriteLine(output.FromSafeString(), forceWrite);
                 }
                 else
                 {
-                    OnDebugOutput?.Invoke(output.FromSaveString() + Environment.NewLine);
+                    OnDebugOutput?.Invoke(output.FromSafeString() + Environment.NewLine);
                 }
             }
             else
             {
-                Console.WriteLine(output.FromSaveString());
+                Console.WriteLine(output.FromSafeString());
             }
         }
 
@@ -105,16 +105,16 @@ namespace YesNt.Interpreter.Runtime
             {
                 if (IsTask)
                 {
-                    parentRuntimeInformation!.Write(output.FromSaveString(), forceWrite);
+                    parentRuntimeInformation!.Write(output.FromSafeString(), forceWrite);
                 }
                 else
                 {
-                    OnDebugOutput?.Invoke(output.FromSaveString());
+                    OnDebugOutput?.Invoke(output.FromSafeString());
                 }
             }
             else
             {
-                Console.Write(output.FromSaveString());
+                Console.Write(output.FromSafeString());
             }
         }
 

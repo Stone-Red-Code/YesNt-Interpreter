@@ -16,7 +16,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High)]
     public void Calculate(string args)
     {
-        MatchCollection matches = CalculationRegex().Matches(args.FromSaveString());
+        MatchCollection matches = CalculationRegex().Matches(args.FromSafeString());
 
         for (int i = 0; i < matches.Count; i++)
         {
@@ -26,7 +26,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
                 RuntimeInfo.Exit("Invalid operation", true);
                 return;
             }
-            args = args.FromSaveString().Replace(matches[i].Value, res);
+            args = args.FromSafeString().Replace(matches[i].Value, res);
         }
 
         RuntimeInfo.CurrentLine = args;
@@ -35,7 +35,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("!eval", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
     public void Evaluate(string args)
     {
-        RuntimeInfo.CurrentLine = args.FromSaveString();
+        RuntimeInfo.CurrentLine = args.FromSafeString();
     }
 
     [Statement("!!", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkYellow, Priority = Priority.PreProcessing, KeepStatementInArgs = true)]
@@ -49,7 +49,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
             {
                 char charToEscape = args[index];
                 args = args.Remove(index, 1);
-                args = args.Insert(index, charToEscape.ToString().ToSaveString());
+                args = args.Insert(index, charToEscape.ToString().ToSafeString());
             }
         }
         RuntimeInfo.CurrentLine = args;

@@ -34,7 +34,7 @@ namespace YesNt.Interpreter.Statements
                     RuntimeInfo.Exit("Terminated by external process", true);
                     return;
                 }
-                args = args.ReplaceFirstOccurrence("%crl ", input.ToSaveString() + " ");
+                args = args.ReplaceFirstOccurrence("%crl ", input.ToSafeString() + " ");
             }
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }
@@ -46,7 +46,7 @@ namespace YesNt.Interpreter.Statements
             while (args.Contains("%cr "))
             {
                 string input = ConsoleExtentions.ReadKey(RuntimeInfo).ToString();
-                args = args.ReplaceFirstOccurrence("%cr ", input.ToSaveString() + " ");
+                args = args.ReplaceFirstOccurrence("%cr ", input.ToSafeString() + " ");
             }
             RuntimeInfo.CurrentLine = args.TrimEnd();
         }

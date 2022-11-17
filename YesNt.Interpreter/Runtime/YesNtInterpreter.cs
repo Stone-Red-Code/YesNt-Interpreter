@@ -148,7 +148,7 @@ namespace YesNt.Interpreter.Runtime
                 DebugEventArgs debugEventArgs = new DebugEventArgs()
                 {
                     LineNumber = runtimeInfo.LineNumber + 1,
-                    OriginalLine = runtimeInfo.CurrentLine.FromSaveString(),
+                    OriginalLine = runtimeInfo.CurrentLine.FromSafeString(),
                     IsTask = runtimeInfo.IsTask,
                     TaskId = runtimeInfo.TaskId
                 };
@@ -229,7 +229,7 @@ namespace YesNt.Interpreter.Runtime
                 }
                 if (runtimeInfo.IsDebugMode && notSearchingLabel)
                 {
-                    debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSaveString();
+                    debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSafeString();
                     runtimeInfo.LineExecuted(debugEventArgs);
                 }
             }

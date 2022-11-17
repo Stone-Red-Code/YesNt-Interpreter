@@ -16,7 +16,7 @@ namespace YesNt.Interpreter.Statements
         [Statement("exc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.Low, Seperator = "|")]
         public void ExecuteProgramWithArgs(string input)
         {
-            string[] parts = input.FromSaveString().Split('|');
+            string[] parts = input.FromSafeString().Split('|');
             parts[0] = parts[0].Trim();
 
             string[] functionArgumets = parts[1].Split(',');
