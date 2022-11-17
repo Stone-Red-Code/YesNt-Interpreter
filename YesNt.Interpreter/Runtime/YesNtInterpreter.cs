@@ -94,8 +94,10 @@ namespace YesNt.Interpreter.Runtime
         {
             runtimeInfo.Reset();
             runtimeInfo.IsDebugMode = isDebugMode;
-            LoadFile(path);
-            Execute();
+            if (LoadFile(path))
+            {
+                Execute();
+            }
         }
 
         public void Execute(List<string> lines, bool isDebugMode = false)
@@ -205,14 +207,7 @@ namespace YesNt.Interpreter.Runtime
                             statement.Value.Invoke(copyLine);
                             statementFound = true;
 
-                            if (!leadingWhitespace)
-                            {
-                                runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.Trim();
-                            }
-                            else
-                            {
-                                runtimeInfo.CurrentLine = runtimeInfo.CurrentLine.TrimEnd();
-                            }
+                            runtimeInfo.CurrentLine = !leadingWhitespace ? runtimeInfo.CurrentLine.Trim() : runtimeInfo.CurrentLine.TrimEnd();
                         }
                         else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
                         {
@@ -261,20 +256,28 @@ namespace YesNt.Interpreter.Runtime
             }
         }
 
-        private void LoadFile(string path)
+        private bool LoadFile(string path)
         {
             if (!File.Exists(path))
             {
-                runtimeInfo.Exit($"File \"{path}\" not found!", true);
-                return;
+                Console.WriteLine($"File \"{path}\" not found!");
+                return false;
             }
 
             string[] lines = File.ReadAllLines(path);
+
+            if (lines.Length <= 0)
+            {
+                Console.WriteLine($"File \"{path}\" is empty!");
+                return false;
+            }
 
             for (int i = 0; i < lines.Length; i++)
             {
                 runtimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName(path), i));
             }
+
+            return true;
         }
     }
 }
