@@ -38,12 +38,7 @@ namespace YesNt.Interpreter.Utilities
             {
                 bool succ1 = parts[0].ToStandardizedNumber(out double part1);
                 bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
-
-                return part1 >= part2;
+                return succ1 && succ2 && part1 >= part2;
             }
 
             parts = input.Split("<=");
@@ -51,12 +46,7 @@ namespace YesNt.Interpreter.Utilities
             {
                 bool succ1 = parts[0].ToStandardizedNumber(out double part1);
                 bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
-
-                return part1 <= part2;
+                return succ1 && succ2 && part1 <= part2;
             }
 
             parts = input.Split(">");
@@ -64,12 +54,7 @@ namespace YesNt.Interpreter.Utilities
             {
                 bool succ1 = parts[0].ToStandardizedNumber(out double part1);
                 bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
-
-                return part1 > part2;
+                return succ1 && succ2 && part1 > part2;
             }
 
             parts = input.Split("<");
@@ -77,12 +62,7 @@ namespace YesNt.Interpreter.Utilities
             {
                 bool succ1 = parts[0].ToStandardizedNumber(out double part1);
                 bool succ2 = parts[1].ToStandardizedNumber(out double part2);
-                if (!succ1 || !succ2)
-                {
-                    return false;
-                }
-
-                return part1 < part2;
+                return succ1 && succ2 && part1 < part2;
             }
 
             return null;

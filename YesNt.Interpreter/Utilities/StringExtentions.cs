@@ -11,7 +11,7 @@ namespace YesNt.Interpreter.Utilities
             StringBuilder output = new StringBuilder();
             foreach (char c in input)
             {
-                output.Append($"\v{c}\v");
+                _ = output.Append($"\v{c}\v");
             }
             return output.ToString();
         }

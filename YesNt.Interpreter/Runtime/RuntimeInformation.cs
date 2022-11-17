@@ -28,7 +28,7 @@ namespace YesNt.Interpreter.Runtime
         public bool Stop { get; private set; } = false;
         public bool StopAllTasks { get; private set; } = false;
         public bool IsDebugMode { get; set; } = false;
-        public string CurrentFilePath { get; set; } = string.Empty;
+        public string WorkingDirectory { get; set; } = string.Empty;
         public bool IsTask => ParentRuntimeInformation is not null;
         public int TaskId => IsTask ? taskId : 0;
         public bool InternalIsInFunction { get; set; }
@@ -39,35 +39,9 @@ namespace YesNt.Interpreter.Runtime
             set => InternalIsInFunction = value;
         }
 
-        public Dictionary<string, string> Variables
-        {
-            get
-            {
-                if (FunctionCallStack.Count == 0)
-                {
-                    return topVariables;
-                }
-                else
-                {
-                    return FunctionCallStack.Peek().Variables;
-                }
-            }
-        }
+        public Dictionary<string, string> Variables => FunctionCallStack.Count == 0 ? topVariables : FunctionCallStack.Peek().Variables;
 
-        public Dictionary<string, int> Labels
-        {
-            get
-            {
-                if (FunctionCallStack.Count == 0)
-                {
-                    return topLabels;
-                }
-                else
-                {
-                    return FunctionCallStack.Peek().Labels;
-                }
-            }
-        }
+        public Dictionary<string, int> Labels => FunctionCallStack.Count == 0 ? topLabels : FunctionCallStack.Peek().Labels;
 
         public RuntimeInformation ParentRuntimeInformation
         {
@@ -82,7 +56,7 @@ namespace YesNt.Interpreter.Runtime
             }
         }
 
-        public bool IsSearching => !string.IsNullOrWhiteSpace(SearchLabel + SearchFunction) || IsInFunction && FunctionCallStack.Count == 0;
+        public bool IsSearching => !string.IsNullOrWhiteSpace(SearchLabel + SearchFunction) || (IsInFunction && FunctionCallStack.Count == 0);
         public bool IsLocalSearch { get; set; }
 
         private event Action<string, bool> OnExit;
@@ -98,7 +72,7 @@ namespace YesNt.Interpreter.Runtime
 
         public void WriteLine(string output, bool forceWrite = false)
         {
-            if (Stop && !forceWrite || parentRuntimeInformation?.StopAllTasks == true && !forceWrite)
+            if ((Stop && !forceWrite) || (parentRuntimeInformation?.StopAllTasks == true && !forceWrite))
             {
                 return;
             }
@@ -122,7 +96,7 @@ namespace YesNt.Interpreter.Runtime
 
         public void Write(string output, bool forceWrite = false)
         {
-            if (Stop && !forceWrite || parentRuntimeInformation?.StopAllTasks == true && !forceWrite)
+            if ((Stop && !forceWrite) || (parentRuntimeInformation?.StopAllTasks == true && !forceWrite))
             {
                 return;
             }
@@ -190,7 +164,7 @@ namespace YesNt.Interpreter.Runtime
             ParentRuntimeInformation = null;
             SearchLabel = string.Empty;
             SearchFunction = string.Empty;
-            CurrentFilePath = string.Empty;
+            WorkingDirectory = string.Empty;
             CurrentLine = string.Empty;
             Stop = false;
             StopAllTasks = false;

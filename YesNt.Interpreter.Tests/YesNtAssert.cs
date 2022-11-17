@@ -28,7 +28,7 @@ internal static class YesNtAssert
 
             if (er is null)
             {
-                onDone.Set();
+                _ = onDone.Set();
             }
         };
 
@@ -51,7 +51,7 @@ internal static class YesNtAssert
         yesNtInterpreter.OnLineExecuted += (er) =>
         {
             debugEventArgs = er ?? debugEventArgs;
-            onDone.Set();
+            _ = onDone.Set();
         };
 
         yesNtInterpreter.Execute(lines, true);

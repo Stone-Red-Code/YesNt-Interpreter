@@ -72,11 +72,11 @@ namespace YesNt.Interpreter.Statements
 
             if (RuntimeInfo.Variables.ContainsKey(key))
             {
-                RuntimeInfo.Variables.Remove(key);
+                _ = RuntimeInfo.Variables.Remove(key);
             }
             else if (RuntimeInfo.GloablVariables.ContainsKey(key))
             {
-                RuntimeInfo.GloablVariables.Remove(key);
+                _ = RuntimeInfo.GloablVariables.Remove(key);
             }
             else
             {

@@ -23,7 +23,7 @@ namespace YesNt.CodeEditor
         {
             if (File.Exists(path))
             {
-                Load(path);
+                _ = Load(path);
             }
         }
 
@@ -131,14 +131,7 @@ namespace YesNt.CodeEditor
 
                 if (CurrentPath.Trim() != path.Trim() && loadIfExists)
                 {
-                    if (Load(path))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return Load(path);
                 }
                 if (string.IsNullOrEmpty(Path.GetExtension(path)))
                 {

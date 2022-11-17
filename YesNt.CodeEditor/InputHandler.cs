@@ -16,7 +16,7 @@ namespace YesNt.CodeEditor
         {
             while (Console.KeyAvailable)
             {
-                Console.ReadKey(true);
+                _ = Console.ReadKey(true);
             }
             if (textEditor.EditMode == Mode.Edit)
             {
@@ -50,14 +50,7 @@ namespace YesNt.CodeEditor
                             return true;
 
                         case ConsoleKey.E:
-                            if (textEditor.Lines.Count > textEditor.CursorPosition.Y)
-                            {
-                                textEditor.CursorPosition.X = textEditor.Lines[textEditor.CursorPosition.Y].TrimEnd().Length;
-                            }
-                            else
-                            {
-                                textEditor.CursorPosition.X = 0;
-                            }
+                            textEditor.CursorPosition.X = textEditor.Lines.Count > textEditor.CursorPosition.Y ? textEditor.Lines[textEditor.CursorPosition.Y].TrimEnd().Length : 0;
                             return true;
                     }
                 }
@@ -128,7 +121,7 @@ namespace YesNt.CodeEditor
                     StringBuilder lineBuilder = new StringBuilder(textEditor.Lines[textEditor.CursorPosition.Y]);
                     while (lineBuilder.Length <= textEditor.CursorPosition.X)
                     {
-                        lineBuilder.Append(' ');
+                        _ = lineBuilder.Append(' ');
                     }
 
                     textEditor.Lines[textEditor.CursorPosition.Y] = lineBuilder.ToString();
@@ -228,7 +221,7 @@ namespace YesNt.CodeEditor
                         break;
 
                     case "save":
-                        textEditor.Save(input, false);
+                        _ = textEditor.Save(input, false);
                         break;
 
                     case "run":
@@ -240,9 +233,9 @@ namespace YesNt.CodeEditor
                             textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath);
                             while (Console.KeyAvailable)
                             {
-                                Console.ReadKey(true);
+                                _ = Console.ReadKey(true);
                             }
-                            Console.ReadKey();
+                            _ = Console.ReadKey();
                             WriteStatus(string.Empty);
                             textEditor.EditMode = Mode.Command;
                         }
@@ -257,9 +250,9 @@ namespace YesNt.CodeEditor
                             textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, true);
                             while (Console.KeyAvailable)
                             {
-                                Console.ReadKey(true);
+                                _ = Console.ReadKey(true);
                             }
-                            Console.ReadKey();
+                            _ = Console.ReadKey();
                             WriteStatus(string.Empty);
                             textEditor.EditMode = Mode.Command;
                         }
@@ -278,7 +271,7 @@ namespace YesNt.CodeEditor
 
                         try
                         {
-                            textEditor.Load(path);
+                            _ = textEditor.Load(path);
                         }
                         catch (Exception ex)
                         {

@@ -42,7 +42,7 @@ namespace YesNt.Interpreter.Utilities
                 DataReceivedEventArgs dataReceivedEventArgs = new DataReceivedEventArgs(data);
                 if (SynchronizingObject != null && SynchronizingObject.InvokeRequired)
                 {
-                    SynchronizingObject.Invoke(outputDataReceived, new object[]
+                    _ = SynchronizingObject.Invoke(outputDataReceived, new object[]
                     {
                         this,
                         dataReceivedEventArgs
@@ -61,7 +61,7 @@ namespace YesNt.Interpreter.Utilities
                 DataReceivedEventArgs dataReceivedEventArgs = new DataReceivedEventArgs(data);
                 if (SynchronizingObject != null && SynchronizingObject.InvokeRequired)
                 {
-                    SynchronizingObject.Invoke(errorDataReceived, new object[]
+                    _ = SynchronizingObject.Invoke(errorDataReceived, new object[]
                     {
                         this,
                         dataReceivedEventArgs
@@ -160,7 +160,7 @@ namespace YesNt.Interpreter.Utilities
             if (sb == null)
             {
                 sb = new StringBuilder(1024);
-                stream.BeginRead(byteBuffer, 0, byteBuffer.Length, new AsyncCallback(ReadBuffer), null);
+                _ = stream.BeginRead(byteBuffer, 0, byteBuffer.Length, new AsyncCallback(ReadBuffer), null);
                 return;
             }
             FlushMessageQueue();
@@ -204,13 +204,13 @@ namespace YesNt.Interpreter.Utilities
                 }
                 finally
                 {
-                    eofEvent.Set();
+                    _ = eofEvent.Set();
                 }
             }
             int chars = decoder.GetChars(byteBuffer, 0, num, charBuffer, 0);
-            sb.Append(charBuffer, 0, chars);
+            _ = sb.Append(charBuffer, 0, chars);
             GetLinesFromStringBuilder();
-            stream.BeginRead(byteBuffer, 0, byteBuffer.Length, new AsyncCallback(ReadBuffer), null);
+            _ = stream.BeginRead(byteBuffer, 0, byteBuffer.Length, new AsyncCallback(ReadBuffer), null);
         }
 
         private void GetLinesFromStringBuilder()
@@ -227,7 +227,7 @@ namespace YesNt.Interpreter.Utilities
             while (i < length)
             {
                 char c = sb[i];
-                if (c == '\r' || c == '\n')
+                if (c is '\r' or '\n')
                 {
                     if (c == '\r' && i + 1 < length && sb[i + 1] == '\n')
                     {
@@ -261,7 +261,7 @@ namespace YesNt.Interpreter.Utilities
             }
             if (num < length)
             {
-                sb.Remove(0, num);
+                _ = sb.Remove(0, num);
             }
             else
             {
@@ -292,7 +292,7 @@ namespace YesNt.Interpreter.Utilities
         {
             if (eofEvent != null)
             {
-                eofEvent.WaitOne();
+                _ = eofEvent.WaitOne();
                 eofEvent.Close();
                 eofEvent = null;
             }
