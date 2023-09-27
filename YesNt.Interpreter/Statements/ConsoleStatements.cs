@@ -28,11 +28,11 @@ internal class ConsoleStatements : StatementRuntimeInformation
         RuntimeInfo.Write(args);
     }
 
-    [Statement("%crl", SearchMode.Contains, SpaceAround.End, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%crl", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void ReadLine(string args)
     {
         args += " ";
-        while (args.Contains("%crl "))
+        while (args.Contains("%crl"))
         {
             string input = Console.ReadLine();
             if (input is null)
@@ -45,11 +45,11 @@ internal class ConsoleStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("%cr", SearchMode.Contains, SpaceAround.End, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%cr", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void ReadKey(string args)
     {
         args += " ";
-        while (args.Contains("%cr "))
+        while (args.Contains("%cr"))
         {
             string input = ConsoleExtentions.ReadKey(RuntimeInfo).ToString();
             args = args.ReplaceFirstOccurrence("%cr ", input.ToSafeString() + " ");

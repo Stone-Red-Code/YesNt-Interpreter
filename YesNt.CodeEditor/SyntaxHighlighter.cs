@@ -17,6 +17,18 @@ internal partial class SyntaxHighlighter
         this.statementInformation = statementInformation;
     }
 
+    public static string Base64Encode(string plainText)
+    {
+        byte[] plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+        return System.Convert.ToBase64String(plainTextBytes);
+    }
+
+    public static string Base64Decode(string base64EncodedData)
+    {
+        byte[] base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+        return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+    }
+
     public void Write(string input)
     {
         input = input.Replace("\0", string.Empty);
@@ -30,7 +42,7 @@ internal partial class SyntaxHighlighter
             MatchCollection matches = EscapeSequenceRegex().Matches(input);
             for (int i = 0; i < matches.Count; i++)
             {
-                input = AddColorInformation(input, matches[i].Value, Console.ForegroundColor, SearchMode.Contains);
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkYellow, SearchMode.Contains);
             }
 
             foreach (StatementInformation statement in statementInformation)
@@ -45,9 +57,9 @@ internal partial class SyntaxHighlighter
                     SpaceAround.StartEnd => $" {statement.Name.Trim()} ",
                     SpaceAround.Start => $" {statement.Name.Trim()}",
                     SpaceAround.End => $"{statement.Name.Trim()} ",
-                    _ => statement.Name
+                    _ => statement.Name.Trim()
                 };
-                input = input.TrimEnd();
+                input = input.TrimEnd(' ');
                 if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
                 {
                     if (statement.Seperator is not null && input.Contains(statement.Seperator))
@@ -60,7 +72,7 @@ internal partial class SyntaxHighlighter
                     }
                     input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
                 }
-                if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
+                else if (statement.SearchMode == SearchMode.Contains && input.Contains(name))
                 {
                     if (statement.Seperator is not null && input.Contains(statement.Seperator))
                     {
@@ -70,9 +82,9 @@ internal partial class SyntaxHighlighter
                     {
                         continue;
                     }
-                    input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), statement.Color, statement.SearchMode);
+                    input = AddColorInformation(input, input.Substring(input.IndexOf(name), name.Length), statement.Color, statement.SearchMode);
                 }
-                if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
+                else if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
                 {
                     if (statement.Seperator is not null && input.Contains(statement.Seperator))
                     {
@@ -84,7 +96,7 @@ internal partial class SyntaxHighlighter
                     }
                     input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
                 }
-                if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
+                else if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
                 {
                     if (statement.Seperator is not null && input.Contains(statement.Seperator))
                     {
@@ -126,7 +138,7 @@ internal partial class SyntaxHighlighter
             bool succ = int.TryParse(stringColor, out int colorIndex);
             if (succ && colorIndex >= 0 && colorIndex < 16)
             {
-                messagePart = messagePart.Replace($"\r{stringColor}\r", string.Empty);
+                messagePart = Base64Decode(messagePart.Replace($"\r{stringColor}\r", string.Empty));
                 consoleColor = (ConsoleColor)colorIndex;
             }
             else
@@ -147,11 +159,14 @@ internal partial class SyntaxHighlighter
     private static string AddColorInformation(string originalString, string value, ConsoleColor color, SearchMode searchMode)
     {
         int spacesAtEnd = value.WhiteSpaceAtEnd();
+
+        string base64Value = Base64Encode(value.TrimEnd());
+
         string reult = searchMode switch
         {
-            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd)),
-            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd)),
-            _ => originalString.Replace(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd))
+            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
+            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
+            _ => originalString.Replace(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd))
         };
         return reult;
     }

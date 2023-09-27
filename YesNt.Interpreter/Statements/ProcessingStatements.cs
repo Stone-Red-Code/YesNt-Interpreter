@@ -81,6 +81,15 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         ConsoleExtentions.Sleep(millisecondsTimeout, RuntimeInfo);
     }
 
+    [Statement("len", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
+    public void Length(string args)
+    {
+        RuntimeInfo.InParametersStack.Clear();
+        RuntimeInfo.OutParametersStack.Clear();
+
+        RuntimeInfo.OutParametersStack.Push(args.FromSafeString().Length.ToString());
+    }
+
     [Statement("imp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Import(string path)
     {

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -90,27 +89,20 @@ internal partial class VariableStatements : StatementRuntimeInformation
             return;
         }
 
-        foreach (KeyValuePair<string, string> variable in RuntimeInfo.Variables)
-        {
-            RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
-        }
-
-        foreach (KeyValuePair<string, string> variable in RuntimeInfo.GloablVariables)
-        {
-            RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
-        }
-
-        if (RuntimeInfo.IsSearching)
-        {
-            return;
-        }
-
         MatchCollection matches = VariableStatementRegex().Matches(RuntimeInfo.CurrentLine);
 
         for (int i = 0; i < matches.Count; i++)
         {
             string varName = matches[i].Value.Replace(">", string.Empty);
-            if (!RuntimeInfo.Variables.ContainsKey(varName) && !RuntimeInfo.GloablVariables.ContainsKey(varName))
+            if (RuntimeInfo.Variables.TryGetValue(varName, out string value))
+            {
+                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
+            }
+            else if (RuntimeInfo.GloablVariables.TryGetValue(varName, out value))
+            {
+                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
+            }
+            else if (!RuntimeInfo.IsSearching)
             {
                 RuntimeInfo.Exit($"Variable \"{varName}\" not found", true);
                 return;

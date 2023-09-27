@@ -13,6 +13,10 @@ namespace YesNt.Interpreter.Runtime;
 
 public class YesNtInterpreter
 {
+    public event Action<DebugEventArgs> OnLineExecuted;
+
+    public event Action<string> OnDebugOutput;
+
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
     private Dictionary<StatementAttribute, Action<string>> statements = new();
     private List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements = new();
@@ -37,10 +41,6 @@ public class YesNtInterpreter
             return new ReadOnlyCollection<StatementInformation>(informations);
         }
     }
-
-    public event Action<DebugEventArgs> OnLineExecuted;
-
-    public event Action<string> OnDebugOutput;
 
     public void Stop()
     {
@@ -83,8 +83,13 @@ public class YesNtInterpreter
             }
         }
 
-        statements = statements.OrderBy(s => s.Key.Priority).ToDictionary(x => x.Key, x => x.Value);
-        staticStatements = staticStatements.OrderBy(s => s.Key.Priority).ToList();
+        statements = statements
+            .OrderBy(s => s.Key.Priority)
+            .ThenByDescending(s => s.Key.Name.Length)
+            .ToDictionary(x => x.Key, x => x.Value);
+        staticStatements = staticStatements
+            .OrderBy(s => s.Key.Priority)
+            .ToList();
 
         runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
         runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted?.Invoke(e);
@@ -138,7 +143,7 @@ public class YesNtInterpreter
                 break;
             }
 
-            runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].Content.TrimEnd().Replace("\r", string.Empty);
+            runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].Content.Trim(' ').Replace("\r", string.Empty);
 
             if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
             {
@@ -187,7 +192,7 @@ public class YesNtInterpreter
                     SpaceAround.StartEnd => $" {statementAttribute.Name.Trim()} ",
                     SpaceAround.Start => $" {statementAttribute.Name.Trim()}",
                     SpaceAround.End => $"{statementAttribute.Name.Trim()} ",
-                    _ => statementAttribute.Name
+                    _ => statementAttribute.Name.Trim()
                 };
 
                 if (statementAttribute.Seperator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Seperator))
@@ -198,16 +203,11 @@ public class YesNtInterpreter
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
                     }
-                    else if (statementAttribute.SearchMode == SearchMode.Contains && $" {runtimeInfo.CurrentLine} ".Contains(name))
+                    else if (statementAttribute.SearchMode == SearchMode.Contains && runtimeInfo.CurrentLine.Contains(name))
                     {
-                        bool leadingWhitespace = runtimeInfo.CurrentLine.StartsWith(' ');
-
-                        runtimeInfo.CurrentLine = $" {runtimeInfo.CurrentLine} ";
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
-
-                        runtimeInfo.CurrentLine = !leadingWhitespace ? runtimeInfo.CurrentLine.Trim() : runtimeInfo.CurrentLine.TrimEnd();
                     }
                     else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
                     {

@@ -13,12 +13,16 @@ public static class StringExtentions
         {
             _ = output.Append($"\v{c}\v");
         }
-        return output.ToString();
+        return output
+            .ToString()
+            .Replace(' ', '~');
     }
 
     public static string FromSafeString(this string input)
     {
-        return input.Replace("\v", "");
+        return input
+            .Replace("\v", "")
+            .Replace('~', ' ');
     }
 
     public static bool ToStandardizedNumber(this string input, out double result)
