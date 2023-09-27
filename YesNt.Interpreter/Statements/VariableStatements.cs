@@ -91,6 +91,11 @@ internal partial class VariableStatements : StatementRuntimeInformation
 
         MatchCollection matches = VariableStatementRegex().Matches(RuntimeInfo.CurrentLine);
 
+        if (matches.Count <= 0)
+        {
+            RuntimeInfo.Exit("Invalid syntax", true);
+        }
+
         for (int i = 0; i < matches.Count; i++)
         {
             string varName = matches[i].Value.Replace(">", string.Empty);

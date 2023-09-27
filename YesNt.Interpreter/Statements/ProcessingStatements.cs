@@ -38,23 +38,6 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = args.FromSafeString();
     }
 
-    [Statement("!!", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkYellow, Priority = Priority.PreProcessing, KeepStatementInArgs = true)]
-    public void DontEvaluate(string args)
-    {
-        int index;
-        while ((index = args.IndexOf("!!")) != -1)
-        {
-            args = args.Remove(index, 2);
-            if (index < args.Length)
-            {
-                char charToEscape = args[index];
-                args = args.Remove(index, 1);
-                args = args.Insert(index, charToEscape.ToString().ToSafeString());
-            }
-        }
-        RuntimeInfo.CurrentLine = args;
-    }
-
     [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
     public void RunTask(string line)
     {
@@ -77,8 +60,14 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("slp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Sleep(string args)
     {
-        _ = int.TryParse(args, out int millisecondsTimeout);
-        ConsoleExtentions.Sleep(millisecondsTimeout, RuntimeInfo);
+        if (int.TryParse(args, out int millisecondsTimeout))
+        {
+            ConsoleExtentions.Sleep(millisecondsTimeout, RuntimeInfo);
+        }
+        else
+        {
+            RuntimeInfo.Exit($"\"{args}\" is not a valid time-out value", true);
+        }
     }
 
     [Statement("len", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]

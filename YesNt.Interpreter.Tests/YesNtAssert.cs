@@ -60,4 +60,26 @@ internal static class YesNtAssert
 
         Assert.AreEqual(expected, debugEventArgs.CurrentLine);
     }
+
+    public static void IsLineNotEqual(string line, string expected, int timeout = 1000)
+    {
+        AutoResetEvent onDone = new AutoResetEvent(false);
+        List<string> lines = new List<string>()
+        {
+           line
+        };
+
+        DebugEventArgs debugEventArgs = new DebugEventArgs();
+        yesNtInterpreter.OnLineExecuted += (er) =>
+        {
+            debugEventArgs = er ?? debugEventArgs;
+            _ = onDone.Set();
+        };
+
+        yesNtInterpreter.Execute(lines, true);
+
+        _ = onDone.WaitOne(TimeSpan.FromMilliseconds(timeout));
+
+        Assert.AreNotEqual(expected, debugEventArgs.CurrentLine);
+    }
 }

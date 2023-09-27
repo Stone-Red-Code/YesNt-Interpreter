@@ -38,7 +38,6 @@ public class CodeFlowTests
     [TestMethod]
     public void CalculationsTest()
     {
-        Assert.Inconclusive();
-        YesNtAssert.IsLineEqual("10 * 10 !calc", 20.ToString());
+        YesNtAssert.IsLineEqual("10 * 10 !calc", 100.ToString());
     }
 }

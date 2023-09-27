@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Enums;
@@ -11,10 +12,12 @@ namespace YesNt.CodeEditor;
 internal partial class SyntaxHighlighter
 {
     private readonly ReadOnlyCollection<StatementInformation> statementInformation;
+    private readonly string[] replacementValues;
 
     public SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
     {
         this.statementInformation = statementInformation;
+        replacementValues = StringExtentions.ReplacementRules.Values.ToArray();
     }
 
     public static string Base64Encode(string plainText)
@@ -39,10 +42,9 @@ internal partial class SyntaxHighlighter
         }
         else
         {
-            MatchCollection matches = EscapeSequenceRegex().Matches(input);
-            for (int i = 0; i < matches.Count; i++)
+            for (int i = 0; i < replacementValues.Length; i++)
             {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkYellow, SearchMode.Contains);
+                input = AddColorInformation(input, replacementValues[i], ConsoleColor.Blue, SearchMode.Contains);
             }
 
             foreach (StatementInformation statement in statementInformation)
@@ -110,7 +112,7 @@ internal partial class SyntaxHighlighter
                 }
             }
 
-            matches = VariableRegex().Matches(input);
+            MatchCollection matches = VariableRegex().Matches(input);
             for (int i = 0; i < matches.Count; i++)
             {
                 input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
@@ -170,9 +172,6 @@ internal partial class SyntaxHighlighter
         };
         return reult;
     }
-
-    [GeneratedRegex("!!.")]
-    private static partial Regex EscapeSequenceRegex();
 
     [GeneratedRegex("^<[a-zA-Z0-9]+")]
     private static partial Regex VariableDeclarationRegex();
