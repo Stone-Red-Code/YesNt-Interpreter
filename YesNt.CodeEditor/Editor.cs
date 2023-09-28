@@ -38,7 +38,7 @@ internal class TextEditor
         inputHandler = new InputHandler(this);
         Console.CancelKeyPress += Console_CancelKeyPress;
 
-        Timer timer = new Timer(500);
+        Timer timer = new Timer(100);
         timer.Elapsed += (s, e) =>
         {
             if (SizeChanged() && EditMode != Mode.Debug)
@@ -115,7 +115,7 @@ internal class TextEditor
         Console.SetCursorPosition(0, Console.WindowHeight - 2);
         Console.Write(">>>" + new string(' ', Console.WindowWidth - 3));
 
-        Console.SetCursorPosition(Math.Min(CursorPosition.X + GetSpacing() + 2, Console.WindowWidth - 1), CursorPosition.Y - LineOffset);
+        Console.SetCursorPosition(Math.Min(CursorPosition.X + GetSpacing() + 2, Console.WindowWidth - 1), Math.Min(CursorPosition.Y - LineOffset, Console.WindowHeight - 4));
 
         Console.CursorVisible = true;
     }
