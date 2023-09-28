@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Timers;
 
 using YesNt.Interpreter.Runtime;
 
@@ -36,6 +37,22 @@ internal class TextEditor
         syntaxHighlighter = new(YesNtInterpreter.StatementInformation);
         inputHandler = new InputHandler(this);
         Console.CancelKeyPress += Console_CancelKeyPress;
+
+        Timer timer = new Timer(500);
+        timer.Elapsed += (s, e) =>
+        {
+            if (SizeChanged() && EditMode != Mode.Debug)
+            {
+                Display(true);
+
+                if (EditMode == Mode.Command)
+                {
+                    InputHandler.WriteStatus(string.Empty);
+                    Console.SetCursorPosition(3, Console.WindowHeight - 2);
+                }
+            }
+        };
+        timer.Start();
     }
 
     public void Run()
