@@ -153,6 +153,8 @@ internal sealed class RuntimeInformation
         Labels.Clear();
         Functions.Clear();
         FunctionCallStack.Clear();
+        InParametersStack.Clear();
+        OutParametersStack.Clear();
         ParentRuntimeInformation = null;
         SearchLabel = string.Empty;
         SearchFunction = string.Empty;
