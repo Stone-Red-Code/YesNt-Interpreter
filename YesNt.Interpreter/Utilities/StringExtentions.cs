@@ -20,7 +20,14 @@ public static class StringExtensions
         {">", "~grt" },
         {",", "~com" },
         {"!", "~exm" },
-        {"|", "~pip" }
+        {"|", "~pip" },
+        {"\n","~nli" },
+        {"\r","~ret" },
+        {"\t","~tab" },
+        {"\b","~bac" },
+        {"\f","~for" },
+        {"\a","~ale" },
+        {"",  "~emp" },
     };
 
     [SuppressMessage("Minor Code Smell", "S3963:\"static\" fields should be initialized inline", Justification = "Doesn't work because it throws a TypeInitializationException")]
@@ -42,26 +49,7 @@ public static class StringExtensions
 
     public static string FromSafeString(this string input)
     {
-        return ReplaceOnce(input.Replace("\v", ""), reverseReplacementRules);
-    }
-
-    public static string ReplaceOnce(string input, Dictionary<string, string> replacementRules)
-    {
-        IEnumerable<KeyValuePair<string, string>> matches = replacementRules.Where(rule => input.Contains(rule.Key));
-        if (!matches.Any())
-        {
-            return input;
-        }
-
-        KeyValuePair<string, string> match = matches.First();
-        int startIndex = input.IndexOf(match.Key);
-        int endIndex = startIndex + match.Key.Length;
-
-        string before = ReplaceOnce(input[..startIndex], replacementRules);
-        string replaced = match.Value;
-        string after = ReplaceOnce(input[endIndex..], replacementRules);
-
-        return before + replaced + after;
+        return ReplaceOnce(input.Replace("\v", string.Empty), reverseReplacementRules);
     }
 
     public static bool ToStandardizedNumber(this string input, out double result)
@@ -91,5 +79,25 @@ public static class StringExtensions
         }
 
         return count;
+    }
+
+    private static string ReplaceOnce(string input, Dictionary<string, string> replacementRules)
+    {
+        // ~emp/string.Empty is a special case, it is used to represent empty strings and won't work with the normal rules because an empty string always matches and causes an infinite loop 3 letter abbreviation
+        IEnumerable<KeyValuePair<string, string>> matches = replacementRules.Where(rule => rule.Key != string.Empty && input.Contains(rule.Key));
+        if (!matches.Any())
+        {
+            return input;
+        }
+
+        KeyValuePair<string, string> match = matches.First();
+        int startIndex = input.IndexOf(match.Key);
+        int endIndex = startIndex + match.Key.Length;
+
+        string before = ReplaceOnce(input[..startIndex], replacementRules);
+        string replaced = match.Value;
+        string after = ReplaceOnce(input[endIndex..], replacementRules);
+
+        return before + replaced + after;
     }
 }
