@@ -18,14 +18,14 @@ public class YesNtInterpreter
     public event Action<string> OnDebugOutput;
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
-    private Dictionary<StatementAttribute, Action<string>> statements = new();
-    private List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements = new();
+    private Dictionary<StatementAttribute, Action<string>> statements = [];
+    private List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements = [];
 
     public ReadOnlyCollection<StatementInformation> StatementInformation
     {
         get
         {
-            List<StatementInformation> informations = statements.Select(s =>
+            List<StatementInformation> information = statements.Select(s =>
             {
                 return new StatementInformation()
                 {
@@ -34,11 +34,11 @@ public class YesNtInterpreter
                     SpaceAround = s.Key.SpaceAround,
                     Color = s.Key.Color,
                     IgnoreSyntaxHighlighting = s.Key.IgnoreSyntaxHighlighting,
-                    Seperator = s.Key.Seperator
+                    Separator = s.Key.Separator
                 };
             }).ToList();
 
-            return new ReadOnlyCollection<StatementInformation>(informations);
+            return new ReadOnlyCollection<StatementInformation>(information);
         }
     }
 
@@ -118,14 +118,14 @@ public class YesNtInterpreter
         Execute();
     }
 
-    internal void Execute(List<Line> lines, Dictionary<string, string> gloablVariables, int startLine, RuntimeInformation parentRuntimeInformation)
+    internal void Execute(List<Line> lines, Dictionary<string, string> globalVariables, int startLine, RuntimeInformation parentRuntimeInformation)
     {
         runtimeInfo.Reset();
         runtimeInfo.IsDebugMode = parentRuntimeInformation.IsDebugMode;
         runtimeInfo.Lines = lines;
         runtimeInfo.LineNumber = startLine;
         runtimeInfo.ParentRuntimeInformation = parentRuntimeInformation;
-        runtimeInfo.GloablVariables = gloablVariables;
+        runtimeInfo.GlobalVariables = globalVariables;
         if (parentRuntimeInformation.StopAllTasks)
         {
             runtimeInfo.Exit($"Parent task was terminated!", parentRuntimeInformation.StopAllTasks);
@@ -195,7 +195,7 @@ public class YesNtInterpreter
                     _ => statementAttribute.Name.Trim()
                 };
 
-                if (statementAttribute.Seperator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Seperator))
+                if (statementAttribute.Separator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Separator))
                 {
                     if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name))
                     {

@@ -11,12 +11,12 @@ internal class TextEditor
 {
     private readonly InputHandler inputHandler;
     private readonly SyntaxHighlighter syntaxHighlighter;
-    private readonly List<string> debugOutput = new();
+    private readonly List<string> debugOutput = [];
 
     private readonly Point oldSize = new Point(0, 0);
     public YesNtInterpreter YesNtInterpreter { get; } = new();
     public int LineOffset { get; set; } = 0;
-    public List<string> Lines { get; } = new();
+    public List<string> Lines { get; } = [];
     public Point CursorPosition { get; } = new(0, 0);
     public Mode EditMode { get; set; } = Mode.Command;
     public string CurrentPath { get; set; } = string.Empty;
@@ -263,16 +263,10 @@ internal class TextEditor
     }
 }
 
-internal class Point
+internal class Point(int x, int y)
 {
-    public int X { get; set; }
-    public int Y { get; set; }
-
-    public Point(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
+    public int X { get; set; } = x;
+    public int Y { get; set; } = y;
 }
 
 internal enum Mode

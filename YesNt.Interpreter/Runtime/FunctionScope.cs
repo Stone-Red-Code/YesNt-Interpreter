@@ -2,17 +2,11 @@
 
 namespace YesNt.Interpreter.Runtime;
 
-internal class FunctionScope
+internal class FunctionScope(int callerLine, Stack<string> arguments)
 {
-    public int CallerLine { get; }
-    public Dictionary<string, string> Variables { get; } = new();
-    public Dictionary<string, int> Labels { get; } = new();
-    public Stack<string> Arguemtns { get; }
+    public int CallerLine { get; } = callerLine;
+    public Dictionary<string, string> Variables { get; } = [];
+    public Dictionary<string, int> Labels { get; } = [];
+    public Stack<string> Arguments { get; } = arguments;
     public Stack<string> Results { get; } = new();
-
-    public FunctionScope(int callerLine, Stack<string> arguemtns)
-    {
-        CallerLine = callerLine;
-        Arguemtns = arguemtns;
-    }
 }

@@ -9,16 +9,10 @@ using YesNt.Interpreter.Utilities;
 
 namespace YesNt.CodeEditor;
 
-internal partial class SyntaxHighlighter
+internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
 {
-    private readonly ReadOnlyCollection<StatementInformation> statementInformation;
-    private readonly string[] replacementValues;
-
-    public SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
-    {
-        this.statementInformation = statementInformation;
-        replacementValues = StringExtentions.ReplacementRules.Values.ToArray();
-    }
+    private readonly ReadOnlyCollection<StatementInformation> statementInformation = statementInformation;
+    private readonly string[] replacementValues = StringExtensions.ReplacementRules.Values.ToArray();
 
     public static string Base64Encode(string plainText)
     {
@@ -64,11 +58,11 @@ internal partial class SyntaxHighlighter
                 input = input.TrimEnd(' ');
                 if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
                 {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
                     {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
                     }
-                    else if (statement.Seperator is not null)
+                    else if (statement.Separator is not null)
                     {
                         continue;
                     }
@@ -76,11 +70,11 @@ internal partial class SyntaxHighlighter
                 }
                 else if (statement.SearchMode == SearchMode.Contains && input.Contains(name))
                 {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
                     {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
                     }
-                    else if (statement.Seperator is not null)
+                    else if (statement.Separator is not null)
                     {
                         continue;
                     }
@@ -88,11 +82,11 @@ internal partial class SyntaxHighlighter
                 }
                 else if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
                 {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
                     {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
                     }
-                    else if (statement.Seperator is not null)
+                    else if (statement.Separator is not null)
                     {
                         continue;
                     }
@@ -100,11 +94,11 @@ internal partial class SyntaxHighlighter
                 }
                 else if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
                 {
-                    if (statement.Seperator is not null && input.Contains(statement.Seperator))
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
                     {
-                        input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
                     }
-                    else if (statement.Seperator is not null)
+                    else if (statement.Separator is not null)
                     {
                         continue;
                     }
@@ -164,13 +158,13 @@ internal partial class SyntaxHighlighter
 
         string base64Value = Base64Encode(value.TrimEnd());
 
-        string reult = searchMode switch
+        string result = searchMode switch
         {
             SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
             SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
             _ => originalString.Replace(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd))
         };
-        return reult;
+        return result;
     }
 
     [GeneratedRegex("^<[a-zA-Z0-9]+")]

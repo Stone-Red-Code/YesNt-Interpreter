@@ -1,7 +1,6 @@
-﻿namespace YesNt.Interpreter.Runtime
+﻿namespace YesNt.Interpreter.Runtime;
+
+internal abstract class StatementRuntimeInformation
 {
-    internal abstract class StatementRuntimeInformation
-    {
-        public RuntimeInformation RuntimeInfo { get; set; }
-    }
+    public RuntimeInformation RuntimeInfo { get; set; }
 }

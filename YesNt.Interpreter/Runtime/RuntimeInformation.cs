@@ -14,16 +14,16 @@ internal sealed class RuntimeInformation
     private event Action<string, bool> OnExit;
 
     private static int internalTaskId = 0;
-    private readonly Dictionary<string, string> topVariables = new();
-    private readonly Dictionary<string, int> topLabels = new();
+    private readonly Dictionary<string, string> topVariables = [];
+    private readonly Dictionary<string, int> topLabels = [];
     private RuntimeInformation parentRuntimeInformation;
     private int taskId = 0;
-    public Dictionary<string, string> GloablVariables { get; set; } = new();
-    public Dictionary<string, int> Functions { get; } = new();
+    public Dictionary<string, string> GlobalVariables { get; set; } = [];
+    public Dictionary<string, int> Functions { get; } = [];
     public Stack<FunctionScope> FunctionCallStack { get; } = new();
     public Stack<string> InParametersStack { get; } = new();
     public Stack<string> OutParametersStack { get; set; } = new();
-    public List<Line> Lines { get; set; } = new();
+    public List<Line> Lines { get; set; } = [];
     public string CurrentLine { get; set; } = string.Empty;
     public string SearchLabel { get; set; } = string.Empty;
     public string SearchFunction { get; set; } = string.Empty;
@@ -149,7 +149,7 @@ internal sealed class RuntimeInformation
     {
         topVariables.Clear();
         Lines.Clear();
-        GloablVariables.Clear();
+        GlobalVariables.Clear();
         Labels.Clear();
         Functions.Clear();
         FunctionCallStack.Clear();

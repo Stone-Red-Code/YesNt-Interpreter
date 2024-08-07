@@ -47,13 +47,13 @@ internal partial class VariableStatements : StatementRuntimeInformation
                 RuntimeInfo.Exit("Invalid Syntax", true);
             }
 
-            if (RuntimeInfo.GloablVariables.ContainsKey(key))
+            if (RuntimeInfo.GlobalVariables.ContainsKey(key))
             {
-                RuntimeInfo.GloablVariables[key] = parts[1].Trim();
+                RuntimeInfo.GlobalVariables[key] = parts[1].Trim();
             }
             else
             {
-                RuntimeInfo.GloablVariables.Add(key, parts[1].Trim());
+                RuntimeInfo.GlobalVariables.Add(key, parts[1].Trim());
             }
         }
         else
@@ -71,9 +71,9 @@ internal partial class VariableStatements : StatementRuntimeInformation
         {
             _ = RuntimeInfo.Variables.Remove(key);
         }
-        else if (RuntimeInfo.GloablVariables.ContainsKey(key))
+        else if (RuntimeInfo.GlobalVariables.ContainsKey(key))
         {
-            _ = RuntimeInfo.GloablVariables.Remove(key);
+            _ = RuntimeInfo.GlobalVariables.Remove(key);
         }
         else
         {
@@ -103,7 +103,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
             {
                 RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
             }
-            else if (RuntimeInfo.GloablVariables.TryGetValue(varName, out value))
+            else if (RuntimeInfo.GlobalVariables.TryGetValue(varName, out value))
             {
                 RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
             }

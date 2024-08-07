@@ -10,28 +10,28 @@ public class CodeFlowTests
     [TestMethod]
     public void FunctionTest()
     {
-        List<string> lines = new List<string>()
-        {
+        List<string> lines =
+        [
             "cal yes",
             "fnc yes",
             "!<result = 1",
             "ret",
             ">result"
-        };
+        ];
         YesNtAssert.IsLastLineEqual(lines, "1");
     }
 
     [TestMethod]
     public void LabelsTest()
     {
-        List<string> lines = new List<string>()
-        {
+        List<string> lines =
+        [
             "<result = 1",
             "jmp yes",
             "<result = 0",
             "lbl yes",
             ">result"
-        };
+        ];
         YesNtAssert.IsLastLineEqual(lines, "1");
     }
 

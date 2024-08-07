@@ -42,10 +42,10 @@ internal static class YesNtAssert
     public static void IsLineEqual(string line, string expected, int timeout = 1000)
     {
         AutoResetEvent onDone = new AutoResetEvent(false);
-        List<string> lines = new List<string>()
-        {
+        List<string> lines =
+        [
            line
-        };
+        ];
 
         DebugEventArgs debugEventArgs = new DebugEventArgs();
         yesNtInterpreter.OnLineExecuted += (er) =>
@@ -64,10 +64,10 @@ internal static class YesNtAssert
     public static void IsLineNotEqual(string line, string expected, int timeout = 1000)
     {
         AutoResetEvent onDone = new AutoResetEvent(false);
-        List<string> lines = new List<string>()
-        {
+        List<string> lines =
+        [
            line
-        };
+        ];
 
         DebugEventArgs debugEventArgs = new DebugEventArgs();
         yesNtInterpreter.OnLineExecuted += (er) =>

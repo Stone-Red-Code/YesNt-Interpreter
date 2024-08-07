@@ -7,7 +7,7 @@ using System.Text;
 
 namespace YesNt.Interpreter.Utilities;
 
-public static class StringExtentions
+public static class StringExtensions
 {
     private static readonly Dictionary<string, string> reverseReplacementRules;
 
@@ -24,7 +24,7 @@ public static class StringExtentions
     };
 
     [SuppressMessage("Minor Code Smell", "S3963:\"static\" fields should be initialized inline", Justification = "Doesn't work because it throws a TypeInitializationException")]
-    static StringExtentions()
+    static StringExtensions()
     {
         reverseReplacementRules = ReplacementRules.ToDictionary(x => x.Value, x => x.Key);
     }

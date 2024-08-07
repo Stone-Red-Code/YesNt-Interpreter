@@ -1,10 +1,9 @@
-﻿namespace YesNt.Interpreter.Enums
+﻿namespace YesNt.Interpreter.Enums;
+
+public enum SearchMode
 {
-    public enum SearchMode
-    {
-        StartOfLine,
-        EndOfLine,
-        Contains,
-        Exact
-    }
+    StartOfLine,
+    EndOfLine,
+    Contains,
+    Exact
 }

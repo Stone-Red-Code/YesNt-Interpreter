@@ -1,13 +1,12 @@
-﻿namespace YesNt.Interpreter.Enums
+﻿namespace YesNt.Interpreter.Enums;
+
+internal enum Priority
 {
-    internal enum Priority
-    {
-        PreProcessing,
-        Highest,
-        VeryHigh,
-        High,
-        Normal,
-        Low,
-        VeryLow
-    }
+    PreProcessing,
+    Highest,
+    VeryHigh,
+    High,
+    Normal,
+    Low,
+    VeryLow
 }

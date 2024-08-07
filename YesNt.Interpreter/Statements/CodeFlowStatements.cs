@@ -7,192 +7,191 @@ using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
-namespace YesNt.Interpreter.Statements
+namespace YesNt.Interpreter.Statements;
+
+internal class CodeFlowStatements : StatementRuntimeInformation
 {
-    internal class CodeFlowStatements : StatementRuntimeInformation
+    [Statement("jmp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow)]
+    public void Jump(string args)
     {
-        [Statement("jmp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow)]
-        public void Jump(string args)
-        {
-            string key = args.Trim();
+        string key = args.Trim();
 
-            if (RuntimeInfo.Labels.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Labels[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchLabel = key;
-                RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
-            }
+        if (RuntimeInfo.Labels.TryGetValue(key, out int value))
+        {
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchLabel = key;
+            RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
+        }
+    }
+
+    [Statement("jif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = "|")]
+    public void JumpIf(string args)
+    {
+        string[] parts = args.Split('|');
+        if (parts.Length != 2)
+        {
+            RuntimeInfo.Exit("Invalid syntax", true);
+            return;
         }
 
-        [Statement("jif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Seperator = "|")]
-        public void JumpIf(string args)
+        string key = parts[0].Trim();
+        string condition = parts[1].Trim();
+
+        bool? result = Evaluator.EvaluateCondition(condition);
+
+        if (result is null)
         {
-            string[] parts = args.Split('|');
-            if (parts.Length != 2)
-            {
-                RuntimeInfo.Exit("Invalid syntax", true);
-                return;
-            }
-
-            string key = parts[0].Trim();
-            string condition = parts[1].Trim();
-
-            bool? result = Evaluator.EvaluateCondition(condition);
-
-            if (result is null)
-            {
-                RuntimeInfo.Exit("Invalid operation", true);
-                return;
-            }
-
-            if (result == false)
-            {
-                return;
-            }
-
-            if (RuntimeInfo.Labels.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Labels[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchLabel = key;
-                RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
-            }
+            RuntimeInfo.Exit("Invalid operation", true);
+            return;
         }
 
-        [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
-        public void FindLabel(string args)
+        if (result == false)
         {
-            string key = args.Trim();
-            if (RuntimeInfo.Labels.ContainsKey(key))
-            {
-                RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
-            }
-            else
-            {
-                RuntimeInfo.Labels.Add(key, RuntimeInfo.LineNumber);
-            }
-
-            if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
-            {
-                RuntimeInfo.SearchLabel = string.Empty;
-                RuntimeInfo.IsLocalSearch = false;
-            }
+            return;
         }
 
-        [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
-        public void Call(string args)
+        if (RuntimeInfo.Labels.TryGetValue(key, out int value))
         {
-            string key = args.Trim();
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchLabel = key;
+            RuntimeInfo.IsLocalSearch = RuntimeInfo.IsInFunction;
+        }
+    }
 
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
-            RuntimeInfo.InParametersStack.Clear();
-
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchFunction = key;
-            }
+    [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
+    public void FindLabel(string args)
+    {
+        string key = args.Trim();
+        if (RuntimeInfo.Labels.ContainsKey(key))
+        {
+            RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
+        }
+        else
+        {
+            RuntimeInfo.Labels.Add(key, RuntimeInfo.LineNumber);
         }
 
-        [Statement("cif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Seperator = "|")]
-        public void CallIf(string args)
+        if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
         {
-            string[] parts = args.Split('|');
-            if (parts.Length != 2)
-            {
-                RuntimeInfo.Exit("Invalid syntax", true);
-                return;
-            }
+            RuntimeInfo.SearchLabel = string.Empty;
+            RuntimeInfo.IsLocalSearch = false;
+        }
+    }
 
-            string key = parts[0].Trim();
-            string condition = parts[1].Trim();
+    [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
+    public void Call(string args)
+    {
+        string key = args.Trim();
 
-            bool? result = Evaluator.EvaluateCondition(condition);
+        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+        RuntimeInfo.InParametersStack.Clear();
 
-            if (result is null)
-            {
-                RuntimeInfo.Exit("Invalid operation", true);
-                return;
-            }
+        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
+        {
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchFunction = key;
+        }
+    }
 
-            if (result == false)
-            {
-                return;
-            }
-
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
-            RuntimeInfo.InParametersStack.Clear();
-
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchFunction = key;
-            }
+    [Statement("cif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Separator = "|")]
+    public void CallIf(string args)
+    {
+        string[] parts = args.Split('|');
+        if (parts.Length != 2)
+        {
+            RuntimeInfo.Exit("Invalid syntax", true);
+            return;
         }
 
-        [Statement("end", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
-        public void End(string _)
+        string key = parts[0].Trim();
+        string condition = parts[1].Trim();
+
+        bool? result = Evaluator.EvaluateCondition(condition);
+
+        if (result is null)
         {
-            if (RuntimeInfo.IsSearching)
-            {
-                RuntimeInfo.IsInFunction = false;
-                if (RuntimeInfo.IsLocalSearch)
-                {
-                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
-                }
-
-                return;
-            }
-            else
-            {
-                RuntimeInfo.IsInFunction = false;
-            }
-
-            RuntimeInfo.Exit("Planned termination by code", false);
+            RuntimeInfo.Exit("Invalid operation", true);
+            return;
         }
 
-        [Statement("trm", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
-        public void Terminate(string _)
+        if (result == false)
         {
-            if (RuntimeInfo.IsSearching)
+            return;
+        }
+
+        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
+        RuntimeInfo.InParametersStack.Clear();
+
+        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
+        {
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchFunction = key;
+        }
+    }
+
+    [Statement("end", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
+    public void End(string _)
+    {
+        if (RuntimeInfo.IsSearching)
+        {
+            RuntimeInfo.IsInFunction = false;
+            if (RuntimeInfo.IsLocalSearch)
             {
-                RuntimeInfo.IsInFunction = false;
-                if (RuntimeInfo.IsLocalSearch)
-                {
-                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
-                }
-
-                return;
+                RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
             }
-            else
+
+            return;
+        }
+        else
+        {
+            RuntimeInfo.IsInFunction = false;
+        }
+
+        RuntimeInfo.Exit("Planned termination by code", false);
+    }
+
+    [Statement("trm", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
+    public void Terminate(string _)
+    {
+        if (RuntimeInfo.IsSearching)
+        {
+            RuntimeInfo.IsInFunction = false;
+            if (RuntimeInfo.IsLocalSearch)
             {
-                RuntimeInfo.IsInFunction = false;
+                RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
             }
 
-            RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);
+            return;
+        }
+        else
+        {
+            RuntimeInfo.IsInFunction = false;
         }
 
-        [Statement("trw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
-        public void Throw(string message)
-        {
-            RuntimeInfo.Exit(message, true);
-        }
+        RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);
+    }
 
-        [Statement("err", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
-        public void Error(string message)
-        {
-            RuntimeInfo.Exit(message, false);
-        }
+    [Statement("trw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+    public void Throw(string message)
+    {
+        RuntimeInfo.Exit(message, true);
+    }
+
+    [Statement("err", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+    public void Error(string message)
+    {
+        RuntimeInfo.Exit(message, false);
     }
 }

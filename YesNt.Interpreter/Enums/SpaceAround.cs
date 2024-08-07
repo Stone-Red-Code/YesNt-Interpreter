@@ -1,10 +1,9 @@
-﻿namespace YesNt.Interpreter.Enums
+﻿namespace YesNt.Interpreter.Enums;
+
+public enum SpaceAround
 {
-    public enum SpaceAround
-    {
-        StartEnd,
-        Start,
-        End,
-        None
-    }
+    StartEnd,
+    Start,
+    End,
+    None
 }

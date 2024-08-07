@@ -41,17 +41,17 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
     public void RunTask(string line)
     {
-        int lineNumer = RuntimeInfo.LineNumber;
+        int lineNumber = RuntimeInfo.LineNumber;
         List<Line> lines = RuntimeInfo.Lines.GetRange(0, RuntimeInfo.Lines.Count);
 
-        Line oldLine = lines[lineNumer];
+        Line oldLine = lines[lineNumber];
 
-        lines[lineNumer] = new Line(line, oldLine.FileName, oldLine.LineNumber);
+        lines[lineNumber] = new Line(line, oldLine.FileName, oldLine.LineNumber);
         _ = Task.Run(() =>
         {
             YesNtInterpreter interpreter = new YesNtInterpreter();
             interpreter.Initialize();
-            interpreter.Execute(lines, RuntimeInfo.GloablVariables, lineNumer, RuntimeInfo);
+            interpreter.Execute(lines, RuntimeInfo.GlobalVariables, lineNumber, RuntimeInfo);
         });
 
         RuntimeInfo.CurrentLine = string.Empty;

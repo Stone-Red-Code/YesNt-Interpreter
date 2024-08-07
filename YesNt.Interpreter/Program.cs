@@ -2,22 +2,13 @@
 
 using YesNt.Interpreter.Runtime;
 
-namespace YesNt.Interpreter
+if (args.Length == 1)
 {
-    internal static class Program
-    {
-        private static void Main(string[] args)
-        {
-            if (args.Length == 1)
-            {
-                YesNtInterpreter interpreter = new YesNtInterpreter();
-                interpreter.Initialize();
-                interpreter.Execute(args[0]);
-            }
-            else
-            {
-                Console.WriteLine("No path specified!");
-            }
-        }
-    }
+    YesNtInterpreter interpreter = new YesNtInterpreter();
+    interpreter.Initialize();
+    interpreter.Execute(args[0]);
+}
+else
+{
+    Console.WriteLine("No path specified!");
 }
