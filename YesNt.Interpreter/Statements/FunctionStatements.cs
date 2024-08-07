@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
+using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Statements;
 
@@ -42,29 +43,26 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.InParametersStack.Push(args);
     }
 
-    [Statement("out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    [Statement("%out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetOutParameter(string args)
     {
-        if (RuntimeInfo.OutParametersStack.Count == 0)
+        while (args.Contains("%out"))
         {
-            RuntimeInfo.Exit("No out argument in stack", true);
-            return;
+            if (RuntimeInfo.OutParametersStack.Count == 0)
+            {
+                RuntimeInfo.Exit("No out argument in stack", true);
+                return;
+            }
+
+            args = args.ReplaceFirstOccurrence("%out", RuntimeInfo.OutParametersStack.Pop());
         }
 
-        if (RuntimeInfo.Variables.ContainsKey(args))
-        {
-            RuntimeInfo.Variables[args] = RuntimeInfo.OutParametersStack.Pop();
-        }
-        else
-        {
-            RuntimeInfo.Variables.Add(args, RuntimeInfo.OutParametersStack.Pop());
-        }
+        RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
     [Statement("%iso", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void CheckIfOutParameterAvailable(string args)
     {
-        args += " ";
         args = args.Replace("%iso", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
 
         RuntimeInfo.CurrentLine = args.TrimEnd();
@@ -102,7 +100,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("get", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    [Statement("%get", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetInParameter(string args)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -111,23 +109,21 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        if (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count == 0)
+        while (args.Contains("%get"))
         {
-            RuntimeInfo.Exit("No in argument in stack", true);
-            return;
+            if (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count == 0)
+            {
+                RuntimeInfo.Exit("No in argument in stack", true);
+                return;
+            }
+
+            args = args.ReplaceFirstOccurrence("%get", RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop());
         }
 
-        if (RuntimeInfo.Variables.ContainsKey(args))
-        {
-            RuntimeInfo.Variables[args] = RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop();
-        }
-        else
-        {
-            RuntimeInfo.Variables.Add(args, RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop());
-        }
+        RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("%isi", SearchMode.Contains, SpaceAround.End, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%isi", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void CheckIfInParameterAvailable(string args)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -136,7 +132,6 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        args += " ";
         args = args.Replace("%isi", (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count > 0).ToString());
 
         RuntimeInfo.CurrentLine = args.TrimEnd();

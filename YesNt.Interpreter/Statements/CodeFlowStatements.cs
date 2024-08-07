@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -89,7 +88,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     {
         string key = args.Trim();
 
-        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack.Reverse())));
+        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
         RuntimeInfo.InParametersStack.Clear();
 
         if (RuntimeInfo.Functions.TryGetValue(key, out int value))
