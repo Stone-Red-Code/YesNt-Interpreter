@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -60,9 +61,33 @@ internal class SystemStatements : StatementRuntimeInformation
         }
     }
 
+    private static void Process_ErrorDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
+    {
+        if (string.IsNullOrWhiteSpace(e.Data))
+        {
+            return;
+        }
+
+        outputStack.Push(e.Data.ToSafeString());
+        Console.Write("Error: " + e.Data);
+    }
+
+    private static void Process_OutputDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
+    {
+        if (string.IsNullOrWhiteSpace(e.Data))
+        {
+            return;
+        }
+
+        outputStack.Push(e.Data.ToSafeString());
+        Console.Write(e.Data);
+    }
+
     private void StartProcess(string name, string args)
     {
         RuntimeInfo.OutParametersStack.Clear();
+
+        Stack<string> outputStack = new Stack<string>();
 
         FixedProcess process = new FixedProcess
         {
@@ -75,8 +100,8 @@ internal class SystemStatements : StatementRuntimeInformation
             }
         };
 
-        process.OutputDataReceived += Process_OutputDataReceived;
-        process.ErrorDataReceived += Process_ErrorDataReceived;
+        process.OutputDataReceived += (s, e) => Process_OutputDataReceived(e, outputStack);
+        process.ErrorDataReceived += (s, e) => Process_ErrorDataReceived(e, outputStack);
 
         _ = process.Start();
         process.BeginOutputReadLine();
@@ -85,28 +110,7 @@ internal class SystemStatements : StatementRuntimeInformation
 
         RuntimeInfo.InParametersStack.Clear();
 
+        RuntimeInfo.OutParametersStack = new(outputStack);
         RuntimeInfo.OutParametersStack.Push(process.ExitCode.ToString());
-    }
-
-    private void Process_ErrorDataReceived(object sender, Utilities.DataReceivedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(e.Data))
-        {
-            return;
-        }
-
-        RuntimeInfo.OutParametersStack.Push(e.Data);
-        Console.Write("Error: " + e.Data);
-    }
-
-    private void Process_OutputDataReceived(object sender, Utilities.DataReceivedEventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(e.Data))
-        {
-            return;
-        }
-
-        RuntimeInfo.OutParametersStack.Push(e.Data);
-        Console.Write(e.Data);
     }
 }

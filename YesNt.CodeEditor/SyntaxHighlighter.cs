@@ -134,7 +134,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
             bool succ = int.TryParse(stringColor, out int colorIndex);
             if (succ && colorIndex >= 0 && colorIndex < 16)
             {
-                messagePart = Base64Decode(messagePart.Replace($"\r{stringColor}\r", string.Empty));
+                messagePart = Base64Decode(messagePart.Replace($"\v{stringColor}\v", string.Empty));
                 consoleColor = (ConsoleColor)colorIndex;
             }
             else
@@ -160,9 +160,9 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
 
         string result = searchMode switch
         {
-            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
-            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd)),
-            _ => originalString.Replace(value, $"\0\r{(int)color}\r{base64Value}\0" + new string(' ', spacesAtEnd))
+            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd)),
+            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd)),
+            _ => originalString.Replace(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd))
         };
         return result;
     }
@@ -176,6 +176,6 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
     [GeneratedRegex(">[a-zA-Z0-9]+")]
     private static partial Regex VariableRegex();
 
-    [GeneratedRegex("(?<=(\\r))(.*)(?=\\r)")]
+    [GeneratedRegex("(?<=(\\v))(.*)(?=\\v)")]
     private static partial Regex StringColorRegex();
 }
