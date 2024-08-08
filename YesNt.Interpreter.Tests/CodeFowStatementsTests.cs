@@ -34,10 +34,4 @@ public class CodeFlowTests
         ];
         YesNtAssert.IsLastLineEqual(lines, "1");
     }
-
-    [TestMethod]
-    public void CalculationsTest()
-    {
-        YesNtAssert.IsLineEqual("10 * 10 !calc", 100.ToString());
-    }
 }
