@@ -62,7 +62,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     {
         if (int.TryParse(args, out int millisecondsTimeout))
         {
-            ConsoleExtentions.Sleep(millisecondsTimeout, RuntimeInfo);
+            ConsoleExtensions.Sleep(millisecondsTimeout, RuntimeInfo);
         }
         else
         {

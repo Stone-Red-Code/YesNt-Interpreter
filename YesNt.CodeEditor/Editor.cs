@@ -203,12 +203,17 @@ internal class TextEditor
         return padding;
     }
 
+    private static string ToLiteral(string input)
+    {
+        return Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(input, false);
+    }
+
     private void YesNtInterpreter_OnDebugOutput(string output)
     {
         debugOutput.Add(output);
     }
 
-    private void YesNtInterpreter_OnLineExecuted(Interpreter.Runtime.DebugEventArgs e)
+    private void YesNtInterpreter_OnLineExecuted(DebugEventArgs e)
     {
         lock (Console.Out)
         {
@@ -221,11 +226,11 @@ internal class TextEditor
 
                 if (e.OriginalLine == e.CurrentLine)
                 {
-                    Console.WriteLine($"{sharedString}[{e.CurrentLine}] ==>");
+                    Console.WriteLine($"{sharedString}[{ToLiteral(e.CurrentLine)}] ==>");
                 }
                 else
                 {
-                    Console.WriteLine($"{sharedString}[{e.OriginalLine}] => [{e.CurrentLine}] ==>");
+                    Console.WriteLine($"{sharedString}[{ToLiteral(e.OriginalLine)}] => [{ToLiteral(e.CurrentLine)}] ==>");
                 }
                 Console.ForegroundColor = ConsoleColor.Gray;
             }

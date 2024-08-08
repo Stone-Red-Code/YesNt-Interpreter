@@ -52,20 +52,20 @@ public class YesNtInterpreter
         Assembly assembly = Assembly.GetExecutingAssembly();
         Type[] types = assembly.GetTypes();
 
-        IEnumerable<Type> statementRuntimeInfos = types.Where(t => t.IsSubclassOf(typeof(StatementRuntimeInformation)));
+        IEnumerable<Type> allStatementRuntimeInfo = types.Where(t => t.IsSubclassOf(typeof(StatementRuntimeInformation)));
 
         statements.Clear();
 
-        foreach (Type type in statementRuntimeInfos)
+        foreach (Type type in allStatementRuntimeInfo)
         {
             object statementInfo = Activator.CreateInstance(type);
 
-            MethodInfo[] methodInfos = statementInfo.GetType().GetMethods();
+            MethodInfo[] allMethodInfo = statementInfo.GetType().GetMethods();
 
             StatementRuntimeInformation statementRuntimeInfo = statementInfo as StatementRuntimeInformation;
             statementRuntimeInfo.RuntimeInfo = runtimeInfo;
 
-            foreach (MethodInfo methodInfo in methodInfos)
+            foreach (MethodInfo methodInfo in allMethodInfo)
             {
                 StatementAttribute statementAttribute = methodInfo.GetCustomAttribute<StatementAttribute>();
                 if (statementAttribute is not null)

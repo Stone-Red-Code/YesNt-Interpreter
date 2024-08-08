@@ -51,7 +51,7 @@ internal class ConsoleStatements : StatementRuntimeInformation
         args += " ";
         while (args.Contains("%cr"))
         {
-            string input = ConsoleExtentions.ReadKey(RuntimeInfo).ToString();
+            string input = ConsoleExtensions.ReadKey(RuntimeInfo).ToString();
             args = args.ReplaceFirstOccurrence("%cr ", input.ToSafeString() + " ");
         }
         RuntimeInfo.CurrentLine = args.TrimEnd();
