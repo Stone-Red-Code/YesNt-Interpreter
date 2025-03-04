@@ -93,7 +93,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
 
         if (matches.Count <= 0)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            return;
         }
 
         for (int i = 0; i < matches.Count; i++)
