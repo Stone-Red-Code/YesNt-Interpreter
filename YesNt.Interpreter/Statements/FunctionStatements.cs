@@ -10,7 +10,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal class FunctionStatements : StatementRuntimeInformation
 {
-    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":")]
     public void FindFunction(string args)
     {
         if (RuntimeInfo.InternalIsInFunction)
@@ -19,7 +19,20 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        string key = NormalizeBlockName(args);
+        string functionDeclaration = args.Trim();
+        if (!functionDeclaration.EndsWith(':'))
+        {
+            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            return;
+        }
+
+        string key = NormalizeBlockName(functionDeclaration);
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            RuntimeInfo.Exit("Invalid syntax", true);
+            return;
+        }
+
         if (RuntimeInfo.Functions.ContainsKey(key))
         {
             RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;

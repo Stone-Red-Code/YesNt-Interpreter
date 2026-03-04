@@ -63,10 +63,23 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("label", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
+    [Statement("label", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true, Separator = ":")]
     public void FindLabel(string args)
     {
-        string key = NormalizeBlockName(args);
+        string labelDeclaration = args.Trim();
+        if (!labelDeclaration.EndsWith(':'))
+        {
+            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            return;
+        }
+
+        string key = NormalizeBlockName(labelDeclaration);
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            RuntimeInfo.Exit("Invalid syntax", true);
+            return;
+        }
+
         if (RuntimeInfo.Labels.ContainsKey(key))
         {
             RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
@@ -146,7 +159,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         args = args.Trim();
         if (!args.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
             return;
         }
 
@@ -198,7 +211,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         args = args.Trim();
         if (!args.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
             return;
         }
 
