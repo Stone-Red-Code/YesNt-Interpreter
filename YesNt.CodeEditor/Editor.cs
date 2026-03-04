@@ -32,7 +32,6 @@ internal class TextEditor
 
     public TextEditor()
     {
-        YesNtInterpreter.Initialize();
         YesNtInterpreter.OnDebugOutput += YesNtInterpreter_OnDebugOutput;
         YesNtInterpreter.OnLineExecuted += YesNtInterpreter_OnLineExecuted;
         syntaxHighlighter = new(YesNtInterpreter.StatementInformation);

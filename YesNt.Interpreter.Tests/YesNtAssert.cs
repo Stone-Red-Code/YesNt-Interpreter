@@ -67,10 +67,31 @@ internal static class YesNtAssert
         StringAssert.Matches(value, new Regex(pattern));
     }
 
+    public static void IsLastLineEqualWithSetup(List<string> lines, string expected, Action<YesNtInterpreter> setup, int timeout = 1000)
+    {
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout, setup);
+        Assert.AreEqual(expected, debugEventArgs?.CurrentLine);
+    }
+
+    public static void ContainsDebugOutputWithSetup(List<string> lines, string expectedFragment, Action<YesNtInterpreter> setup, int timeout = 1000)
+    {
+        (_, string debugOutput) = ExecuteAndCapture(lines, timeout, setup);
+        StringAssert.Contains(debugOutput, expectedFragment);
+    }
+
+    public static string? GetLastLineWithSetup(List<string> lines, Action<YesNtInterpreter> setup, int timeout = 1000)
+    {
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout, setup);
+        return debugEventArgs?.CurrentLine;
+    }
+
     private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout)
+        => ExecuteAndCapture(lines, timeout, setup: null);
+
+    private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout, Action<YesNtInterpreter>? setup)
     {
         YesNtInterpreter yesNtInterpreter = new YesNtInterpreter();
-        yesNtInterpreter.Initialize();
+        setup?.Invoke(yesNtInterpreter);
 
         AutoResetEvent onDone = new AutoResetEvent(false);
         DebugEventArgs? debugEventArgs = null;

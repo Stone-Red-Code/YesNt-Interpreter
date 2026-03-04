@@ -60,19 +60,17 @@ public class YesNtInterpreter
         AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
     }
 
-    public void Stop()
+    public YesNtInterpreter()
     {
-        runtimeInfo.Exit("Terminated by external process", true);
-    }
-
-    public void Initialize()
-    {
-        statements.Clear();
-        staticStatements.Clear();
         GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
 
         runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
         runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted?.Invoke(e);
+    }
+
+    public void Stop()
+    {
+        runtimeInfo.Exit("Terminated by external process", true);
     }
 
     public void Execute(string path, bool isDebugMode = false)

@@ -79,9 +79,8 @@ public class ConsoleStatementsTests
     public void ReadKeyCanBeInterruptedByStopTest()
     {
         YesNtInterpreter interpreter = new YesNtInterpreter();
-        interpreter.Initialize();
 
-        AutoResetEvent onDone = new AutoResetEvent(false);
+        AutoResetEvent onDone= new AutoResetEvent(false);
         StringBuilder output = new StringBuilder();
 
         interpreter.OnDebugOutput += (s) => _ = output.Append(s);

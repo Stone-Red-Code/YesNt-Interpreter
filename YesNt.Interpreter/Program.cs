@@ -11,7 +11,6 @@ internal static class Program
         if (args.Length == 1)
         {
             YesNtInterpreter interpreter = new YesNtInterpreter();
-            interpreter.Initialize();
             interpreter.Execute(args[0]);
         }
         else
