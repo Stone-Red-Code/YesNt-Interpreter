@@ -9,7 +9,7 @@ Current language syntax is documented in [SYNTAX_V2.md](SYNTAX_V2.md).
 Example:
 
 ```ynt
-let name = world
+var name = world
 print_line Hello ${name}
 ```
 
@@ -18,3 +18,4 @@ print_line Hello ${name}
 ```bash
 dotnet run --project YesNt.Interpreter -- path/to/script.ynt
 ```
+

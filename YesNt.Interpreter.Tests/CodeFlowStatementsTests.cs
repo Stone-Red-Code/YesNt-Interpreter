@@ -12,9 +12,9 @@ public class CodeFlowStatementsTests
     {
         List<string> lines =
         [
-            "let result = before",
+            "var result = before",
             "exit",
-            "let result = after",
+            "var result = after",
             "${result}"
         ];
 
@@ -27,7 +27,7 @@ public class CodeFlowStatementsTests
         List<string> lines =
         [
             "abort_all",
-            "let result = after",
+            "var result = after",
             "${result}"
         ];
 
@@ -78,3 +78,4 @@ public class CodeFlowStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Function \"nowhere\" not found");
     }
 }
+

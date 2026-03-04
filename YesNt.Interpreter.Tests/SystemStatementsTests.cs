@@ -13,7 +13,7 @@ public class SystemStatementsTests
         List<string> lines =
         [
             "exec cmd with /c,echo yesnt",
-            "let exitCode = %out",
+            "var exitCode = %out",
             "${exitCode}"
         ];
 
@@ -28,7 +28,7 @@ public class SystemStatementsTests
             "push_in /c",
             "push_in echo yesnt",
             "exec cmd",
-            "let exitCode = %out",
+            "var exitCode = %out",
             "${exitCode}"
         ];
 
@@ -46,3 +46,4 @@ public class SystemStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Failed to start \"does_not_exist_abc_xyz\"");
     }
 }
+

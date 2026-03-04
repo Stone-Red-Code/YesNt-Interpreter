@@ -20,7 +20,7 @@ This document describes the current, word-based YesNt syntax.
 ## Quick Example
 
 ```ynt
-let name = world
+var name = world
 func greet:
 print_line Hello ${name}
 return
@@ -40,10 +40,10 @@ end_if
 ## While Loops
 
 ```ynt
-let i = 3
+var i = 3
 while ${i} > 0:
 print_line ${i}
-let i = ${i} - 1 calc
+var i = ${i} - 1 calc
 end_while
 ```
 
@@ -51,7 +51,7 @@ end_while
 
 | Area | v1 Syntax | v2 Syntax | Notes |
 |---|---|---|---|
-| Variables | `<x = value` | `let x = value` | Local variable define/update. |
+| Variables | `<x = value` | `var x = value` | Local variable define/update. |
 | Variables | `!<x = value` | `global x = value` | Global variable define/update. |
 | Variables | `del x` | `delete x` | Deletes local first, then global. |
 | Variables | `>x` | `${x}` | Variable read/interpolation token. |
@@ -99,3 +99,4 @@ end_while
 
 - `%out` is intentionally kept as `%out`.
 - Postfix operations are `calc`, `eval`, and `task`.
+

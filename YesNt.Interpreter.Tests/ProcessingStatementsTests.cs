@@ -68,7 +68,7 @@ public class ProcessingStatementsTests
         List<string> lines =
         [
             "sleep 5",
-            "let result = ok",
+            "var result = ok",
             "${result}"
         ];
 
@@ -81,7 +81,7 @@ public class ProcessingStatementsTests
         List<string> lines =
         [
             "length hello",
-            "let value = %out",
+            "var value = %out",
             "${value}"
         ];
 
@@ -95,7 +95,7 @@ public class ProcessingStatementsTests
 
         try
         {
-            File.WriteAllText(tempFile, "let imported = yes");
+            File.WriteAllText(tempFile, "var imported = yes");
 
             List<string> lines =
             [
@@ -139,3 +139,4 @@ public class ProcessingStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "1", timeout: 3000);
     }
 }
+

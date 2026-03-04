@@ -12,7 +12,7 @@ public class VariableStatementsTests
     {
         List<string> lines =
         [
-            "let value = hi",
+            "var value = hi",
             "${value}"
         ];
 
@@ -37,7 +37,7 @@ public class VariableStatementsTests
         List<string> lines =
         [
             "global value = global",
-            "let value = local",
+            "var value = local",
             "${value}"
         ];
 
@@ -49,7 +49,7 @@ public class VariableStatementsTests
     {
         List<string> lines =
         [
-            "let value = a",
+            "var value = a",
             "delete value",
             "global value = b",
             "${value}"
@@ -74,7 +74,7 @@ public class VariableStatementsTests
     {
         List<string> lines =
         [
-            "let a"
+            "var a"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "Invalid statement");
@@ -85,7 +85,7 @@ public class VariableStatementsTests
     {
         List<string> lines =
         [
-            "let a b = 1"
+            "var a b = 1"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "Invalid Syntax");
@@ -102,3 +102,4 @@ public class VariableStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Variable \"missing\" not found");
     }
 }
+

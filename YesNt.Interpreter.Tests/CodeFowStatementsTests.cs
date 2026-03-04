@@ -26,9 +26,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = 1",
+            "var result = 1",
             "goto yes",
-            "let result = 0",
+            "var result = 0",
             "label yes:",
             "${result}"
         ];
@@ -40,9 +40,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = low",
+            "var result = low",
             "if 6 > 5:",
-            "let result = high",
+            "var result = high",
             "end_if",
             "${result}"
         ];
@@ -55,11 +55,11 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = low",
+            "var result = low",
             "if 6 < 5:",
-            "let result = high",
+            "var result = high",
             "else:",
-            "let result = medium",
+            "var result = medium",
             "end_if",
             "${result}"
         ];
@@ -72,12 +72,12 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = 0",
+            "var result = 0",
             "if 1 == 1:",
             "if 2 == 3:",
-            "let result = 1",
+            "var result = 1",
             "else:",
-            "let result = 2",
+            "var result = 2",
             "end_if",
             "end_if",
             "${result}"
@@ -91,9 +91,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let i = 3",
+            "var i = 3",
             "while ${i} > 0:",
-            "let i = ${i} - 1 calc",
+            "var i = ${i} - 1 calc",
             "end_while",
             "${i}"
         ];
@@ -106,9 +106,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let i = 0",
+            "var i = 0",
             "while ${i} > 0:",
-            "let i = 99",
+            "var i = 99",
             "end_while",
             "${i}"
         ];
@@ -121,15 +121,15 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let outer = 2",
-            "let count = 0",
+            "var outer = 2",
+            "var count = 0",
             "while ${outer} > 0:",
-            "let inner = 2",
+            "var inner = 2",
             "while ${inner} > 0:",
-            "let count = ${count} + 1 calc",
-            "let inner = ${inner} - 1 calc",
+            "var count = ${count} + 1 calc",
+            "var inner = ${inner} - 1 calc",
             "end_while",
-            "let outer = ${outer} - 1 calc",
+            "var outer = ${outer} - 1 calc",
             "end_while",
             "${count}"
         ];
@@ -142,11 +142,11 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = 0",
+            "var result = 0",
             "if 2 > 1:",
-            "let result = 1",
+            "var result = 1",
             "else:",
-            "let result = 2",
+            "var result = 2",
             "end_if",
             "${result}"
         ];
@@ -159,9 +159,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = 5",
+            "var result = 5",
             "if 1 == 2:",
-            "let result = 1",
+            "var result = 1",
             "end_if",
             "${result}"
         ];
@@ -174,11 +174,11 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let result = 0",
+            "var result = 0",
             "if 1 == 1 goto done",
-            "let result = 2",
+            "var result = 2",
             "label done:",
-            "let result = ${result} + 1 calc",
+            "var result = ${result} + 1 calc",
             "${result}"
         ];
 
@@ -228,7 +228,7 @@ public class CodeFlowTests
         List<string> lines =
         [
             "if 1 == 2:",
-            "let result = 1"
+            "var result = 1"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "No matching end_if found");
@@ -250,9 +250,9 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "let i = 0",
+            "var i = 0",
             "while ${i} > 1:",
-            "let i = ${i} + 1 calc"
+            "var i = ${i} + 1 calc"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "No matching end_while found");
@@ -269,3 +269,4 @@ public class CodeFlowTests
         YesNtAssert.ContainsTerminationMessage(lines, "No matching while found");
     }
 }
+

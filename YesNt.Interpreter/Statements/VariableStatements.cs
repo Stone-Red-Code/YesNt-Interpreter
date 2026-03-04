@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -8,7 +8,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal partial class VariableStatements : StatementRuntimeInformation
 {
-    [Statement("let", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
+    [Statement("var", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
     public void DefineVariable(string args)
     {
         string[] parts = args.Split('=');
@@ -118,3 +118,4 @@ internal partial class VariableStatements : StatementRuntimeInformation
     [GeneratedRegex("\\$\\{([a-zA-Z0-9]+)\\}")]
     private static partial Regex VariableStatementRegex();
 }
+

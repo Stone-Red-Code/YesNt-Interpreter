@@ -62,7 +62,7 @@ public class ConsoleStatementsTests
 
                 List<string> lines =
                 [
-                    "let value = %read_line",
+                    "var value = %read_line",
                     "${value}"
                 ];
 
@@ -95,7 +95,7 @@ public class ConsoleStatementsTests
 
         List<string> lines =
         [
-            "let value = %read_key"
+            "var value = %read_key"
         ];
 
         _ = Task.Run(() => interpreter.Execute(lines, true));
@@ -108,3 +108,4 @@ public class ConsoleStatementsTests
         StringAssert.Contains(output.ToString(), "Terminated by external process");
     }
 }
+

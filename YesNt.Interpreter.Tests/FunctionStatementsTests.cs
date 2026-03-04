@@ -32,14 +32,14 @@ public class FunctionStatementsTests
             "goto main",
             "func probe:",
             "global hasInBefore = %has_in",
-            "let consume = %in",
+            "var consume = %in",
             "global hasInAfter = %has_in",
             "push_out ${hasInBefore}",
             "push_out ${hasInAfter}",
             "return",
             "label main:",
             "call probe with x",
-            "let hasOut = %has_out",
+            "var hasOut = %has_out",
             "${hasOut}"
         ];
 
@@ -57,7 +57,7 @@ public class FunctionStatementsTests
             "return",
             "label main:",
             "call make with anything",
-            "let value = %out",
+            "var value = %out",
             "${value}"
         ];
 
@@ -69,7 +69,7 @@ public class FunctionStatementsTests
     {
         List<string> lines =
         [
-            "let x = %out"
+            "var x = %out"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "No out argument in stack");
@@ -80,7 +80,7 @@ public class FunctionStatementsTests
     {
         List<string> lines =
         [
-            "let x = %in"
+            "var x = %in"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "Statement not allowed outside of function");
@@ -138,10 +138,11 @@ public class FunctionStatementsTests
         List<string> lines =
         [
             "clear_call_stack",
-            "let result = ok",
+            "var result = ok",
             "${result}"
         ];
 
         YesNtAssert.IsLastLineEqual(lines, "ok");
     }
 }
+
