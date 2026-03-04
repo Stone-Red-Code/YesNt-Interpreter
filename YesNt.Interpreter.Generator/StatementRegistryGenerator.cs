@@ -225,19 +225,12 @@ public sealed class StatementRegistryGenerator : ISourceGenerator
         };
     }
 
-    private sealed class MethodRegistration
+    private sealed class MethodRegistration(INamedTypeSymbol containingType, IMethodSymbol method, AttributeData attribute)
     {
-        public MethodRegistration(INamedTypeSymbol containingType, IMethodSymbol method, AttributeData attribute)
-        {
-            ContainingType = containingType;
-            Method = method;
-            Attribute = attribute;
-        }
+        public INamedTypeSymbol ContainingType { get; } = containingType;
 
-        public INamedTypeSymbol ContainingType { get; }
+        public IMethodSymbol Method { get; } = method;
 
-        public IMethodSymbol Method { get; }
-
-        public AttributeData Attribute { get; }
+        public AttributeData Attribute { get; } = attribute;
     }
 }

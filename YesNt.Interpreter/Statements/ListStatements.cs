@@ -13,19 +13,19 @@ internal class ListStatements : StatementRuntimeInformation
     public void Create(string args)
     {
         string[] parts = SplitTwo(args, " new");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
 
         string name = parts[0];
-        if (!RuntimeInfo.Lists.ContainsKey(name))
+        if (!RuntimeInfo.Lists.TryGetValue(name, out List<string> value))
         {
             RuntimeInfo.Lists.Add(name, []);
         }
         else
         {
-            RuntimeInfo.Lists[name].Clear();
+            value.Clear();
         }
     }
 
@@ -33,7 +33,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Delete(string args)
     {
         string[] parts = SplitTwo(args, " delete");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -53,7 +53,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Clear(string args)
     {
         string[] parts = SplitTwo(args, " clear");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -70,7 +70,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Length(string args)
     {
         string[] parts = SplitTwo(args, " length");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -88,7 +88,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Add(string args)
     {
         string[] parts = SplitTwo(args, " add ");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -111,7 +111,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Get(string args)
     {
         string[] parts = SplitTwo(args, " get ");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -134,7 +134,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Remove(string args)
     {
         string[] parts = SplitTwo(args, " remove ");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -156,7 +156,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Set(string args)
     {
         string[] parts = SplitTwo(args, " set ");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -167,7 +167,7 @@ internal class ListStatements : StatementRuntimeInformation
         }
 
         string[] indexAndValue = SplitIndexAndValue(parts[1]);
-        if (indexAndValue is null)
+        if (indexAndValue.Length == 0)
         {
             return;
         }
@@ -184,7 +184,7 @@ internal class ListStatements : StatementRuntimeInformation
     public void Insert(string args)
     {
         string[] parts = SplitTwo(args, " insert ");
-        if (parts is null)
+        if (parts.Length == 0)
         {
             return;
         }
@@ -195,7 +195,7 @@ internal class ListStatements : StatementRuntimeInformation
         }
 
         string[] indexAndValue = SplitIndexAndValue(parts[1]);
-        if (indexAndValue is null)
+        if (indexAndValue.Length == 0)
         {
             return;
         }
@@ -214,7 +214,7 @@ internal class ListStatements : StatementRuntimeInformation
         if (parts.Length != 2)
         {
             RuntimeInfo.Exit("Invalid syntax", true);
-            return null;
+            return [];
         }
 
         parts[0] = parts[0].Trim();
@@ -223,7 +223,7 @@ internal class ListStatements : StatementRuntimeInformation
         if (string.IsNullOrWhiteSpace(parts[0]))
         {
             RuntimeInfo.Exit("Invalid syntax", true);
-            return null;
+            return [];
         }
 
         return parts;
@@ -246,7 +246,7 @@ internal class ListStatements : StatementRuntimeInformation
         if (parts.Length != 2)
         {
             RuntimeInfo.Exit("Invalid syntax", true);
-            return null;
+            return [];
         }
 
         parts[0] = parts[0].Trim();
