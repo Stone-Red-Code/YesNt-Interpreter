@@ -17,8 +17,8 @@ public class YesNtInterpreter
     public event Action<string> OnDebugOutput;
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
-    private Dictionary<StatementAttribute, Action<string>> statements = [];
-    private List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements = [];
+    private Dictionary<StatementAttribute, Action<string>> statements;
+    private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
 
     public ReadOnlyCollection<StatementInformation> StatementInformation
     {
@@ -65,7 +65,7 @@ public class YesNtInterpreter
         GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
 
         runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
-        runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted?.Invoke(e);
+        runtimeInfo.OnLineExecuted += e => OnLineExecuted?.Invoke(e);
     }
 
     public void Stop()
