@@ -36,6 +36,19 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
         }
         else
         {
+
+            MatchCollection matches = VariableRegex().Matches(input);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
+            }
+
+            matches = StringRegex().Matches(input);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkYellow, SearchMode.Contains);
+            }
+
             for (int i = 0; i < replacementValues.Length; i++)
             {
                 input = AddColorInformation(input, replacementValues[i], ConsoleColor.Blue, SearchMode.Contains);
@@ -105,12 +118,6 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
                     input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
                 }
             }
-
-            MatchCollection matches = VariableRegex().Matches(input);
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
-            }
         }
 
         foreach (string part in input.Split("\0"))
@@ -157,6 +164,11 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
 
     [GeneratedRegex("\\$\\{[a-zA-Z0-9]+\\}")]
     private static partial Regex VariableRegex();
+
+    // match all double quote pairs
+
+    [GeneratedRegex(@"(?<!\\)(?:\\\\{2})*""(?:\\.|[^""\\])*""")]
+    private static partial Regex StringRegex();
 
     [GeneratedRegex("(?<=(\\v))(.*)(?=\\v)")]
     private static partial Regex StringColorRegex();
