@@ -85,10 +85,7 @@ internal static class YesNtAssert
         return debugEventArgs?.CurrentLine;
     }
 
-    private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout)
-        => ExecuteAndCapture(lines, timeout, setup: null);
-
-    private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout, Action<YesNtInterpreter>? setup)
+    private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout, Action<YesNtInterpreter>? setup = null)
     {
         YesNtInterpreter yesNtInterpreter = new YesNtInterpreter();
         setup?.Invoke(yesNtInterpreter);
