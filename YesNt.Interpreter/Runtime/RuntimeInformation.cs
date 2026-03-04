@@ -15,6 +15,7 @@ internal sealed class RuntimeInformation
 
     private static int internalTaskId = 0;
     private readonly Dictionary<string, string> topVariables = [];
+    private readonly Dictionary<string, List<string>> topLists = [];
     private readonly Dictionary<string, int> topLabels = [];
     private RuntimeInformation parentRuntimeInformation;
     private int taskId = 0;
@@ -43,6 +44,7 @@ internal sealed class RuntimeInformation
     }
 
     public Dictionary<string, string> Variables => FunctionCallStack.Count == 0 ? topVariables : FunctionCallStack.Peek().Variables;
+    public Dictionary<string, List<string>> Lists => FunctionCallStack.Count == 0 ? topLists : FunctionCallStack.Peek().Lists;
 
     public Dictionary<string, int> Labels => FunctionCallStack.Count == 0 ? topLabels : FunctionCallStack.Peek().Labels;
 
@@ -148,6 +150,7 @@ internal sealed class RuntimeInformation
     public void Reset()
     {
         topVariables.Clear();
+        topLists.Clear();
         Lines.Clear();
         GlobalVariables.Clear();
         Labels.Clear();

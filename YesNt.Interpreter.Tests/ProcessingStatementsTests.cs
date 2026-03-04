@@ -132,7 +132,9 @@ public class ProcessingStatementsTests
         [
             "global result = 0",
             "global result = 1 task",
-            "sleep 50",
+            "while ${result} == 0:",
+            "sleep 10",
+            "end_while",
             "${result}"
         ];
 

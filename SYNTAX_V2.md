@@ -47,6 +47,17 @@ var i = ${i} - 1 calc
 end_while
 ```
 
+## Lists
+
+```ynt
+list items new
+list items add apple
+list items add banana
+list items get 1
+var value = %out
+print_line ${value}
+```
+
 ## Full v1 -> v2 Mapping
 
 | Area | v1 Syntax | v2 Syntax | Notes |
