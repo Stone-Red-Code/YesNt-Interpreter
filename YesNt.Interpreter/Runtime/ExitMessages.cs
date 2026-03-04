@@ -1,5 +1,9 @@
 namespace YesNt.Interpreter.Runtime;
 
+/// <summary>
+/// Central repository of all exit/error message strings used by <see cref="RuntimeInformation.Exit"/>.
+/// Keeping messages here ensures consistency and makes them easy to find or localise.
+/// </summary>
 internal static class ExitMessages
 {
     internal const string InvalidSyntax = "Invalid syntax";

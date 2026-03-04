@@ -4,8 +4,19 @@ using System.Text.RegularExpressions;
 
 namespace YesNt.Interpreter.Utilities;
 
+/// <summary>
+/// Provides expression evaluation used by conditional and arithmetic statements.
+/// </summary>
 internal static partial class Evaluator
 {
+    /// <summary>
+    /// Evaluates a boolean condition string such as <c>a == b</c>, <c>x &gt; 3</c>, or <c>true</c>.
+    /// </summary>
+    /// <param name="input">The condition expression, which may contain safe-string encoded values.</param>
+    /// <returns>
+    /// <see langword="true"/> or <see langword="false"/> if the condition could be evaluated;
+    /// <see langword="null"/> if the expression is not a recognised condition form (treated as an error by callers).
+    /// </returns>
     public static bool? EvaluateCondition(string input)
     {
         if (input.ToLower().FromSafeString().Trim() == "true")
@@ -68,6 +79,13 @@ internal static partial class Evaluator
         return null;
     }
 
+    /// <summary>
+    /// Evaluates a numeric arithmetic expression string and returns the result as a string.
+    /// Supports <c>+</c>, <c>-</c>, <c>*</c>, and <c>/</c> operators.
+    /// Adjacent sign characters (<c>++</c>, <c>--</c>, <c>-+</c>, <c>+-</c>) are normalised before evaluation.
+    /// </summary>
+    /// <param name="input">The arithmetic expression to evaluate.</param>
+    /// <returns>The result as a culture-invariant numeric string, or <c>"NaN"</c> if evaluation failed.</returns>
     public static string Calculate(string input)
     {
         input = PlusPlusRegex().Replace(input, "+");

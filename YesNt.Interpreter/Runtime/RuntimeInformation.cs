@@ -5,6 +5,13 @@ using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Runtime;
 
+/// <summary>
+/// Holds all mutable runtime state for a single script execution, including variables, lists,
+/// labels, functions, the call stack, the line counter, and stop flags.
+/// Each background task spawned by the <c>task</c> statement owns its own
+/// <see cref="RuntimeInformation"/> whose <see cref="ParentRuntimeInformation"/> points back
+/// to the main execution context.
+/// </summary>
 internal sealed class RuntimeInformation
 {
     public event Action<string> OnDebugOutput;

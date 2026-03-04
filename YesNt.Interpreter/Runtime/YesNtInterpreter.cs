@@ -10,16 +10,45 @@ using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Runtime;
 
+/// <summary>
+/// The main entry point for executing YesNt scripts.
+/// </summary>
+/// <example>
+/// Running a script file:
+/// <code>
+/// var interpreter = new YesNtInterpreter();
+/// interpreter.Execute("path/to/script.ynt");
+/// </code>
+/// Running script lines in memory with a custom statement:
+/// <code>
+/// var interpreter = new YesNtInterpreter();
+/// interpreter.AddStatement("log", SearchMode.StartOfLine, SpaceAround.End, args =>
+///     Console.WriteLine($"[LOG] {args}"));
+/// interpreter.Execute(new List&lt;string&gt; { "log hello world" });
+/// </code>
+/// </example>
 public class YesNtInterpreter
 {
+    /// <summary>
+    /// Raised after each line is executed in debug mode. The argument is <see langword="null"/>
+    /// when execution ends (either normally or due to an error), allowing callers to detect completion.
+    /// </summary>
     public event Action<DebugEventArgs> OnLineExecuted;
 
+    /// <summary>
+    /// Raised in debug mode whenever the script produces output (e.g. via <c>print_line</c>).
+    /// In non-debug mode output is written directly to <see cref="Console"/>.
+    /// </summary>
     public event Action<string> OnDebugOutput;
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
     private Dictionary<StatementAttribute, Action<string>> statements;
     private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
 
+    /// <summary>
+    /// Gets a read-only snapshot of all currently registered statements.
+    /// Useful for building syntax highlighters or documentation tools.
+    /// </summary>
     public ReadOnlyCollection<StatementInformation> StatementInformation
     {
         get
@@ -41,6 +70,16 @@ public class YesNtInterpreter
         }
     }
 
+    /// <summary>
+    /// Registers a custom statement using a pre-built <see cref="StatementAttribute"/>.
+    /// If a statement with the same attribute key already exists it will be replaced.
+    /// The statement list is re-sorted by priority after insertion.
+    /// </summary>
+    /// <param name="attribute">The attribute describing the keyword, search mode, and priority.</param>
+    /// <param name="handler">
+    /// The delegate invoked when the statement matches. Receives the argument text
+    /// (the part of the line after the keyword, unless <see cref="StatementAttribute.KeepStatementInArgs"/> is set).
+    /// </param>
     public void AddStatement(StatementAttribute attribute, Action<string> handler)
     {
         statements[attribute] = handler;
@@ -50,16 +89,34 @@ public class YesNtInterpreter
             .ToDictionary(x => x.Key, x => x.Value);
     }
 
+    /// <summary>
+    /// Registers a custom statement without a syntax-highlight colour.
+    /// </summary>
+    /// <param name="name">The keyword that identifies this statement in source code.</param>
+    /// <param name="searchMode">Where in the line the keyword is matched.</param>
+    /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
+    /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
     }
 
+    /// <summary>
+    /// Registers a custom statement with a syntax-highlight colour.
+    /// </summary>
+    /// <param name="name">The keyword that identifies this statement in source code.</param>
+    /// <param name="searchMode">Where in the line the keyword is matched.</param>
+    /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
+    /// <param name="consoleColor">The colour used for syntax highlighting in the code editor.</param>
+    /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
     }
 
+    /// <summary>
+    /// Initialises a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
+    /// </summary>
     public YesNtInterpreter()
     {
         GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
@@ -68,11 +125,23 @@ public class YesNtInterpreter
         runtimeInfo.OnLineExecuted += e => OnLineExecuted?.Invoke(e);
     }
 
+    /// <summary>
+    /// Requests a graceful stop of the currently executing script.
+    /// The interpreter will terminate at the next line boundary.
+    /// </summary>
     public void Stop()
     {
         runtimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
     }
 
+    /// <summary>
+    /// Executes a YesNt script file.
+    /// </summary>
+    /// <param name="path">The path to the <c>.ynt</c> script file.</param>
+    /// <param name="isDebugMode">
+    /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> instead of
+    /// <see cref="Console"/> and line-execution events are raised via <see cref="OnLineExecuted"/>.
+    /// </param>
     public void Execute(string path, bool isDebugMode = false)
     {
         runtimeInfo.Reset();
@@ -83,6 +152,14 @@ public class YesNtInterpreter
         }
     }
 
+    /// <summary>
+    /// Executes a YesNt script supplied as an in-memory list of lines.
+    /// </summary>
+    /// <param name="lines">The script lines to execute.</param>
+    /// <param name="isDebugMode">
+    /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> and
+    /// line-execution events are raised via <see cref="OnLineExecuted"/>.
+    /// </param>
     public void Execute(List<string> lines, bool isDebugMode = false)
     {
         runtimeInfo.Reset();

@@ -11,6 +11,14 @@ public delegate void DataReceivedEventHandler(object sender, DataReceivedEventAr
 
 internal delegate void UserCallBack(string data);
 
+/// <summary>
+/// A workaround replacement for <see cref="System.Diagnostics.Process"/> that fixes a buffering
+/// issue in <see cref="System.Diagnostics.Process.BeginOutputReadLine"/> / <see cref="System.Diagnostics.Process.BeginErrorReadLine"/>:
+/// the BCL implementation only delivers data when a newline is encountered, which means partial
+/// lines are not raised until the process writes another newline or exits.
+/// <see cref="FixedProcess"/> flushes whatever is in the read buffer immediately, enabling real-time
+/// output forwarding for interactive child processes.
+/// </summary>
 public class FixedProcess : Process
 {
     public new event DataReceivedEventHandler OutputDataReceived;
