@@ -18,35 +18,36 @@ internal class SystemStatements : StatementRuntimeInformation
     public void ExecuteProgramWithArgs(string input)
     {
         string[] parts = input.FromSafeString().Split(" with ", 2, StringSplitOptions.None);
-        parts[0] = parts[0].Trim();
+        string program = parts[0].Trim();
 
-        string[] functionArguments = parts[1].Split(',');
-
-        foreach (string argument in functionArguments)
+        foreach (string argument in parts[1].Split(','))
         {
             RuntimeInfo.InParametersStack.Push(argument.Trim());
         }
 
         try
         {
-            StartProcess(parts[0], string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
+            StartProcess(program, string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
         }
         catch (FileNotFoundException)
         {
-            RuntimeInfo.Exit(ExitMessages.CannotFindFile(parts[0]), false);
+            RuntimeInfo.Exit(ExitMessages.CannotFindFile(program), false);
         }
         catch (Win32Exception ex)
         {
-            RuntimeInfo.Exit(ExitMessages.FailedToStart(parts[0], ex.Message), false);
+            RuntimeInfo.Exit(ExitMessages.FailedToStart(program, ex.Message), false);
         }
-
-        // HACK: Clear line to avoid execution from another "exec" statement.
-        RuntimeInfo.CurrentLine = string.Empty;
     }
 
     [Statement("exec", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.VeryLow)]
     public void ExecuteProgram(string input)
     {
+        // This is to prevent the "exec with" statement from being triggered by this one, since they both start with "exec"
+        if (input.Contains(" with "))
+        {
+            return;
+        }
+
         try
         {
             StartProcess(input, string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
