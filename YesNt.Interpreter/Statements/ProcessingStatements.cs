@@ -82,6 +82,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("import", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Import(string path)
     {
+        path = path.FromSafeString();
         path = Path.Combine(RuntimeInfo.WorkingDirectory, path);
 
         if (string.IsNullOrEmpty(Path.GetExtension(path)))
