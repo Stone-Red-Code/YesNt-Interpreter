@@ -88,7 +88,7 @@ public class VariableStatementsTests
             "var a b = 1"
         ];
 
-        YesNtAssert.ContainsTerminationMessage(lines, "Invalid Syntax");
+        YesNtAssert.ContainsTerminationMessage(lines, "Invalid syntax");
     }
 
     [TestMethod]

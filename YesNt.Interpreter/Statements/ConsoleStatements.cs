@@ -37,7 +37,7 @@ internal class ConsoleStatements : StatementRuntimeInformation
             string input = Console.ReadLine();
             if (input is null)
             {
-                RuntimeInfo.Exit("Terminated by external process", true);
+                RuntimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
                 return;
             }
             args = args.ReplaceFirstOccurrence("%read_line ", input.ToSafeString() + " ");

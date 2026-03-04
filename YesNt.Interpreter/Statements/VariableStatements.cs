@@ -17,7 +17,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
             string key = parts[0].Trim();
             if (key.Contains(' '))
             {
-                RuntimeInfo.Exit("Invalid Syntax", true);
+                RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             }
 
             if (RuntimeInfo.Variables.ContainsKey(key))
@@ -31,7 +31,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
         else
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
         }
     }
 
@@ -44,7 +44,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
             string key = parts[0].Trim();
             if (key.Contains(' '))
             {
-                RuntimeInfo.Exit("Invalid Syntax", true);
+                RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             }
 
             if (RuntimeInfo.GlobalVariables.ContainsKey(key))
@@ -58,7 +58,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
         else
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
         }
     }
 
@@ -77,7 +77,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
         else
         {
-            RuntimeInfo.Exit($"Variable \"{key}\" not found", true);
+            RuntimeInfo.Exit(ExitMessages.VariableNotFound(key), true);
         }
     }
 
@@ -109,7 +109,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
             }
             else if (!RuntimeInfo.IsSearching)
             {
-                RuntimeInfo.Exit($"Variable \"{varName}\" not found", true);
+                RuntimeInfo.Exit(ExitMessages.VariableNotFound(varName), true);
                 return;
             }
         }

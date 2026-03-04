@@ -23,7 +23,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
             string res = Evaluator.Calculate(matches[i].Value);
             if (res is null)
             {
-                RuntimeInfo.Exit("Invalid operation", true);
+                RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
                 return;
             }
             args = args.FromSafeString().Replace(matches[i].Value, res);
@@ -65,7 +65,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         }
         else
         {
-            RuntimeInfo.Exit($"\"{args}\" is not a valid time-out value", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidTimeoutValue(args), true);
         }
     }
 
@@ -104,12 +104,12 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
             }
             catch
             {
-                RuntimeInfo.Exit($"Could not load file \"{path}\"", true);
+                RuntimeInfo.Exit(ExitMessages.CouldNotLoadFile(path), true);
             }
         }
         else
         {
-            RuntimeInfo.Exit($"Could not find file \"{path}\"", true);
+            RuntimeInfo.Exit(ExitMessages.CouldNotFindFile(path), true);
         }
     }
 

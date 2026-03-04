@@ -15,21 +15,21 @@ internal class FunctionStatements : StatementRuntimeInformation
     {
         if (RuntimeInfo.InternalIsInFunction)
         {
-            RuntimeInfo.Exit("Nested functions are not allowed", true);
+            RuntimeInfo.Exit(ExitMessages.NestedFunctionsNotAllowed, true);
             return;
         }
 
         string functionDeclaration = args.Trim();
         if (!functionDeclaration.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
         string key = NormalizeBlockName(functionDeclaration);
         if (string.IsNullOrWhiteSpace(key))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -63,7 +63,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         {
             if (RuntimeInfo.OutParametersStack.Count == 0)
             {
-                RuntimeInfo.Exit("No out argument in stack", true);
+                RuntimeInfo.Exit(ExitMessages.NoOutArgumentInStack, true);
                 return;
             }
 
@@ -87,7 +87,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         string[] parts = args.Split(" with ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -118,7 +118,7 @@ internal class FunctionStatements : StatementRuntimeInformation
     {
         if (!RuntimeInfo.IsInFunction)
         {
-            RuntimeInfo.Exit("Statement not allowed outside of function", true);
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
             return;
         }
 
@@ -126,7 +126,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         {
             if (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count == 0)
             {
-                RuntimeInfo.Exit("No in argument in stack", true);
+                RuntimeInfo.Exit(ExitMessages.NoInArgumentInStack, true);
                 return;
             }
 
@@ -141,7 +141,7 @@ internal class FunctionStatements : StatementRuntimeInformation
     {
         if (!RuntimeInfo.IsInFunction)
         {
-            RuntimeInfo.Exit("Statement not allowed outside of function", true);
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
             return;
         }
 
@@ -155,7 +155,7 @@ internal class FunctionStatements : StatementRuntimeInformation
     {
         if (!RuntimeInfo.IsInFunction)
         {
-            RuntimeInfo.Exit("Statement not allowed outside of function", true);
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
             return;
         }
 
@@ -167,7 +167,7 @@ internal class FunctionStatements : StatementRuntimeInformation
     {
         if (!RuntimeInfo.IsInFunction)
         {
-            RuntimeInfo.Exit("Statement not allowed outside of function", true);
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
             return;
         }
 
@@ -177,7 +177,7 @@ internal class FunctionStatements : StatementRuntimeInformation
 
             if (RuntimeInfo.IsLocalSearch)
             {
-                RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
             }
             return;
         }
@@ -195,7 +195,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         }
         else
         {
-            RuntimeInfo.Exit("No function in stack", true);
+            RuntimeInfo.Exit(ExitMessages.NoFunctionInStack, true);
         }
     }
 

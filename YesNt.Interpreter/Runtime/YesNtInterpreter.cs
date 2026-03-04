@@ -70,7 +70,7 @@ public class YesNtInterpreter
 
     public void Stop()
     {
-        runtimeInfo.Exit("Terminated by external process", true);
+        runtimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
     }
 
     public void Execute(string path, bool isDebugMode = false)
@@ -106,7 +106,7 @@ public class YesNtInterpreter
         runtimeInfo.GlobalVariables = globalVariables;
         if (parentRuntimeInformation.StopAllTasks)
         {
-            runtimeInfo.Exit($"Parent task was terminated!", parentRuntimeInformation.StopAllTasks);
+            runtimeInfo.Exit(ExitMessages.TerminatedByParentTask, parentRuntimeInformation.StopAllTasks);
             return;
         }
         Execute();
@@ -203,7 +203,7 @@ public class YesNtInterpreter
 
             if (!statementFound)
             {
-                runtimeInfo.Exit("Invalid statement", true);
+                runtimeInfo.Exit(ExitMessages.InvalidStatement, true);
             }
             if (runtimeInfo.IsDebugMode && notSearchingLabel)
             {
@@ -216,15 +216,15 @@ public class YesNtInterpreter
         {
             if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchLabel))
             {
-                runtimeInfo.Exit($"Label \"{runtimeInfo.SearchLabel}\" not found", true);
+                runtimeInfo.Exit(ExitMessages.LabelNotFound(runtimeInfo.SearchLabel), true);
             }
             else if (!string.IsNullOrWhiteSpace(runtimeInfo.SearchFunction))
             {
-                runtimeInfo.Exit($"Function \"{runtimeInfo.SearchFunction}\" not found", true);
+                runtimeInfo.Exit(ExitMessages.FunctionNotFound(runtimeInfo.SearchFunction), true);
             }
             else
             {
-                runtimeInfo.Exit("End of file", false);
+                runtimeInfo.Exit(ExitMessages.EndOfFile, false);
             }
 
             if (runtimeInfo.IsDebugMode)

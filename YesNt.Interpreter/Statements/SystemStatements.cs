@@ -33,11 +33,11 @@ internal class SystemStatements : StatementRuntimeInformation
         }
         catch (FileNotFoundException)
         {
-            RuntimeInfo.Exit($"Cannot find file \"{parts[0]}\".", false);
+            RuntimeInfo.Exit(ExitMessages.CannotFindFile(parts[0]), false);
         }
         catch (Win32Exception ex)
         {
-            RuntimeInfo.Exit($"Failed to start \"{parts[0]}\". {ex.Message}", false);
+            RuntimeInfo.Exit(ExitMessages.FailedToStart(parts[0], ex.Message), false);
         }
 
         // HACK: Clear line to avoid execution from another "exec" statement.
@@ -53,11 +53,11 @@ internal class SystemStatements : StatementRuntimeInformation
         }
         catch (FileNotFoundException)
         {
-            RuntimeInfo.Exit($"Cannot find file \"{input}\".", false);
+            RuntimeInfo.Exit(ExitMessages.CannotFindFile(input), false);
         }
         catch (Win32Exception ex)
         {
-            RuntimeInfo.Exit($"Failed to start \"{input}\". {ex.Message}", false);
+            RuntimeInfo.Exit(ExitMessages.FailedToStart(input, ex.Message), false);
         }
     }
 

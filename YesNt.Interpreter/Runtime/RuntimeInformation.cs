@@ -131,7 +131,7 @@ internal sealed class RuntimeInformation
         {
             StopAllTasks = true;
             OnExit?.Invoke(message, StopAllTasks);
-            parentRuntimeInformation?.Exit("Terminated by child task", true);
+            parentRuntimeInformation?.Exit(ExitMessages.TerminatedByChildTask, true);
         }
     }
 
@@ -177,6 +177,6 @@ internal sealed class RuntimeInformation
 
     private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopAllTasks)
     {
-        Exit($"Terminated by parent task", stopAllTasks);
+        Exit(ExitMessages.TerminatedByParentTask, stopAllTasks);
     }
 }

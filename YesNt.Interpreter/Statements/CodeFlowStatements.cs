@@ -32,7 +32,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         string[] parts = args.Split(" goto ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -43,7 +43,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
         if (result is null)
         {
-            RuntimeInfo.Exit("Invalid operation", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
             return;
         }
 
@@ -69,14 +69,14 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         string labelDeclaration = args.Trim();
         if (!labelDeclaration.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
         string key = NormalizeBlockName(labelDeclaration);
         if (string.IsNullOrWhiteSpace(key))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -120,7 +120,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         string[] parts = args.Split(" call ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -131,7 +131,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
         if (result is null)
         {
-            RuntimeInfo.Exit("Invalid operation", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
             return;
         }
 
@@ -159,7 +159,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         args = args.Trim();
         if (!args.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
@@ -168,7 +168,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
         if (result is null)
         {
-            RuntimeInfo.Exit("Invalid operation", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
             return;
         }
 
@@ -180,7 +180,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         (int targetLine, _) = FindElseOrEndIf(RuntimeInfo.LineNumber);
         if (targetLine < 0)
         {
-            RuntimeInfo.Exit("No matching end_if found", true);
+            RuntimeInfo.Exit(ExitMessages.NoMatchingEndIf, true);
             return;
         }
 
@@ -193,7 +193,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         int targetLine = FindEndIf(RuntimeInfo.LineNumber);
         if (targetLine < 0)
         {
-            RuntimeInfo.Exit("No matching end_if found", true);
+            RuntimeInfo.Exit(ExitMessages.NoMatchingEndIf, true);
             return;
         }
 
@@ -211,7 +211,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         args = args.Trim();
         if (!args.EndsWith(':'))
         {
-            RuntimeInfo.Exit("Invalid syntax. Statement must end with ':'", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
@@ -220,7 +220,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
         if (result is null)
         {
-            RuntimeInfo.Exit("Invalid operation", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
             return;
         }
 
@@ -232,7 +232,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         int endWhileLine = FindEndWhile(RuntimeInfo.LineNumber);
         if (endWhileLine < 0)
         {
-            RuntimeInfo.Exit("No matching end_while found", true);
+            RuntimeInfo.Exit(ExitMessages.NoMatchingEndWhile, true);
             return;
         }
 
@@ -245,7 +245,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         int whileLine = FindWhile(RuntimeInfo.LineNumber);
         if (whileLine < 0)
         {
-            RuntimeInfo.Exit("No matching while found", true);
+            RuntimeInfo.Exit(ExitMessages.NoMatchingWhile, true);
             return;
         }
 
@@ -260,7 +260,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             RuntimeInfo.IsInFunction = false;
             if (RuntimeInfo.IsLocalSearch)
             {
-                RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
             }
 
             return;
@@ -270,7 +270,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             RuntimeInfo.IsInFunction = false;
         }
 
-        RuntimeInfo.Exit("Planned termination by code", false);
+        RuntimeInfo.Exit(ExitMessages.PlannedTermination, false);
     }
 
     [Statement("abort_all", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
@@ -281,7 +281,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             RuntimeInfo.IsInFunction = false;
             if (RuntimeInfo.IsLocalSearch)
             {
-                RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
+                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
             }
 
             return;
@@ -291,7 +291,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             RuntimeInfo.IsInFunction = false;
         }
 
-        RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);
+        RuntimeInfo.Exit(ExitMessages.PlannedTerminationCancelingTasks, true);
     }
 
     [Statement("throw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]

@@ -42,7 +42,7 @@ internal class ListStatements : StatementRuntimeInformation
 
         if (!RuntimeInfo.Lists.ContainsKey(name))
         {
-            RuntimeInfo.Exit($"List \"{name}\" not found", true);
+            RuntimeInfo.Exit(ExitMessages.ListNotFound(name), true);
             return;
         }
 
@@ -100,7 +100,7 @@ internal class ListStatements : StatementRuntimeInformation
 
         if (string.IsNullOrWhiteSpace(parts[1]))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return;
         }
 
@@ -213,7 +213,7 @@ internal class ListStatements : StatementRuntimeInformation
         string[] parts = input.Split(separator, 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return [];
         }
 
@@ -222,7 +222,7 @@ internal class ListStatements : StatementRuntimeInformation
 
         if (string.IsNullOrWhiteSpace(parts[0]))
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return [];
         }
 
@@ -233,7 +233,7 @@ internal class ListStatements : StatementRuntimeInformation
     {
         if (!RuntimeInfo.Lists.TryGetValue(name, out list))
         {
-            RuntimeInfo.Exit($"List \"{name}\" not found", true);
+            RuntimeInfo.Exit(ExitMessages.ListNotFound(name), true);
             return false;
         }
 
@@ -245,7 +245,7 @@ internal class ListStatements : StatementRuntimeInformation
         string[] parts = input.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 2)
         {
-            RuntimeInfo.Exit("Invalid syntax", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             return [];
         }
 
@@ -259,13 +259,13 @@ internal class ListStatements : StatementRuntimeInformation
         bool success = int.TryParse(rawIndex.Trim(), out index);
         if (!success)
         {
-            RuntimeInfo.Exit($"\"{rawIndex}\" is not a valid index", true);
+            RuntimeInfo.Exit(ExitMessages.InvalidIndex(rawIndex), true);
             return false;
         }
 
         if (index < 0 || index >= maxExclusive)
         {
-            RuntimeInfo.Exit($"Index {index} out of range", true);
+            RuntimeInfo.Exit(ExitMessages.IndexOutOfRange(index), true);
             return false;
         }
 

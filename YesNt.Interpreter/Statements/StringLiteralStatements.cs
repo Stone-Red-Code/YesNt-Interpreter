@@ -53,7 +53,7 @@ internal class StringLiteralStatements : StatementRuntimeInformation
 
             if (!closed)
             {
-                RuntimeInfo.Exit("Invalid string literal", true);
+                RuntimeInfo.Exit(ExitMessages.InvalidStringLiteral, true);
                 return;
             }
 
