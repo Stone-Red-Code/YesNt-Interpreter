@@ -19,24 +19,32 @@ This document describes the current, word-based YesNt syntax.
 
 ## Quick Example
 
-v1:
-
-```ynt
-<name = world
-fnc greet
-cwl Hello >name
-ret
-cal greet
-```
-
-v2:
-
 ```ynt
 let name = world
 func greet:
 print_line Hello ${name}
 return
 call greet
+```
+
+## Block Conditionals
+
+```ynt
+if 10 > 5:
+print_line yes
+else:
+print_line no
+end_if
+```
+
+## While Loops
+
+```ynt
+let i = 3
+while ${i} > 0:
+print_line ${i}
+let i = ${i} - 1 calc
+end_while
 ```
 
 ## Full v1 -> v2 Mapping
