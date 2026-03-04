@@ -81,7 +81,8 @@ internal static partial class Evaluator
 
     /// <summary>
     /// Evaluates a numeric arithmetic expression string and returns the result as a string.
-    /// Supports <c>+</c>, <c>-</c>, <c>*</c>, and <c>/</c> operators.
+    /// Supports <c>+</c>, <c>-</c>, <c>*</c>, <c>/</c>, <c>%</c> (modulo), and <c>^</c> (power) operators
+    /// with standard precedence (<c>^</c> highest, <c>+</c>/<c>-</c> lowest) and parentheses.
     /// Adjacent sign characters (<c>++</c>, <c>--</c>, <c>-+</c>, <c>+-</c>) are normalised before evaluation.
     /// </summary>
     /// <param name="input">The arithmetic expression to evaluate.</param>

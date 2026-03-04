@@ -48,6 +48,14 @@ internal class InputHandler(TextEditor textEditor)
                         textEditor.CursorPosition.X = textEditor.Lines.Count > textEditor.CursorPosition.Y ? textEditor.Lines[textEditor.CursorPosition.Y].TrimEnd().Length : 0;
                         return true;
 
+                    case ConsoleKey.R:
+                        ExecuteWithDebugScreen("run", false, false);
+                        return true;
+
+                    case ConsoleKey.D:
+                        ExecuteWithDebugScreen("debug", true, false);
+                        return true;
+
                     case ConsoleKey.F:
                         textEditor.FormatLines();
                         textEditor.Display(true);
@@ -352,6 +360,8 @@ internal class InputHandler(TextEditor textEditor)
             return;
         }
 
+        Mode previousMode = textEditor.EditMode;
+
         textEditor.EditMode = Mode.Debug;
         textEditor.IsStepDebugMode = stepMode;
         Console.Clear();
@@ -373,6 +383,6 @@ internal class InputHandler(TextEditor textEditor)
         _ = Console.ReadKey();
         WriteStatus(string.Empty);
         textEditor.IsStepDebugMode = false;
-        textEditor.EditMode = Mode.Command;
+        textEditor.EditMode = previousMode;
     }
 }
