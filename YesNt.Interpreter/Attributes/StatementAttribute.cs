@@ -5,7 +5,7 @@ using YesNt.Interpreter.Enums;
 namespace YesNt.Interpreter.Attributes;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-internal class StatementAttribute : Attribute
+public class StatementAttribute : Attribute
 {
     public string Name { get; }
     public SearchMode SearchMode { get; }
@@ -17,7 +17,7 @@ internal class StatementAttribute : Attribute
     public bool IgnoreSyntaxHighlighting { get; }
     public string Separator { get; set; }
 
-    internal StatementAttribute(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color)
+    public StatementAttribute(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color)
     {
         Name = name;
         SearchMode = searchMode;
@@ -25,7 +25,7 @@ internal class StatementAttribute : Attribute
         Color = color;
     }
 
-    internal StatementAttribute(string name, SearchMode searchMode, SpaceAround spaceAround)
+    public StatementAttribute(string name, SearchMode searchMode, SpaceAround spaceAround)
     {
         Name = name;
         SearchMode = searchMode;

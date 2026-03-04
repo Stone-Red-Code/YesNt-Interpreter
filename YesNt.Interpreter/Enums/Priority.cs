@@ -1,6 +1,6 @@
 ﻿namespace YesNt.Interpreter.Enums;
 
-internal enum Priority
+public enum Priority
 {
     PreProcessing,
     Highest,

@@ -41,6 +41,25 @@ public class YesNtInterpreter
         }
     }
 
+    public void AddStatement(StatementAttribute attribute, Action<string> handler)
+    {
+        statements[attribute] = handler;
+        statements = statements
+            .OrderBy(s => s.Key.Priority)
+            .ThenByDescending(s => s.Key.Name.Length)
+            .ToDictionary(x => x.Key, x => x.Value);
+    }
+
+    public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
+    {
+        AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
+    }
+
+    public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
+    {
+        AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
+    }
+
     public void Stop()
     {
         runtimeInfo.Exit("Terminated by external process", true);

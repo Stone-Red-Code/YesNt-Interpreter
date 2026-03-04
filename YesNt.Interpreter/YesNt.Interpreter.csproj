@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>YesNt.Interpreter</RootNamespace>
     <ApplicationIcon />
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <StartupObject />
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
