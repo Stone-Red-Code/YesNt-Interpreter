@@ -48,6 +48,8 @@ internal class SystemStatements : StatementRuntimeInformation
             return;
         }
 
+        input = input.FromSafeString();
+
         try
         {
             StartProcess(input, string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
