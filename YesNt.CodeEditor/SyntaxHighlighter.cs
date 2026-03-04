@@ -36,17 +36,16 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
         }
         else
         {
-
-            MatchCollection matches = VariableRegex().Matches(input);
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
-            }
-
-            matches = StringRegex().Matches(input);
+            MatchCollection matches = StringRegex().Matches(input);
             for (int i = 0; i < matches.Count; i++)
             {
                 input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkYellow, SearchMode.Contains);
+            }
+
+            matches = VariableRegex().Matches(input);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
             }
 
             for (int i = 0; i < replacementValues.Length; i++)
@@ -162,14 +161,15 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
         return result;
     }
 
+    // This regex matches variables in the format ${variableName}, where variableName consists of alphanumeric characters.
     [GeneratedRegex("\\$\\{[a-zA-Z0-9]+\\}")]
     private static partial Regex VariableRegex();
 
-    // match all double quote pairs
-
+    // This regex matches string literals, taking into account escaped quotes and backslashes.
     [GeneratedRegex(@"(?<!\\)(?:\\\\{2})*""(?:\\.|[^""\\])*""")]
     private static partial Regex StringRegex();
 
+    // This regex matches the color information embedded in the string, which is in the format \v{colorIndex}\v{base64EncodedValue}\v.
     [GeneratedRegex("(?<=(\\v))(.*)(?=\\v)")]
     private static partial Regex StringColorRegex();
 }
