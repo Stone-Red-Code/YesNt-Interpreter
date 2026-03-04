@@ -50,10 +50,12 @@ internal class InputHandler(TextEditor textEditor)
 
                     case ConsoleKey.R:
                         ExecuteWithDebugScreen("run", false, false);
+                        textEditor.Display(true);
                         return true;
 
                     case ConsoleKey.D:
                         ExecuteWithDebugScreen("debug", true, false);
+                        textEditor.Display(true);
                         return true;
 
                     case ConsoleKey.F:
