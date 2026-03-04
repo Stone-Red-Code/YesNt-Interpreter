@@ -2,4 +2,19 @@
  
 > YesNt is a imperative and interpreted language inspired by the Assembly language.
 
-Check out the [Wiki](https://github.com/Stone-Red-Code/YesNt-Interpreter/wiki) (Work in progress)
+## Syntax
+
+Current language syntax is documented in [SYNTAX_V2.md](SYNTAX_V2.md).
+
+Example:
+
+```ynt
+let name = world
+print_line Hello ${name}
+```
+
+## Run
+
+```bash
+dotnet run --project YesNt.Interpreter -- path/to/script.ynt
+```

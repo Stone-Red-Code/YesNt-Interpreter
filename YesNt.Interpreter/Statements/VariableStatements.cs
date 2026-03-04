@@ -8,7 +8,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal partial class VariableStatements : StatementRuntimeInformation
 {
-    [Statement("<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
+    [Statement("let", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
     public void DefineVariable(string args)
     {
         string[] parts = args.Split('=');
@@ -35,7 +35,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("!<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
+    [Statement("global", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
     public void DefineGlobalVariable(string args)
     {
         string[] parts = args.Split('=');
@@ -62,7 +62,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("del", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.Red, Priority = Priority.VeryLow)]
+    [Statement("delete", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.Red, Priority = Priority.VeryLow)]
     public void DeleteVariable(string args)
     {
         string key = args.Trim();
@@ -81,10 +81,10 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement(">", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest)]
+    [Statement("${", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest, Separator = "}")]
     public void ReadVariable(string _)
     {
-        if (!RuntimeInfo.CurrentLine.Contains('>'))
+        if (!RuntimeInfo.CurrentLine.Contains("${"))
         {
             return;
         }
@@ -98,14 +98,14 @@ internal partial class VariableStatements : StatementRuntimeInformation
 
         for (int i = 0; i < matches.Count; i++)
         {
-            string varName = matches[i].Value.Replace(">", string.Empty);
+            string varName = matches[i].Groups[1].Value;
             if (RuntimeInfo.Variables.TryGetValue(varName, out string value))
             {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
+                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace(matches[i].Value, value);
             }
             else if (RuntimeInfo.GlobalVariables.TryGetValue(varName, out value))
             {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{varName}", value);
+                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace(matches[i].Value, value);
             }
             else if (!RuntimeInfo.IsSearching)
             {
@@ -115,6 +115,6 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
     }
 
-    [GeneratedRegex(">[a-zA-Z0-9]+")]
+    [GeneratedRegex("\\$\\{([a-zA-Z0-9]+)\\}")]
     private static partial Regex VariableStatementRegex();
 }

@@ -167,13 +167,13 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
         return result;
     }
 
-    [GeneratedRegex("^<[a-zA-Z0-9]+")]
+    [GeneratedRegex("^let\\s+[a-zA-Z0-9]+")]
     private static partial Regex VariableDeclarationRegex();
 
-    [GeneratedRegex("^!<[a-zA-Z0-9]+")]
+    [GeneratedRegex("^global\\s+[a-zA-Z0-9]+")]
     private static partial Regex GlobalVariableDeclarationRegex();
 
-    [GeneratedRegex(">[a-zA-Z0-9]+")]
+    [GeneratedRegex("\\$\\{[a-zA-Z0-9]+\\}")]
     private static partial Regex VariableRegex();
 
     [GeneratedRegex("(?<=(\\v))(.*)(?=\\v)")]

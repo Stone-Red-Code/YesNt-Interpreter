@@ -13,7 +13,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal partial class ProcessingStatements : StatementRuntimeInformation
 {
-    [Statement("!calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High)]
+    [Statement("calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High)]
     public void Calculate(string args)
     {
         MatchCollection matches = CalculationRegex().Matches(args.FromSafeString());
@@ -32,13 +32,13 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = args;
     }
 
-    [Statement("!eval", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
+    [Statement("eval", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
     public void Evaluate(string args)
     {
         RuntimeInfo.CurrentLine = args.FromSafeString();
     }
 
-    [Statement("!task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
+    [Statement("task", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
     public void RunTask(string line)
     {
         int lineNumber = RuntimeInfo.LineNumber;
@@ -57,7 +57,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = string.Empty;
     }
 
-    [Statement("slp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
+    [Statement("sleep", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Sleep(string args)
     {
         if (int.TryParse(args, out int millisecondsTimeout))
@@ -70,7 +70,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("len", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
+    [Statement("length", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Length(string args)
     {
         RuntimeInfo.InParametersStack.Clear();
@@ -79,7 +79,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         RuntimeInfo.OutParametersStack.Push(args.FromSafeString().Length.ToString());
     }
 
-    [Statement("imp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
+    [Statement("import", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Import(string path)
     {
         path = Path.Combine(RuntimeInfo.WorkingDirectory, path);

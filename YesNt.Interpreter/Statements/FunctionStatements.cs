@@ -10,7 +10,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal class FunctionStatements : StatementRuntimeInformation
 {
-    [Statement("fnc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
     public void FindFunction(string args)
     {
         if (RuntimeInfo.InternalIsInFunction)
@@ -19,7 +19,7 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        string key = args.Trim();
+        string key = NormalizeBlockName(args);
         if (RuntimeInfo.Functions.ContainsKey(key))
         {
             RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
@@ -37,7 +37,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.IsInFunction = true;
     }
 
-    [Statement("in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    [Statement("push_in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
     public void AddInParameter(string args)
     {
         RuntimeInfo.InParametersStack.Push(args);
@@ -60,25 +60,25 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("%iso", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%has_out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void CheckIfOutParameterAvailable(string args)
     {
-        args = args.Replace("%iso", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
+        args = args.Replace("%has_out", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
 
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Separator = "|")]
+    [Statement("call", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Separator = " with ")]
     public void Call(string args)
     {
-        string[] parts = args.Split('|');
+        string[] parts = args.Split(" with ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
             RuntimeInfo.Exit("Invalid syntax", true);
             return;
         }
 
-        string key = parts[0].Trim();
+        string key = NormalizeBlockName(parts[0]);
         string[] functionArguments = parts[1].Split(',');
 
         foreach (string argument in functionArguments)
@@ -100,7 +100,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("%get", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%in", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetInParameter(string args)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -109,7 +109,7 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        while (args.Contains("%get"))
+        while (args.Contains("%in"))
         {
             if (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count == 0)
             {
@@ -117,13 +117,13 @@ internal class FunctionStatements : StatementRuntimeInformation
                 return;
             }
 
-            args = args.ReplaceFirstOccurrence("%get", RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop());
+            args = args.ReplaceFirstOccurrence("%in", RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop());
         }
 
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("%isi", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%has_in", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void CheckIfInParameterAvailable(string args)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -132,12 +132,12 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        args = args.Replace("%isi", (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count > 0).ToString());
+        args = args.Replace("%has_in", (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count > 0).ToString());
 
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    [Statement("push_out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
     public void AddOutParameter(string args)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -149,7 +149,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
     }
 
-    [Statement("ret", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    [Statement("return", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
     public void Return(string _)
     {
         if (!RuntimeInfo.IsInFunction)
@@ -186,9 +186,14 @@ internal class FunctionStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("ccs", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
+    [Statement("clear_call_stack", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
     public void ClearCallStack(string _)
     {
         RuntimeInfo.FunctionCallStack.Clear();
+    }
+
+    private static string NormalizeBlockName(string value)
+    {
+        return value.Trim().TrimEnd(':').Trim();
     }
 }

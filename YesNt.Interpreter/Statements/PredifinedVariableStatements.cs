@@ -51,12 +51,12 @@ internal class PredefinedVariableStatements : StatementRuntimeInformation
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 
-    [Statement("%rnd", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    [Statement("%rand", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetRandom(string args)
     {
-        while (args.Contains("%rnd"))
+        while (args.Contains("%rand"))
         {
-            args = args.ReplaceFirstOccurrence("%rnd", random.Next(32767, int.MaxValue).ToString());
+            args = args.ReplaceFirstOccurrence("%rand", random.Next(32767, int.MaxValue).ToString());
         }
 
         RuntimeInfo.CurrentLine = args.TrimEnd();

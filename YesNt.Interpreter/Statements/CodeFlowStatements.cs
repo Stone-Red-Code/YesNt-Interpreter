@@ -10,10 +10,10 @@ namespace YesNt.Interpreter.Statements;
 
 internal class CodeFlowStatements : StatementRuntimeInformation
 {
-    [Statement("jmp", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow)]
+    [Statement("goto", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow)]
     public void Jump(string args)
     {
-        string key = args.Trim();
+        string key = NormalizeBlockName(args);
 
         if (RuntimeInfo.Labels.TryGetValue(key, out int value))
         {
@@ -26,18 +26,18 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("jif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = "|")]
+    [Statement("if", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = " goto ")]
     public void JumpIf(string args)
     {
-        string[] parts = args.Split('|');
+        string[] parts = args.Split(" goto ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
             RuntimeInfo.Exit("Invalid syntax", true);
             return;
         }
 
-        string key = parts[0].Trim();
-        string condition = parts[1].Trim();
+        string condition = parts[0].Trim();
+        string key = NormalizeBlockName(parts[1]);
 
         bool? result = Evaluator.EvaluateCondition(condition);
 
@@ -63,10 +63,10 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("lbl", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
+    [Statement("label", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, ExecuteInSearchMode = true)]
     public void FindLabel(string args)
     {
-        string key = args.Trim();
+        string key = NormalizeBlockName(args);
         if (RuntimeInfo.Labels.ContainsKey(key))
         {
             RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
@@ -83,10 +83,10 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
+    [Statement("call", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
     public void Call(string args)
     {
-        string key = args.Trim();
+        string key = NormalizeBlockName(args);
 
         RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
         RuntimeInfo.InParametersStack.Clear();
@@ -101,18 +101,18 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("cif", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Separator = "|")]
+    [Statement("if", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Separator = " call ")]
     public void CallIf(string args)
     {
-        string[] parts = args.Split('|');
+        string[] parts = args.Split(" call ", 2, StringSplitOptions.None);
         if (parts.Length != 2)
         {
             RuntimeInfo.Exit("Invalid syntax", true);
             return;
         }
 
-        string key = parts[0].Trim();
-        string condition = parts[1].Trim();
+        string condition = parts[0].Trim();
+        string key = NormalizeBlockName(parts[1]);
 
         bool? result = Evaluator.EvaluateCondition(condition);
 
@@ -140,7 +140,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("end", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
+    [Statement("exit", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
     public void End(string _)
     {
         if (RuntimeInfo.IsSearching)
@@ -161,7 +161,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.Exit("Planned termination by code", false);
     }
 
-    [Statement("trm", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
+    [Statement("abort_all", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
     public void Terminate(string _)
     {
         if (RuntimeInfo.IsSearching)
@@ -182,15 +182,20 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.Exit("Planned termination by code. Canceling all tasks", true);
     }
 
-    [Statement("trw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+    [Statement("throw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
     public void Throw(string message)
     {
         RuntimeInfo.Exit(message, true);
     }
 
-    [Statement("err", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
+    [Statement("error", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
     public void Error(string message)
     {
         RuntimeInfo.Exit(message, false);
+    }
+
+    private static string NormalizeBlockName(string value)
+    {
+        return value.Trim().TrimEnd(':').Trim();
     }
 }

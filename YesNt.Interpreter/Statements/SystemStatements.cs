@@ -14,10 +14,10 @@ namespace YesNt.Interpreter.Statements;
 
 internal class SystemStatements : StatementRuntimeInformation
 {
-    [Statement("exc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.Low, Separator = "|")]
+    [Statement("exec", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.Low, Separator = " with ")]
     public void ExecuteProgramWithArgs(string input)
     {
-        string[] parts = input.FromSafeString().Split('|');
+        string[] parts = input.FromSafeString().Split(" with ", 2, StringSplitOptions.None);
         parts[0] = parts[0].Trim();
 
         string[] functionArguments = parts[1].Split(',');
@@ -29,7 +29,7 @@ internal class SystemStatements : StatementRuntimeInformation
 
         try
         {
-            StartProcess(parts[0], string.Join(string.Empty, RuntimeInfo.InParametersStack.Reverse()));
+            StartProcess(parts[0], string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
         }
         catch (FileNotFoundException)
         {
@@ -40,16 +40,16 @@ internal class SystemStatements : StatementRuntimeInformation
             RuntimeInfo.Exit($"Failed to start \"{parts[0]}\". {ex.Message}", false);
         }
 
-        //HACK: Clear line to avoid execution from other "exc" statement
+        // HACK: Clear line to avoid execution from another "exec" statement.
         RuntimeInfo.CurrentLine = string.Empty;
     }
 
-    [Statement("exc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.VeryLow)]
+    [Statement("exec", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta, Priority = Priority.VeryLow)]
     public void ExecuteProgram(string input)
     {
         try
         {
-            StartProcess(input, string.Join(string.Empty, RuntimeInfo.InParametersStack.Reverse()));
+            StartProcess(input, string.Join(" ", RuntimeInfo.InParametersStack.Reverse()));
         }
         catch (FileNotFoundException)
         {

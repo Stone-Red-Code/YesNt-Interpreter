@@ -12,11 +12,11 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "cal yes",
-            "fnc yes",
-            "!<result = 1",
-            "ret",
-            ">result"
+            "call yes",
+            "func yes:",
+            "global result = 1",
+            "return",
+            "${result}"
         ];
         YesNtAssert.IsLastLineEqual(lines, "1");
     }
@@ -26,11 +26,11 @@ public class CodeFlowTests
     {
         List<string> lines =
         [
-            "<result = 1",
-            "jmp yes",
-            "<result = 0",
-            "lbl yes",
-            ">result"
+            "let result = 1",
+            "goto yes",
+            "let result = 0",
+            "label yes:",
+            "${result}"
         ];
         YesNtAssert.IsLastLineEqual(lines, "1");
     }
