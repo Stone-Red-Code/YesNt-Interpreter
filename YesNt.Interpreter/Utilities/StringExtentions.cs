@@ -13,10 +13,14 @@ namespace YesNt.Interpreter.Utilities;
 /// <para>
 /// YesNt uses a "safe string" encoding to pass values through the interpreter pipeline without
 /// accidentally triggering keyword matching. Special characters (spaces, operators, punctuation,
-/// control characters) are replaced with tilde-prefixed three-letter codes
-/// (e.g. space → <c>~spc</c>, newline → <c>~nli</c>). The mapping is defined in
-/// <see cref="ReplacementRules"/>. Use <see cref="ToSafeString"/> to encode and
-/// <see cref="FromSafeString"/> to decode.
+/// control characters) are replaced with SOH-delimited three-letter codes
+/// (e.g. space → <c>\x01spc\x01</c>, newline → <c>\x01nli\x01</c>). These codes use the
+/// non-printable SOH character (U+0001) as a sentinel. Written via string concatenation
+/// (<c>"\x01" + "spc" + "\x01"</c>) to avoid C#'s greedy <c>\x</c> hex escape absorbing
+/// following hex-digit letters. U+0001 cannot appear in normal user source, preventing raw
+/// source text from being accidentally decoded.
+/// The mapping is defined in <see cref="ReplacementRules"/>. Use <see cref="ToSafeString"/>
+/// to encode and <see cref="FromSafeString"/> to decode.
 /// </para>
 /// </remarks>
 public static class StringExtensions
@@ -29,21 +33,21 @@ public static class StringExtensions
     /// </summary>
     public static Dictionary<string, string> ReplacementRules { get; } = new()
     {
-        {"~", "~til" },
-        {" ", "~spc" },
-        {"%", "~per" },
-        {"<", "~let" },
-        {">", "~grt" },
-        {",", "~com" },
-        {"!", "~exm" },
-        {"|", "~pip" },
-        {"\n","~nli" },
-        {"\r","~ret" },
-        {"\t","~tab" },
-        {"\b","~bac" },
-        {"\f","~for" },
-        {"\a","~ale" },
-        {"",  "~emp" },
+        {"~",  "\x01" + "til" + "\x01" },
+        {" ",  "\x01" + "spc" + "\x01" },
+        {"%",  "\x01" + "per" + "\x01" },
+        {"<",  "\x01" + "let" + "\x01" },
+        {">",  "\x01" + "grt" + "\x01" },
+        {",",  "\x01" + "com" + "\x01" },
+        {"!",  "\x01" + "exm" + "\x01" },
+        {"|",  "\x01" + "pip" + "\x01" },
+        {"\n", "\x01" + "nli" + "\x01" },
+        {"\r", "\x01" + "ret" + "\x01" },
+        {"\t", "\x01" + "tab" + "\x01" },
+        {"\b", "\x01" + "bac" + "\x01" },
+        {"\f", "\x01" + "for" + "\x01" },
+        {"\a", "\x01" + "ale" + "\x01" },
+        {"",   "\x01" + "emp" + "\x01" },
     };
 
     static StringExtensions()
@@ -130,15 +134,15 @@ public static class StringExtensions
 
     private static string ReplaceOnce(string input, Dictionary<string, string> replacementRules)
     {
-        // ~emp/string.Empty is a special case, it is used to represent empty strings and won't work with the normal rules because an empty string always matches and causes an infinite loop 3 letter abbreviation
-        IEnumerable<KeyValuePair<string, string>> matches = replacementRules.Where(rule => rule.Key != string.Empty && input.Contains(rule.Key));
+        // \x01emp\x01/string.Empty is a special case, it is used to represent empty strings and won't work with the normal rules because an empty string always matches and causes an infinite loop 3 letter abbreviation
+        IEnumerable<KeyValuePair<string, string>> matches = replacementRules.Where(rule => rule.Key != string.Empty && input.Contains(rule.Key, StringComparison.Ordinal));
         if (!matches.Any())
         {
             return input;
         }
 
         KeyValuePair<string, string> match = matches.First();
-        int startIndex = input.IndexOf(match.Key);
+        int startIndex = input.IndexOf(match.Key, StringComparison.Ordinal);
         int endIndex = startIndex + match.Key.Length;
 
         string before = ReplaceOnce(input[..startIndex], replacementRules);

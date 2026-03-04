@@ -46,9 +46,21 @@ public class ProcessingStatementsTests
     }
 
     [TestMethod]
-    public void EvalDecodesSafeStringTest()
+    public void EvalRawTildeSequenceIsLiteralTest()
     {
-        YesNtAssert.IsLineEqual("hello~nliworld eval", "hello\nworld");
+        YesNtAssert.IsLineEqual("hello~nliworld eval", "hello~nliworld");
+    }
+
+    [TestMethod]
+    public void EvalDecodesStringLiteralEscapesTest()
+    {
+        List<string> lines =
+        [
+            "var x = \"hello\\nworld\"",
+            "${x} eval"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "hello\nworld");
     }
 
     [TestMethod]

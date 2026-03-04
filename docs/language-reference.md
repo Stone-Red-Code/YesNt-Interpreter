@@ -30,7 +30,7 @@ Execution proceeds top-to-bottom unless a control-flow statement changes the lin
 - Blank lines are silently skipped.
 - Lines starting with `#` are comments and are silently skipped.
 - Variable interpolation uses `${name}` and is evaluated before the statement runs.
-- Special characters inside string literals are encoded internally and decoded on output — this is transparent to scripts.
+- Special characters inside string literals are encoded internally and decoded on output - this is transparent to scripts.
 
 ---
 
@@ -38,7 +38,7 @@ Execution proceeds top-to-bottom unless a control-flow statement changes the lin
 
 ```ynt
 # This is a comment.
-print_line Hello  # inline comments are NOT supported — everything after print_line is the argument
+print_line Hello  # inline comments are NOT supported - everything after print_line is the argument
 ```
 
 Only whole-line comments (lines whose first non-whitespace character is `#`) are supported.
@@ -60,10 +60,14 @@ print_line "She said \"hi\""
 | `\n`   | Newline              |
 | `\r`   | Carriage return      |
 | `\t`   | Horizontal tab       |
+| `\b`   | Backspace            |
+| `\f`   | Form feed            |
+| `\a`   | Alert (bell)         |
+| `\v`   | Vertical tab         |
 | `\"`   | Literal double-quote |
 | `\\`   | Literal backslash    |
 
-Variable interpolation (`${name}`) is **not** evaluated inside string literals — the braces
+Variable interpolation (`${name}`) is **not** evaluated inside string literals - the braces
 and content are passed through verbatim.
 
 ```ynt
@@ -76,7 +80,7 @@ print_line "hello " ${x} # prints: hello world   (interpolation outside the lite
 
 ## Variables
 
-### Local variables — `var`
+### Local variables - `var`
 
 ```
 var <name> = <value>
@@ -92,7 +96,7 @@ var greeting = Hello, world!
 
 Variable names may only contain letters and digits (`[a-zA-Z0-9]`).
 
-### Global variables — `global`
+### Global variables - `global`
 
 ```
 global <name> = <value>
@@ -104,7 +108,7 @@ Defines or updates a variable that is visible across all function scopes and bac
 global total = 100
 ```
 
-### Reading a variable — `${name}`
+### Reading a variable - `${name}`
 
 `${name}` is an inline token that is replaced with the variable's value before the statement executes.
 It can appear anywhere in a line and multiple occurrences are replaced left to right.
@@ -116,7 +120,7 @@ var b = 10
 print_line ${a} plus ${b}
 ```
 
-### Deleting a variable — `delete`
+### Deleting a variable - `delete`
 
 ```
 delete <name>
@@ -134,7 +138,7 @@ delete temp
 
 ## Console I/O
 
-### Print with newline — `print_line`
+### Print with newline - `print_line`
 
 ```
 print_line <text>
@@ -149,7 +153,7 @@ print_line
 print_line Done.
 ```
 
-### Print without newline — `print`
+### Print without newline - `print`
 
 ```
 print <text>
@@ -163,7 +167,7 @@ var name = %read_line
 print_line Hello, ${name}!
 ```
 
-### Read a line of input — `%read_line`
+### Read a line of input - `%read_line`
 
 `%read_line` is an inline token that is replaced with one line of text read from standard input.
 
@@ -172,7 +176,7 @@ var answer = %read_line
 print_line You typed: ${answer}
 ```
 
-### Read a single key — `%read_key`
+### Read a single key - `%read_key`
 
 `%read_key` is an inline token that is replaced with the single character pressed by the user (no Enter required).
 
@@ -182,7 +186,7 @@ var key = %read_key
 print_line You pressed: ${key}
 ```
 
-### Clear the console — `clear`
+### Clear the console - `clear`
 
 ```
 clear
@@ -348,7 +352,7 @@ if ${debug} == True call dump_state
 
 ## Functions
 
-### Declaring a function — `func`
+### Declaring a function - `func`
 
 ```
 func <name>:
@@ -367,7 +371,7 @@ func add:
 return
 ```
 
-### Calling a function — `call`
+### Calling a function - `call`
 
 ```
 call <name>
@@ -384,13 +388,13 @@ call add with 3, 7
 
 ### Input arguments
 
-#### Push an input argument — `push_in`
+#### Push an input argument - `push_in`
 
 ```
 push_in <value>
 ```
 
-Pushes a value onto the input argument stack. Values are consumed in the order they were pushed —
+Pushes a value onto the input argument stack. Values are consumed in the order they were pushed -
 the first `push_in` call is the first value consumed by `%in` inside the function.
 
 ```ynt
@@ -398,7 +402,7 @@ push_in Alice
 call greet
 ```
 
-#### Pop the next input argument — `%in`
+#### Pop the next input argument - `%in`
 
 `%in` is an inline token (only valid inside a function) that is replaced with the next value
 popped from the argument stack.
@@ -410,7 +414,7 @@ func greet:
 return
 ```
 
-#### Check if input argument exists — `%has_in`
+#### Check if input argument exists - `%has_in`
 
 `%has_in` is replaced with `True` or `False` depending on whether the input stack is non-empty.
 Only valid inside a function.
@@ -423,7 +427,7 @@ return
 
 ### Output values
 
-#### Push an output value — `push_out`
+#### Push an output value - `push_out`
 
 ```
 push_out <value>
@@ -431,7 +435,7 @@ push_out <value>
 
 Only valid inside a function. Pushes a return value onto the output stack.
 
-#### Consume an output value — `%out`
+#### Consume an output value - `%out`
 
 `%out` is an inline token that pops and inserts the top value from the output stack.
 Valid anywhere after a function call or list/processing statement that pushes to the output stack.
@@ -442,7 +446,7 @@ var total = %out
 print_line ${total}
 ```
 
-#### Check if output value exists — `%has_out`
+#### Check if output value exists - `%has_out`
 
 `%has_out` is replaced with `True` or `False` depending on whether the output stack is non-empty.
 
@@ -451,7 +455,7 @@ call maybe_produce
 if %has_out == True call consume_result
 ```
 
-### Clear the call stack — `clear_call_stack`
+### Clear the call stack - `clear_call_stack`
 
 ```
 clear_call_stack
@@ -465,7 +469,7 @@ Discards all frames on the function call stack. Useful for error recovery.
 
 Lists are ordered, mutable sequences of strings. All list operations start with the keyword `list`.
 
-### Create or reset — `list … new`
+### Create or reset - `list … new`
 
 ```
 list <name> new
@@ -473,7 +477,7 @@ list <name> new
 
 Creates an empty list. If the list already exists it is cleared.
 
-### Add an item — `list … add`
+### Add an item - `list … add`
 
 ```
 list <name> add <value>
@@ -481,7 +485,7 @@ list <name> add <value>
 
 Appends `<value>` to the end of the list.
 
-### Get an item — `list … get`
+### Get an item - `list … get`
 
 ```
 list <name> get <index>
@@ -498,7 +502,7 @@ var first = %out
 print_line ${first}
 ```
 
-### Set an item — `list … set`
+### Set an item - `list … set`
 
 ```
 list <name> set <index> <value>
@@ -506,7 +510,7 @@ list <name> set <index> <value>
 
 Replaces the item at `<index>` with `<value>`.
 
-### Remove an item — `list … remove`
+### Remove an item - `list … remove`
 
 ```
 list <name> remove <index>
@@ -514,7 +518,7 @@ list <name> remove <index>
 
 Removes the item at `<index>`. Subsequent items shift down.
 
-### Insert an item — `list … insert`
+### Insert an item - `list … insert`
 
 ```
 list <name> insert <index> <value>
@@ -522,7 +526,7 @@ list <name> insert <index> <value>
 
 Inserts `<value>` before position `<index>`.
 
-### Get the length — `list … length`
+### Get the length - `list … length`
 
 ```
 list <name> length
@@ -536,7 +540,7 @@ var n = %out
 print_line ${n} items
 ```
 
-### Clear all items — `list … clear`
+### Clear all items - `list … clear`
 
 ```
 list <name> clear
@@ -544,7 +548,7 @@ list <name> clear
 
 Removes all items but keeps the list alive.
 
-### Delete a list — `list … delete`
+### Delete a list - `list … delete`
 
 ```
 list <name> delete
@@ -556,11 +560,11 @@ Removes the list entirely.
 
 ## Processing
 
-### Arithmetic — `calc`
+### Arithmetic - `calc`
 
 See [Arithmetic](#arithmetic).
 
-### Decode a safe string — `eval`
+### Decode a safe string - `eval`
 
 ```
 <expression> eval
@@ -569,7 +573,7 @@ See [Arithmetic](#arithmetic).
 Decodes any internally-encoded characters in the current line back to their plain-text form.
 Useful after producing text from string literal operations that you want to re-use as plain text.
 
-### Run from the current line in a background task — `task`
+### Run from the current line in a background task - `task`
 
 ```
 <line> task
@@ -608,7 +612,7 @@ func background_job:
 This works well for task-only worker flows. In non-task/shared flows, prefer `return` if you want
 to return to the caller instead of terminating that execution flow with `exit`.
 
-### Sleep — `sleep`
+### Sleep - `sleep`
 
 ```
 sleep <milliseconds>
@@ -622,7 +626,7 @@ sleep 1000
 print_line One second later.
 ```
 
-### Get string length — `length`
+### Get string length - `length`
 
 ```
 length <text>
@@ -636,7 +640,7 @@ var len = %out
 print_line ${len}
 ```
 
-### Import another script — `import`
+### Import another script - `import`
 
 ```
 import <path>
@@ -655,7 +659,7 @@ import lib/math.ynt
 
 ## System
 
-### Execute a program — `exec`
+### Execute a program - `exec`
 
 ```
 exec <program>
@@ -706,7 +710,7 @@ var roll = %rand
 
 ## Termination
 
-### Normal exit — `exit`
+### Normal exit - `exit`
 
 ```
 exit
@@ -714,7 +718,7 @@ exit
 
 Terminates the script gracefully. Background tasks that are still running are not cancelled.
 
-### Exit and cancel all tasks — `abort_all`
+### Exit and cancel all tasks - `abort_all`
 
 ```
 abort_all
@@ -722,7 +726,7 @@ abort_all
 
 Terminates the script and signals all background tasks to stop.
 
-### Throw an error — `throw`
+### Throw an error - `throw`
 
 ```
 throw <message>
@@ -740,7 +744,7 @@ func validate_fail:
 return
 ```
 
-### Non-fatal error — `error`
+### Non-fatal error - `error`
 
 ```
 error <message>

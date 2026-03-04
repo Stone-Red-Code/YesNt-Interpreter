@@ -150,7 +150,7 @@ public class ListStatementsTests
         List<string> lines =
         [
             "list items new",
-            "list items add hello~spcworld",
+            "list items add \"hello world\"",
             "list items get 0",
             "var result = %out eval",
             "${result}"

@@ -70,6 +70,10 @@ internal class StringLiteralStatements : StatementRuntimeInformation
             'n' => '\n',
             'r' => '\r',
             't' => '\t',
+            'b' => '\b',
+            'f' => '\f',
+            'a' => '\a',
+            'v' => '\v',
             '"' => '"',
             '\\' => '\\',
             _ => escapeChar

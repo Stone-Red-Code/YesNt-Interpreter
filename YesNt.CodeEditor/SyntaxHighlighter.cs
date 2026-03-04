@@ -129,7 +129,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
             bool succ = int.TryParse(stringColor, out int colorIndex);
             if (succ && colorIndex >= 0 && colorIndex < 16)
             {
-                messagePart = Base64Decode(messagePart.Replace($"\v{stringColor}\v", string.Empty));
+                messagePart = Base64Decode(messagePart.Replace("\x01" + stringColor + "\x01", string.Empty));
                 consoleColor = (ConsoleColor)colorIndex;
             }
             else
@@ -155,9 +155,9 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
 
         string result = searchMode switch
         {
-            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd)),
-            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd)),
-            _ => originalString.Replace(value, $"\0\v{(int)color}\v{base64Value}\0" + new string(' ', spacesAtEnd))
+            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd)),
+            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd)),
+            _ => originalString.Replace(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd))
         };
         return result;
     }
@@ -170,7 +170,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
     [GeneratedRegex(@"(?<!\\)(?:\\\\{2})*""(?:\\.|[^""\\])*""")]
     private static partial Regex StringRegex();
 
-    // This regex matches the color information embedded in the string, which is in the format \v{colorIndex}\v{base64EncodedValue}\v.
-    [GeneratedRegex("(?<=(\\v))(.*)(?=\\v)")]
+    // This regex matches the color information embedded in the string, which is in the format \x01{colorIndex}\x01{base64EncodedValue}.
+    [GeneratedRegex(@"(?<=(\x01))(.*)(?=\x01)")]
     private static partial Regex StringColorRegex();
 }
