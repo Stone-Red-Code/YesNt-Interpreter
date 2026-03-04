@@ -160,7 +160,7 @@ public class YesNtInterpreter
                 {
                     if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name))
                     {
-                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(0, name.Length);
+                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine[name.Length..];
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
                     }
@@ -172,7 +172,7 @@ public class YesNtInterpreter
                     }
                     else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
                     {
-                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Remove(runtimeInfo.CurrentLine.Length - name.Length);
+                        string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine[..^name.Length];
                         statement.Value.Invoke(copyLine);
                         statementFound = true;
                     }

@@ -170,11 +170,9 @@ internal class AsyncStreamReader : IDisposable
             byteBuffer = null;
             charBuffer = null;
         }
-        if (eofEvent != null)
-        {
-            eofEvent.Close();
-            eofEvent = null;
-        }
+
+        eofEvent?.Close();
+        eofEvent = null;
     }
 
     private void Init(Stream stream, UserCallBack callback, Encoding encoding, int bufferSize)

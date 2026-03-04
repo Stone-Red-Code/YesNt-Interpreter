@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -30,7 +29,6 @@ public static class StringExtensions
         {"",  "~emp" },
     };
 
-    [SuppressMessage("Minor Code Smell", "S3963:\"static\" fields should be initialized inline", Justification = "Doesn't work because it throws a TypeInitializationException")]
     static StringExtensions()
     {
         reverseReplacementRules = ReplacementRules.ToDictionary(x => x.Value, x => x.Key);
