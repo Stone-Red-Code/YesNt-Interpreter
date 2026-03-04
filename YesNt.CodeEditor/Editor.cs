@@ -203,6 +203,118 @@ internal class TextEditor
         return padding;
     }
 
+    public void FormatLines()
+    {
+        const int indentationSize = 4;
+        List<string> blockStack = [];
+
+        for (int i = 0; i < Lines.Count; i++)
+        {
+            string trimmed = Lines[i].Trim(' ');
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                Lines[i] = string.Empty;
+                continue;
+            }
+
+            if (trimmed.StartsWith('#'))
+            {
+                Lines[i] = trimmed;
+                continue;
+            }
+
+            if (trimmed == "else:")
+            {
+                for (int j = blockStack.Count - 1; j >= 0; j--)
+                {
+                    if (blockStack[j] is "if" or "else")
+                    {
+                        blockStack.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+            bool isTerminatingStatement = trimmed == "exit"
+                || trimmed.StartsWith("throw ", StringComparison.Ordinal)
+                || trimmed.StartsWith("error ", StringComparison.Ordinal);
+            bool closesFunctionBlock = isTerminatingStatement && blockStack.Count > 0 && blockStack[^1] == "func";
+
+            if (trimmed == "end_if")
+            {
+                for (int j = blockStack.Count - 1; j >= 0; j--)
+                {
+                    if (blockStack[j] is "if" or "else")
+                    {
+                        blockStack.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+            else if (trimmed == "end_while")
+            {
+                for (int j = blockStack.Count - 1; j >= 0; j--)
+                {
+                    if (blockStack[j] == "while")
+                    {
+                        blockStack.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+            else if (trimmed == "return")
+            {
+                for (int j = blockStack.Count - 1; j >= 0; j--)
+                {
+                    if (blockStack[j] == "func")
+                    {
+                        blockStack.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+
+            int lineIndentation = closesFunctionBlock ? Math.Max(0, blockStack.Count - 1) : blockStack.Count;
+            Lines[i] = new string(' ', lineIndentation * indentationSize) + trimmed;
+
+            if (!isTerminatingStatement && (
+                (trimmed.StartsWith("if ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
+                || (trimmed.StartsWith("while ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
+                || (trimmed.StartsWith("func ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
+                || trimmed == "else:"))
+            {
+                if (trimmed.StartsWith("if ", StringComparison.Ordinal))
+                {
+                    blockStack.Add("if");
+                }
+                else if (trimmed.StartsWith("while ", StringComparison.Ordinal))
+                {
+                    blockStack.Add("while");
+                }
+                else if (trimmed.StartsWith("func ", StringComparison.Ordinal))
+                {
+                    blockStack.Add("func");
+                }
+                else
+                {
+                    blockStack.Add("else");
+                }
+            }
+
+            if (isTerminatingStatement)
+            {
+                while (blockStack.Count > 0 && blockStack[^1] != "func")
+                {
+                    blockStack.RemoveAt(blockStack.Count - 1);
+                }
+
+                if (closesFunctionBlock && blockStack.Count > 0 && blockStack[^1] == "func")
+                {
+                    blockStack.RemoveAt(blockStack.Count - 1);
+                }
+            }
+        }
+    }
+
     private static string ToLiteral(string input)
     {
         return Microsoft.CodeAnalysis.CSharp.SymbolDisplay.FormatLiteral(input, false);

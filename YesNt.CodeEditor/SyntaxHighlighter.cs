@@ -30,7 +30,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
     {
         input = input.Replace("\0", string.Empty);
 
-        if (input.StartsWith('#'))
+        if (input.TrimStart(' ').StartsWith('#'))
         {
             input = AddColorInformation(input, input, ConsoleColor.Gray, SearchMode.Exact);
         }
@@ -68,7 +68,8 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
                     _ => statement.Name.Trim()
                 };
                 input = input.TrimEnd(' ');
-                if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
+                string inputTrim = input.Trim(' ');
+                if (statement.SearchMode == SearchMode.StartOfLine && inputTrim.StartsWith(name))
                 {
                     if (statement.Separator is not null && input.Contains(statement.Separator))
                     {
@@ -78,7 +79,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
                     {
                         continue;
                     }
-                    input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
+                    input = AddColorInformation(input, name, statement.Color, statement.SearchMode);
                 }
                 else if (statement.SearchMode == SearchMode.Contains && input.Contains(name))
                 {
@@ -104,7 +105,7 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
                     }
                     input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
                 }
-                else if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
+                else if (statement.SearchMode == SearchMode.Exact && inputTrim.Equals(name))
                 {
                     if (statement.Separator is not null && input.Contains(statement.Separator))
                     {

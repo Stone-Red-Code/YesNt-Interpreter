@@ -47,6 +47,12 @@ internal class InputHandler(TextEditor textEditor)
                     case ConsoleKey.E:
                         textEditor.CursorPosition.X = textEditor.Lines.Count > textEditor.CursorPosition.Y ? textEditor.Lines[textEditor.CursorPosition.Y].TrimEnd().Length : 0;
                         return true;
+
+                    case ConsoleKey.F:
+                        textEditor.FormatLines();
+                        textEditor.Display(true);
+                        WriteStatus("Formatted!");
+                        return true;
                 }
             }
             if (keyInfo.Key == ConsoleKey.DownArrow)
@@ -274,6 +280,11 @@ internal class InputHandler(TextEditor textEditor)
                     WriteStatus(string.Empty);
                     break;
 
+                case "format":
+                    textEditor.FormatLines();
+                    WriteStatus("Formatted!");
+                    break;
+
                 case "exit":
                     return false;
 
@@ -331,30 +342,37 @@ internal class InputHandler(TextEditor textEditor)
 
     private void ExecuteWithDebugScreen(string saveInput, bool debugMode, bool stepMode)
     {
-        if (textEditor.Save(saveInput, true))
+        string[] parts = saveInput.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        bool hasPathArgument = parts.Length > 1;
+        bool canRunUnsavedBuffer = !hasPathArgument && string.IsNullOrWhiteSpace(textEditor.CurrentPath);
+
+        bool canExecute = canRunUnsavedBuffer || textEditor.Save(saveInput, true);
+        if (!canExecute)
         {
-            textEditor.EditMode = Mode.Debug;
-            textEditor.IsStepDebugMode = stepMode;
-            Console.Clear();
-            Console.CursorVisible = true;
-
-            if (debugMode)
-            {
-                textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, true);
-            }
-            else
-            {
-                textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath);
-            }
-
-            while (Console.KeyAvailable)
-            {
-                _ = Console.ReadKey(true);
-            }
-            _ = Console.ReadKey();
-            WriteStatus(string.Empty);
-            textEditor.IsStepDebugMode = false;
-            textEditor.EditMode = Mode.Command;
+            return;
         }
+
+        textEditor.EditMode = Mode.Debug;
+        textEditor.IsStepDebugMode = stepMode;
+        Console.Clear();
+        Console.CursorVisible = true;
+
+        if (canRunUnsavedBuffer)
+        {
+            textEditor.YesNtInterpreter.Execute([.. textEditor.Lines], debugMode);
+        }
+        else
+        {
+            textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, debugMode);
+        }
+
+        while (Console.KeyAvailable)
+        {
+            _ = Console.ReadKey(true);
+        }
+        _ = Console.ReadKey();
+        WriteStatus(string.Empty);
+        textEditor.IsStepDebugMode = false;
+        textEditor.EditMode = Mode.Command;
     }
 }
