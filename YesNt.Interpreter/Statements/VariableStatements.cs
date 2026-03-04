@@ -8,7 +8,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal partial class VariableStatements : StatementRuntimeInformation
 {
-    [Statement("let", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+    [Statement("let", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
     public void DefineVariable(string args)
     {
         string[] parts = args.Split('=');
@@ -35,7 +35,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("global", SearchMode.StartOfLine, SpaceAround.End, Priority = Priority.VeryLow)]
+    [Statement("global", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
     public void DefineGlobalVariable(string args)
     {
         string[] parts = args.Split('=');

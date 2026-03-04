@@ -111,18 +111,6 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
             {
                 input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
             }
-
-            matches = VariableDeclarationRegex().Matches(input);
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkCyan, SearchMode.StartOfLine);
-            }
-
-            matches = GlobalVariableDeclarationRegex().Matches(input);
-            for (int i = 0; i < matches.Count; i++)
-            {
-                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
-            }
         }
 
         foreach (string part in input.Split("\0"))
@@ -166,12 +154,6 @@ internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation
         };
         return result;
     }
-
-    [GeneratedRegex("^let\\s+[a-zA-Z0-9]+")]
-    private static partial Regex VariableDeclarationRegex();
-
-    [GeneratedRegex("^global\\s+[a-zA-Z0-9]+")]
-    private static partial Regex GlobalVariableDeclarationRegex();
 
     [GeneratedRegex("\\$\\{[a-zA-Z0-9]+\\}")]
     private static partial Regex VariableRegex();
