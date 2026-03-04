@@ -225,36 +225,18 @@ internal class InputHandler(TextEditor textEditor)
                     break;
 
                 case "run":
-                    if (textEditor.Save(input, true))
-                    {
-                        textEditor.EditMode = Mode.Debug;
-                        Console.Clear();
-                        Console.CursorVisible = true;
-                        textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath);
-                        while (Console.KeyAvailable)
-                        {
-                            _ = Console.ReadKey(true);
-                        }
-                        _ = Console.ReadKey();
-                        WriteStatus(string.Empty);
-                        textEditor.EditMode = Mode.Command;
-                    }
+                    ExecuteWithDebugScreen(input, false, false);
                     break;
 
                 case "debug":
-                    if (textEditor.Save(input, true))
+                    if (TryParseDebugCommand(input, out bool stepMode, out string parsedPath))
                     {
-                        textEditor.EditMode = Mode.Debug;
-                        Console.Clear();
-                        Console.CursorVisible = true;
-                        textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, true);
-                        while (Console.KeyAvailable)
-                        {
-                            _ = Console.ReadKey(true);
-                        }
-                        _ = Console.ReadKey();
-                        WriteStatus(string.Empty);
-                        textEditor.EditMode = Mode.Command;
+                        string saveInput = string.IsNullOrWhiteSpace(parsedPath) ? "debug" : $"debug {parsedPath}";
+                        ExecuteWithDebugScreen(saveInput, true, stepMode);
+                    }
+                    else
+                    {
+                        WriteStatus("Invalid arguments!");
                     }
                     break;
 
@@ -308,5 +290,71 @@ internal class InputHandler(TextEditor textEditor)
     {
         Console.SetCursorPosition(0, Console.WindowHeight - 1);
         Console.Write(input + new string(' ', Console.WindowWidth - input.Length - 1));
+    }
+
+    private static bool TryParseDebugCommand(string input, out bool stepMode, out string path)
+    {
+        stepMode = false;
+        path = string.Empty;
+
+        string[] parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0 || !parts[0].Equals("debug", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        for (int i = 1; i < parts.Length; i++)
+        {
+            string token = parts[i];
+            if (token.Equals("step", StringComparison.OrdinalIgnoreCase))
+            {
+                if (stepMode)
+                {
+                    return false;
+                }
+
+                stepMode = true;
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = token;
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ExecuteWithDebugScreen(string saveInput, bool debugMode, bool stepMode)
+    {
+        if (textEditor.Save(saveInput, true))
+        {
+            textEditor.EditMode = Mode.Debug;
+            textEditor.IsStepDebugMode = stepMode;
+            Console.Clear();
+            Console.CursorVisible = true;
+
+            if (debugMode)
+            {
+                textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath, true);
+            }
+            else
+            {
+                textEditor.YesNtInterpreter.Execute(textEditor.CurrentPath);
+            }
+
+            while (Console.KeyAvailable)
+            {
+                _ = Console.ReadKey(true);
+            }
+            _ = Console.ReadKey();
+            WriteStatus(string.Empty);
+            textEditor.IsStepDebugMode = false;
+            textEditor.EditMode = Mode.Command;
+        }
     }
 }

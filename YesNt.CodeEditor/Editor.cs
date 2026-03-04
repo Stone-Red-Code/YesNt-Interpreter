@@ -20,6 +20,7 @@ internal class TextEditor
     public Point CursorPosition { get; } = new(0, 0);
     public Mode EditMode { get; set; } = Mode.Command;
     public string CurrentPath { get; set; } = string.Empty;
+    public bool IsStepDebugMode { get; set; }
 
     public TextEditor(string path) : this()
     {
@@ -240,6 +241,14 @@ internal class TextEditor
             foreach (string output in outputs)
             {
                 Console.Write(output);
+            }
+
+            if (IsStepDebugMode && e is not null && !e.IsTask)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("[Step] Press any key for next line (Ctrl+C to stop)...");
+                Console.ForegroundColor = ConsoleColor.Gray;
+                _ = Console.ReadKey(true);
             }
         }
     }
