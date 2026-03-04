@@ -1,4 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace YesNt.Interpreter.Tests;
 
@@ -39,5 +43,99 @@ public class ProcessingStatementsTests
     public void ExponentiationTest()
     {
         YesNtAssert.IsLineEqual("2 ^ 3 calc", "8");
+    }
+
+    [TestMethod]
+    public void EvalDecodesSafeStringTest()
+    {
+        YesNtAssert.IsLineEqual("hello~nliworld eval", "hello\nworld");
+    }
+
+    [TestMethod]
+    public void SleepInvalidValueFailsTest()
+    {
+        List<string> lines =
+        [
+            "sleep nope"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "\"nope\" is not a valid time-out value");
+    }
+
+    [TestMethod]
+    public void SleepRunsAndContinuesTest()
+    {
+        List<string> lines =
+        [
+            "sleep 5",
+            "let result = ok",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "ok");
+    }
+
+    [TestMethod]
+    public void LengthPushesOutParameterTest()
+    {
+        List<string> lines =
+        [
+            "length hello",
+            "let value = %out",
+            "${value}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "5");
+    }
+
+    [TestMethod]
+    public void ImportLoadsScriptTest()
+    {
+        string tempFile = Path.Combine(Path.GetTempPath(), $"yesnt-import-{Guid.NewGuid():N}.ynt");
+
+        try
+        {
+            File.WriteAllText(tempFile, "let imported = yes");
+
+            List<string> lines =
+            [
+                $"import {tempFile}",
+                "${imported}"
+            ];
+
+            YesNtAssert.IsLastLineEqual(lines, "yes");
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void ImportMissingFileFailsTest()
+    {
+        List<string> lines =
+        [
+            $"import {Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))}.ynt"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "Could not find file");
+    }
+
+    [TestMethod]
+    public void TaskCanUpdateGlobalVariableTest()
+    {
+        List<string> lines =
+        [
+            "global result = 0",
+            "global result = 1 task",
+            "sleep 50",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "1", timeout: 3000);
     }
 }

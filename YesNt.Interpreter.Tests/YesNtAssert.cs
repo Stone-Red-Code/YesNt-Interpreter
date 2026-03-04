@@ -1,7 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Text;
 using System.Threading;
 
 using YesNt.Interpreter.Runtime;
@@ -10,76 +12,91 @@ namespace YesNt.Interpreter.Tests;
 
 internal static class YesNtAssert
 {
-    private static readonly YesNtInterpreter yesNtInterpreter = new YesNtInterpreter();
-
-    static YesNtAssert()
-    {
-        yesNtInterpreter.Initialize();
-    }
-
     public static void IsLastLineEqual(List<string> lines, string expected, int timeout = 1000)
     {
-        AutoResetEvent onDone = new AutoResetEvent(false);
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout);
+        Assert.AreEqual(expected, debugEventArgs?.CurrentLine);
+    }
 
-        DebugEventArgs debugEventArgs = new DebugEventArgs();
+    public static void IsLineEqual(string line, string expected, int timeout = 1000)
+    {
+        List<string> lines =
+        [
+           line
+        ];
+
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout);
+        Assert.AreEqual(expected, debugEventArgs?.CurrentLine);
+    }
+
+    public static void IsLineNotEqual(string line, string expected, int timeout = 1000)
+    {
+        List<string> lines =
+        [
+           line
+        ];
+
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout);
+        Assert.AreNotEqual(expected, debugEventArgs?.CurrentLine);
+    }
+
+    public static void ContainsTerminationMessage(List<string> lines, string expectedMessageFragment, int timeout = 1000)
+    {
+        (_, string debugOutput) = ExecuteAndCapture(lines, timeout);
+
+        StringAssert.Contains(debugOutput, expectedMessageFragment);
+    }
+
+    public static void ContainsDebugOutput(List<string> lines, string expectedFragment, int timeout = 1000)
+    {
+        (_, string debugOutput) = ExecuteAndCapture(lines, timeout);
+
+        StringAssert.Contains(debugOutput, expectedFragment);
+    }
+
+    public static string? GetLastLine(List<string> lines, int timeout = 1000)
+    {
+        (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout);
+        return debugEventArgs?.CurrentLine;
+    }
+
+    public static void LastLineMatches(List<string> lines, string pattern, int timeout = 1000)
+    {
+        string? value = GetLastLine(lines, timeout);
+        Assert.IsNotNull(value);
+        StringAssert.Matches(value, new Regex(pattern));
+    }
+
+    private static (DebugEventArgs? LastDebugEvent, string DebugOutput) ExecuteAndCapture(List<string> lines, int timeout)
+    {
+        YesNtInterpreter yesNtInterpreter = new YesNtInterpreter();
+        yesNtInterpreter.Initialize();
+
+        AutoResetEvent onDone = new AutoResetEvent(false);
+        DebugEventArgs? debugEventArgs = null;
+        StringBuilder outputBuilder = new StringBuilder();
+
         yesNtInterpreter.OnLineExecuted += (er) =>
         {
-            debugEventArgs = er ?? debugEventArgs;
-
-            if (er is null)
+            if (er is not null)
+            {
+                debugEventArgs = er;
+            }
+            else
             {
                 _ = onDone.Set();
             }
         };
 
-        yesNtInterpreter.Execute(lines, true);
-
-        _ = onDone.WaitOne(TimeSpan.FromSeconds(timeout));
-
-        Assert.AreEqual(expected, debugEventArgs.CurrentLine);
-    }
-
-    public static void IsLineEqual(string line, string expected, int timeout = 1000)
-    {
-        AutoResetEvent onDone = new AutoResetEvent(false);
-        List<string> lines =
-        [
-           line
-        ];
-
-        DebugEventArgs debugEventArgs = new DebugEventArgs();
-        yesNtInterpreter.OnLineExecuted += (er) =>
+        yesNtInterpreter.OnDebugOutput += (s) =>
         {
-            debugEventArgs = er ?? debugEventArgs;
-            _ = onDone.Set();
+            _ = outputBuilder.Append(s);
         };
 
         yesNtInterpreter.Execute(lines, true);
 
         _ = onDone.WaitOne(TimeSpan.FromMilliseconds(timeout));
 
-        Assert.AreEqual(expected, debugEventArgs.CurrentLine);
-    }
-
-    public static void IsLineNotEqual(string line, string expected, int timeout = 1000)
-    {
-        AutoResetEvent onDone = new AutoResetEvent(false);
-        List<string> lines =
-        [
-           line
-        ];
-
-        DebugEventArgs debugEventArgs = new DebugEventArgs();
-        yesNtInterpreter.OnLineExecuted += (er) =>
-        {
-            debugEventArgs = er ?? debugEventArgs;
-            _ = onDone.Set();
-        };
-
-        yesNtInterpreter.Execute(lines, true);
-
-        _ = onDone.WaitOne(TimeSpan.FromMilliseconds(timeout));
-
-        Assert.AreNotEqual(expected, debugEventArgs.CurrentLine);
+        return (debugEventArgs, outputBuilder.ToString());
     }
 }
