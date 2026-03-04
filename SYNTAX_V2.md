@@ -14,6 +14,8 @@ This document describes the current, word-based YesNt syntax.
 - Statements are line-based.
 - `# ...` remains a comment.
 - Variable interpolation inside text uses `${name}`.
+- String literals use double quotes (`"..."`) with escapes like `\n`, `\t`, `\"`, `\\`.
+  Interpolation is not evaluated inside string literals.
 - Function and label declarations are block markers with a trailing `:`.
 - Conditions retain current evaluator expressions (for example: `a == b`, `x > 5`, `10 + 2 == 12`).
 
@@ -22,6 +24,7 @@ This document describes the current, word-based YesNt syntax.
 ```ynt
 var name = world
 func greet:
+print_line "Hello world"
 print_line Hello ${name}
 return
 call greet
