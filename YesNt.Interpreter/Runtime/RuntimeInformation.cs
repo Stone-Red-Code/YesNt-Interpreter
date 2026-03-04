@@ -123,13 +123,29 @@ internal sealed class RuntimeInformation
     {
         if (!Stop)
         {
-            Line line = Lines[Math.Min(LineNumber, Lines.Count - 1)];
-            WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
+            if (Lines.Count == 0)
+            {
+                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task {TaskId}" : "The process")} was terminated with the message: {message}]", true);
+            }
+            else
+            {
+                Line line = Lines[Math.Min(LineNumber, Lines.Count - 1)];
+                WriteLine($"{Environment.NewLine}[{(IsTask ? $"Task {TaskId}" : "The process")} was terminated at line {line.LineNumber + 1} in the file \"{line.FileName}\" with the message: {message}]", true);
+            }
+
             while (FunctionCallStack.Count > 0)
             {
                 int stackLineNumber = FunctionCallStack.Pop().CallerLine;
-                Line stackLine = (ParentRuntimeInformation?.Lines ?? Lines)[stackLineNumber];
-                WriteLine($"    at line {stackLine.LineNumber + 1} in the file \"{stackLine.FileName}\"", true);
+                List<Line> targetLines = ParentRuntimeInformation?.Lines ?? Lines;
+                if (stackLineNumber >= 0 && stackLineNumber < targetLines.Count)
+                {
+                    Line stackLine = targetLines[stackLineNumber];
+                    WriteLine($"    at line {stackLine.LineNumber + 1} in the file \"{stackLine.FileName}\"", true);
+                }
+                else
+                {
+                    WriteLine("    at unknown location (source not available)", true);
+                }
             }
 
             Stop = true;
