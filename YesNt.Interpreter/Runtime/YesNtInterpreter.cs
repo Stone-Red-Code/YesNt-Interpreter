@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -49,47 +48,9 @@ public class YesNtInterpreter
 
     public void Initialize()
     {
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        Type[] types = assembly.GetTypes();
-
-        IEnumerable<Type> allStatementRuntimeInfo = types.Where(t => t.IsSubclassOf(typeof(StatementRuntimeInformation)));
-
         statements.Clear();
-
-        foreach (Type type in allStatementRuntimeInfo)
-        {
-            object statementInfo = Activator.CreateInstance(type);
-
-            MethodInfo[] allMethodInfo = statementInfo.GetType().GetMethods();
-
-            StatementRuntimeInformation statementRuntimeInfo = statementInfo as StatementRuntimeInformation;
-            statementRuntimeInfo.RuntimeInfo = runtimeInfo;
-
-            foreach (MethodInfo methodInfo in allMethodInfo)
-            {
-                StatementAttribute statementAttribute = methodInfo.GetCustomAttribute<StatementAttribute>();
-                if (statementAttribute is not null)
-                {
-                    Action<string> method = methodInfo.CreateDelegate(typeof(Action<string>), statementInfo) as Action<string>;
-                    statements.Add(statementAttribute, method);
-                }
-
-                StaticStatementAttribute staticStatementAttribute = methodInfo.GetCustomAttribute<StaticStatementAttribute>();
-                if (staticStatementAttribute is not null)
-                {
-                    Action method = methodInfo.CreateDelegate(typeof(Action), statementInfo) as Action;
-                    staticStatements.Add(new(staticStatementAttribute, method));
-                }
-            }
-        }
-
-        statements = statements
-            .OrderBy(s => s.Key.Priority)
-            .ThenByDescending(s => s.Key.Name.Length)
-            .ToDictionary(x => x.Key, x => x.Value);
-        staticStatements = staticStatements
-            .OrderBy(s => s.Key.Priority)
-            .ToList();
+        staticStatements.Clear();
+        GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
 
         runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
         runtimeInfo.OnLineExecuted += (DebugEventArgs e) => OnLineExecuted?.Invoke(e);
