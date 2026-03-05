@@ -92,19 +92,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     [Statement("call", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow)]
     public void Call(string args)
     {
-        string key = NormalizeBlockName(args);
-
-        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
-        RuntimeInfo.InParametersStack.Clear();
-
-        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
-        {
-            RuntimeInfo.LineNumber = value;
-        }
-        else
-        {
-            RuntimeInfo.SearchFunction = key;
-        }
+        CallFunction(NormalizeBlockName(args));
     }
 
     [Statement("if", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.VeryLow, Separator = " call ")]
@@ -118,8 +106,6 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
 
         string condition = parts[0].Trim();
-        string key = NormalizeBlockName(parts[1]);
-
         bool? result = Evaluator.EvaluateCondition(condition);
 
         if (result is null)
@@ -128,21 +114,9 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             return;
         }
 
-        if (result == false)
+        if (result == true)
         {
-            return;
-        }
-
-        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
-        RuntimeInfo.InParametersStack.Clear();
-
-        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
-        {
-            RuntimeInfo.LineNumber = value;
-        }
-        else
-        {
-            RuntimeInfo.SearchFunction = key;
+            CallFunction(NormalizeBlockName(parts[1]));
         }
     }
 
@@ -248,37 +222,13 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     [Statement("exit", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
     public void End(string _)
     {
-        if (RuntimeInfo.IsSearching)
-        {
-            RuntimeInfo.IsInFunction = false;
-            if (RuntimeInfo.IsLocalSearch)
-            {
-                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
-            }
-
-            return;
-        }
-
-        RuntimeInfo.IsInFunction = false;
-        RuntimeInfo.Exit(ExitMessages.PlannedTermination, false);
+        HandleExit(ExitMessages.PlannedTermination, false);
     }
 
     [Statement("abort_all", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red, ExecuteInSearchMode = true)]
     public void Terminate(string _)
     {
-        if (RuntimeInfo.IsSearching)
-        {
-            RuntimeInfo.IsInFunction = false;
-            if (RuntimeInfo.IsLocalSearch)
-            {
-                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
-            }
-
-            return;
-        }
-
-        RuntimeInfo.IsInFunction = false;
-        RuntimeInfo.Exit(ExitMessages.PlannedTerminationCancelingTasks, true);
+        HandleExit(ExitMessages.PlannedTerminationCancelingTasks, true);
     }
 
     [Statement("throw", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Red)]
@@ -291,6 +241,38 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     public void Error(string message)
     {
         RuntimeInfo.Exit(message, false);
+    }
+
+    private void CallFunction(string key)
+    {
+        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
+        RuntimeInfo.InParametersStack.Clear();
+
+        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
+        {
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchFunction = key;
+        }
+    }
+
+    private void HandleExit(string exitMessage, bool isError)
+    {
+        if (RuntimeInfo.IsSearching)
+        {
+            RuntimeInfo.IsInFunction = false;
+            if (RuntimeInfo.IsLocalSearch)
+            {
+                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
+            }
+
+            return;
+        }
+
+        RuntimeInfo.IsInFunction = false;
+        RuntimeInfo.Exit(exitMessage, isError);
     }
 
     private int FindBlockBoundary(int currentLine)

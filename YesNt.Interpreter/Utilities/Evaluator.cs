@@ -126,7 +126,8 @@ internal static partial class Evaluator
 
         string[] parts = input.Split(op);
 
-        //Weird fix
+        // If the expression starts with the operator (e.g. "-3 + 5" split by '-' gives ["", "3 + 5"]),
+        // prepend the operator back onto the first real part so it isn't lost.
         if (parts.Length >= 2 && string.IsNullOrWhiteSpace(parts[0]))
         {
             parts[1] = $"{op}{parts[1]}";
