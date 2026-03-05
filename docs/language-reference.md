@@ -26,19 +26,18 @@ Execution proceeds top-to-bottom unless a control-flow statement changes the lin
 
 ## Basic rules
 
-- Lines are trimmed of leading and trailing whitespace before execution.
-- Blank lines are silently skipped.
-- Lines starting with `#` are comments and are silently skipped.
-- Variable interpolation uses `${name}` and is evaluated before the statement runs.
-- Special characters inside string literals are encoded internally and decoded on output - this is transparent to scripts.
-
----
+- Scripts are plain text files with the `.ynt` extension.
+- Each non-empty line is one statement. There are no multi-line expressions.
+- Leading and trailing whitespace on each line is ignored.
+- Lines starting with `#` are comments. Inline comments are not supported. Everything after the keyword is treated as its argument.
+- `${variable}` anywhere in a line is replaced with the variable's value before the statement runs.
+- Text wrapped in double quotes (`"..."`) is a string literal. Its contents are not matched as keywords and support escape sequences like `\n` and `\t`.
 
 ## Comments
 
 ```ynt
 # This is a comment.
-print_line Hello  # inline comments are NOT supported - everything after print_line is the argument
+print_line Hello  # inline comments are NOT supported. Everything after print_line is the argument
 ```
 
 Only whole-line comments (lines whose first non-whitespace character is `#`) are supported.
@@ -222,7 +221,7 @@ Adjacent sign characters (`++`, `--`, `-+`, `+-`) are normalised before evaluati
 ```ynt
 var x = 3
 var y = 4
-var sum = ${x} + ${y} calc              # 7
+var sum = ${x} + ${y} calc             # 7
 var expr = 2 + 3 * 4 calc              # 14  (* before +)
 var parens = (2 + 3) * 4 calc          # 20
 var power = 2 ^ 10 calc                # 1024
@@ -311,7 +310,7 @@ goto <name>
 ```
 
 `label` marks a target. `goto` performs an unconditional jump to that label.
-At the top level, labels are file-scoped — you can jump to any label in the file. Inside a function, labels are restricted to the current function; you cannot jump to a label outside the calling function.
+At the top level, labels are file-scoped, you can jump to any label in the file. Inside a function, labels are restricted to the current function; you cannot jump to a label outside the calling function.
 
 ```ynt
 label loop:
@@ -598,7 +597,7 @@ print_line Main thread continues.
 #### Recommended pattern
 
 Use a direct function call with `task`, and terminate inside that function with `exit`.
-This keeps the worker logic isolated and avoids `goto` scaffolding.
+This keeps the worker logic isolated.
 
 ```ynt
 call background_job task
@@ -606,7 +605,7 @@ print_line Main thread keeps going
 
 func background_job:
     print_line Work in background
-    exit
+exit
 ```
 
 This works well for task-only worker flows. In non-task/shared flows, prefer `return` if you want
