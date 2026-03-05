@@ -17,16 +17,21 @@ YesNt is a line-based, interpreted scripting language. The core idea is simple: 
 - **Background tasks:** Any line can be forked into a background execution flow with `task`
 - **Embeddable:** The interpreter ships as a C# library. Custom statements can be registered, and built-in ones can be removed or disabled for sandboxing
 
-YesNt is intentionally minimal and transparent. It is well suited for scripting, education, and embedding in applications that need a lightweight, controllable scripting engine.
+YesNt is intentionally minimal and is well suited for:
+
+- Scripting in games or applications where simple syntax and customizability are needed
+- Rapid prototyping or automation tasks where a lightweight embedded language is beneficial
+- Educational purposes to learn language design by adding new statements or modifying existing ones
+- Embedding as a scripting engine in larger C# projects, with the ability to expose custom functionality through registered statements
 
 ## Usage
 
 1. Download & install the latest release
-   - GitHub (Windows/Linux/macOS): [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
+   - GitHub: [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
 2. Run a script with the interpreter CLI
-   - `YesNt.Interpreter.App script.ynt` runs a script
+   - `yesnt script.ynt` runs a script
 3. Or use the terminal code editor
-   - `YesNt.CodeEditor` opens the editor (optional path to load a file)
+   - `yesntcode` opens the editor (optional path to load a file)
    - `run` / `debug` to execute the open script
    - `format` to auto-format indentation
 
