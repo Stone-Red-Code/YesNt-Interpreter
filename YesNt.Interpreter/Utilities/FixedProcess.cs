@@ -19,7 +19,7 @@ internal delegate void UserCallBack(string data);
 /// <see cref="FixedProcess"/> flushes whatever is in the read buffer immediately, enabling real-time
 /// output forwarding for interactive child processes.
 /// </summary>
-public class FixedProcess : Process
+internal class FixedProcess : Process
 {
     public new event DataReceivedEventHandler OutputDataReceived;
 

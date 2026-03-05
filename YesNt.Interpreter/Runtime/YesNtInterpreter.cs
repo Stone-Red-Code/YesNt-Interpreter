@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -13,20 +13,6 @@ namespace YesNt.Interpreter.Runtime;
 /// <summary>
 /// The main entry point for executing YesNt scripts.
 /// </summary>
-/// <example>
-/// Running a script file:
-/// <code>
-/// var interpreter = new YesNtInterpreter();
-/// interpreter.Execute("path/to/script.ynt");
-/// </code>
-/// Running script lines in memory with a custom statement:
-/// <code>
-/// var interpreter = new YesNtInterpreter();
-/// interpreter.AddStatement("log", SearchMode.StartOfLine, SpaceAround.End, args =>
-///     Console.WriteLine($"[LOG] {args}"));
-/// interpreter.Execute(new List&lt;string&gt; { "log hello world" });
-/// </code>
-/// </example>
 public class YesNtInterpreter
 {
     /// <summary>
@@ -43,6 +29,8 @@ public class YesNtInterpreter
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
     private Dictionary<StatementAttribute, Action<string>> statements;
+    private List<StatementHandler> statementHandlers;
+    private List<List<StatementHandler>> lineMatchingHandlers = [];
     private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
     private readonly Dictionary<string, List<KeyValuePair<StatementAttribute, Action<string>>>> disabledStatements = [];
 
@@ -77,9 +65,26 @@ public class YesNtInterpreter
     public YesNtInterpreter()
     {
         GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
+        UpdateStatementHandlers();
+        runtimeInfo.PreScanLinesAction = PreScanLines;
 
         runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
         runtimeInfo.OnLineExecuted += e => OnLineExecuted?.Invoke(e);
+    }
+
+    private void UpdateStatementHandlers()
+    {
+        statementHandlers = statements.Select(s =>
+        {
+            string name = s.Key.SpaceAround switch
+            {
+                SpaceAround.StartEnd => $" {s.Key.Name.Trim()} ",
+                SpaceAround.Start => $" {s.Key.Name.Trim()}",
+                SpaceAround.End => $"{s.Key.Name.Trim()} ",
+                _ => s.Key.Name.Trim()
+            };
+            return new StatementHandler(s.Key, s.Value, name);
+        }).ToList();
     }
 
     /// <summary>
@@ -102,14 +107,16 @@ public class YesNtInterpreter
             .OrderBy(s => s.Key.Priority)
             .ThenByDescending(s => s.Key.Name.Length)
             .ToDictionary(x => x.Key, x => x.Value);
+        UpdateStatementHandlers();
+        PreScanLines();
     }
 
     /// <summary>
-    /// Registers a custom statement without a syntax-highlight color.
+    /// Registers a simple custom statement with default settings.
     /// </summary>
-    /// <param name="name">The keyword that identifies this statement in source code.</param>
-    /// <param name="searchMode">Where in the line the keyword is matched.</param>
-    /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
+    /// <param name="name">The keyword to match.</param>
+    /// <param name="searchMode">Where in the line the keyword is searched for.</param>
+    /// <param name="spaceAround">Which sides of the keyword must be padded with a space.</param>
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
     {
@@ -117,12 +124,12 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Registers a custom statement with a syntax-highlight color.
+    /// Registers a simple custom statement with a specific syntax-highlight color.
     /// </summary>
-    /// <param name="name">The keyword that identifies this statement in source code.</param>
-    /// <param name="searchMode">Where in the line the keyword is matched.</param>
-    /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
-    /// <param name="consoleColor">The color used for syntax highlighting in the code editor.</param>
+    /// <param name="name">The keyword to match.</param>
+    /// <param name="searchMode">Where in the line the keyword is searched for.</param>
+    /// <param name="spaceAround">Which sides of the keyword must be padded with a space.</param>
+    /// <param name="consoleColor">The color used for syntax highlighting.</param>
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
@@ -130,10 +137,9 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Permanently removes all built-in or custom statements that match <paramref name="name"/>.
-    /// After removal, any script line that would have matched triggers an "Invalid statement" error.
+    /// Unregisters all handlers matching the specified keyword <paramref name="name"/>.
     /// </summary>
-    /// <param name="name">The keyword of the statement(s) to remove.</param>
+    /// <param name="name">The keyword to remove.</param>
     public void RemoveStatement(string name)
     {
         foreach (StatementAttribute key in statements.Keys.Where(k => k.Name == name).ToList())
@@ -142,6 +148,8 @@ public class YesNtInterpreter
         }
 
         _ = disabledStatements.Remove(name);
+        UpdateStatementHandlers();
+        PreScanLines();
     }
 
     /// <summary>
@@ -171,6 +179,8 @@ public class YesNtInterpreter
         {
             statements[kv.Key] = _ => { };
         }
+        UpdateStatementHandlers();
+        PreScanLines();
     }
 
     /// <summary>
@@ -192,6 +202,8 @@ public class YesNtInterpreter
         }
 
         _ = disabledStatements.Remove(name);
+        UpdateStatementHandlers();
+        PreScanLines();
     }
 
     /// <summary>
@@ -236,9 +248,11 @@ public class YesNtInterpreter
 
         for (int i = 0; i < lines.Count; i++)
         {
-            runtimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName("#Memory#"), i));
+            string content = lines[i].Trim().Replace("\r", string.Empty);
+            runtimeInfo.Lines.Add(new Line(content, Path.GetFileName("#Memory#"), i));
         }
 
+        PreScanLines();
         Execute();
     }
 
@@ -255,6 +269,7 @@ public class YesNtInterpreter
             runtimeInfo.Exit(ExitMessages.TerminatedByParentTask, parentRuntimeInformation.StopAllTasks);
             return;
         }
+        PreScanLines();
         Execute();
     }
 
@@ -267,20 +282,25 @@ public class YesNtInterpreter
                 break;
             }
 
-            runtimeInfo.CurrentLine = runtimeInfo.Lines[runtimeInfo.LineNumber].Content.Trim(' ').Replace("\r", string.Empty);
+            Line lineObj = runtimeInfo.Lines[runtimeInfo.LineNumber];
+            runtimeInfo.CurrentLine = lineObj.Content;
 
             if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
             {
                 continue;
             }
 
-            DebugEventArgs debugEventArgs = new DebugEventArgs()
+            DebugEventArgs debugEventArgs = null;
+            if (runtimeInfo.IsDebugMode)
             {
-                LineNumber = runtimeInfo.LineNumber + 1,
-                OriginalLine = runtimeInfo.CurrentLine.FromSafeString(),
-                IsTask = runtimeInfo.IsTask,
-                TaskId = runtimeInfo.TaskId
-            };
+                debugEventArgs = new DebugEventArgs()
+                {
+                    LineNumber = runtimeInfo.LineNumber + 1,
+                    OriginalLine = runtimeInfo.CurrentLine.FromSafeString(),
+                    IsTask = runtimeInfo.IsTask,
+                    TaskId = runtimeInfo.TaskId
+                };
+            }
 
             foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
             {
@@ -296,9 +316,11 @@ public class YesNtInterpreter
             bool statementFound = false;
             bool notSearchingLabel = !runtimeInfo.IsSearching;
 
-            foreach (KeyValuePair<StatementAttribute, Action<string>> statement in statements)
+            List<StatementHandler> handlers = (runtimeInfo.LineNumber < lineMatchingHandlers.Count) ? lineMatchingHandlers[runtimeInfo.LineNumber] : [];
+
+            foreach (StatementHandler handler in handlers)
             {
-                StatementAttribute statementAttribute = statement.Key;
+                StatementAttribute statementAttribute = handler.Attribute;
 
                 if (!statementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
@@ -311,37 +333,31 @@ public class YesNtInterpreter
                     break;
                 }
 
-                string name = statementAttribute.SpaceAround switch
-                {
-                    SpaceAround.StartEnd => $" {statementAttribute.Name.Trim()} ",
-                    SpaceAround.Start => $" {statementAttribute.Name.Trim()}",
-                    SpaceAround.End => $"{statementAttribute.Name.Trim()} ",
-                    _ => statementAttribute.Name.Trim()
-                };
+                string name = handler.FullName;
 
-                if (statementAttribute.Separator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Separator))
+                if (statementAttribute.Separator is null || runtimeInfo.CurrentLine.Contains(statementAttribute.Separator, StringComparison.Ordinal))
                 {
-                    if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name))
+                    if (statementAttribute.SearchMode == SearchMode.StartOfLine && runtimeInfo.CurrentLine.StartsWith(name, StringComparison.Ordinal))
                     {
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine[name.Length..];
-                        statement.Value.Invoke(copyLine);
+                        handler.Handler.Invoke(copyLine);
                         statementFound = true;
                     }
-                    else if (statementAttribute.SearchMode == SearchMode.Contains && runtimeInfo.CurrentLine.Contains(name))
+                    else if (statementAttribute.SearchMode == SearchMode.Contains && runtimeInfo.CurrentLine.Contains(name, StringComparison.Ordinal))
                     {
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine.Replace(name, string.Empty);
-                        statement.Value.Invoke(copyLine);
+                        handler.Handler.Invoke(copyLine);
                         statementFound = true;
                     }
-                    else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name))
+                    else if (statementAttribute.SearchMode == SearchMode.EndOfLine && runtimeInfo.CurrentLine.EndsWith(name, StringComparison.Ordinal))
                     {
                         string copyLine = statementAttribute.KeepStatementInArgs ? runtimeInfo.CurrentLine : runtimeInfo.CurrentLine[..^name.Length];
-                        statement.Value.Invoke(copyLine);
+                        handler.Handler.Invoke(copyLine);
                         statementFound = true;
                     }
-                    else if (statementAttribute.SearchMode == SearchMode.Exact && runtimeInfo.CurrentLine.Equals(name))
+                    else if (statementAttribute.SearchMode == SearchMode.Exact && runtimeInfo.CurrentLine.Equals(name, StringComparison.Ordinal))
                     {
-                        statement.Value.Invoke(runtimeInfo.CurrentLine);
+                        handler.Handler.Invoke(runtimeInfo.CurrentLine);
                         statementFound = true;
                     }
                 }
@@ -351,7 +367,7 @@ public class YesNtInterpreter
             {
                 runtimeInfo.Exit(ExitMessages.InvalidStatement, true);
             }
-            if (runtimeInfo.IsDebugMode && notSearchingLabel)
+            if (runtimeInfo.IsDebugMode && notSearchingLabel && debugEventArgs != null)
             {
                 debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSafeString();
                 runtimeInfo.LineExecuted(debugEventArgs);
@@ -402,9 +418,93 @@ public class YesNtInterpreter
 
         for (int i = 0; i < lines.Length; i++)
         {
-            runtimeInfo.Lines.Add(new Line(lines[i], Path.GetFileName(path), i));
+            string content = lines[i].Trim().Replace("\r", string.Empty);
+            runtimeInfo.Lines.Add(new Line(content, Path.GetFileName(path), i));
         }
 
+        PreScanLines();
         return true;
+    }
+
+    internal void PreScanLines()
+    {
+        runtimeInfo.BlockBoundaries.Clear();
+        lineMatchingHandlers = new List<List<StatementHandler>>(runtimeInfo.Lines.Count);
+        
+        // Dictionary to track open blocks by their expected end statement name
+        var openBlocks = new Dictionary<string, Stack<int>>();
+
+        for (int i = 0; i < runtimeInfo.Lines.Count; i++)
+        {
+            string content = runtimeInfo.Lines[i].Content;
+            List<StatementHandler> matchingHandlers = [];
+
+            foreach (StatementHandler handler in statementHandlers)
+            {
+                if (IsPossibleMatch(content, handler))
+                {
+                    matchingHandlers.Add(handler);
+
+                    // Track block starts (skip intermediates — they are handled separately below)
+                    string blockPair = handler.Attribute.BlockPair;
+                    if (!string.IsNullOrEmpty(blockPair) && !handler.Attribute.IsBlockIntermediate)
+                    {
+                        if (!openBlocks.TryGetValue(blockPair, out var stack))
+                        {
+                            stack = new Stack<int>();
+                            openBlocks[blockPair] = stack;
+                        }
+                        stack.Push(i);
+                    }
+
+                    // Track block ends
+                    if (handler.Attribute.IsBlockEnd)
+                    {
+                        if (openBlocks.TryGetValue(handler.Attribute.Name, out var stack) && stack.Count > 0)
+                        {
+                            int startLine = stack.Pop();
+                            runtimeInfo.BlockBoundaries[startLine] = i;
+                            runtimeInfo.BlockBoundaries[i] = startLine;
+                        }
+                    }
+
+                    // Track block intermediates (e.g., else:): pop the opener, record boundary, push self
+                    if (handler.Attribute.IsBlockIntermediate)
+                    {
+                        string intermediatePair = handler.Attribute.BlockPair;
+                        if (!string.IsNullOrEmpty(intermediatePair))
+                        {
+                            if (!openBlocks.TryGetValue(intermediatePair, out var stack))
+                            {
+                                stack = new Stack<int>();
+                                openBlocks[intermediatePair] = stack;
+                            }
+                            if (stack.Count > 0)
+                            {
+                                int startLine = stack.Pop();
+                                runtimeInfo.BlockBoundaries[startLine] = i;
+                            }
+                            stack.Push(i);
+                        }
+                    }
+                }
+            }
+            lineMatchingHandlers.Add(matchingHandlers);
+        }
+    }
+
+    private static bool IsPossibleMatch(string content, StatementHandler handler)
+    {
+        StatementAttribute attr = handler.Attribute;
+        string fullName = handler.FullName;
+
+        return attr.SearchMode switch
+        {
+            SearchMode.Exact => content == fullName,
+            SearchMode.StartOfLine => content.StartsWith(fullName, StringComparison.Ordinal),
+            SearchMode.EndOfLine => content.EndsWith(fullName, StringComparison.Ordinal),
+            SearchMode.Contains => content.Contains(fullName, StringComparison.Ordinal),
+            _ => false
+        };
     }
 }

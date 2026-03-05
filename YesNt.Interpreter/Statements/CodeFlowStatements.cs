@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
@@ -80,14 +80,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             return;
         }
 
-        if (RuntimeInfo.Labels.ContainsKey(key))
-        {
-            RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
-        }
-        else
-        {
-            RuntimeInfo.Labels.Add(key, RuntimeInfo.LineNumber);
-        }
+        RuntimeInfo.Labels[key] = RuntimeInfo.LineNumber;
 
         if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchLabel) && RuntimeInfo.SearchLabel == key)
         {
@@ -153,7 +146,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         }
     }
 
-    [Statement("if", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = ":")]
+    [Statement("if", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = ":", BlockPair = "end_if")]
     public void IfBlock(string args)
     {
         args = args.Trim();
@@ -177,7 +170,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             return;
         }
 
-        (int targetLine, _) = FindElseOrEndIf(RuntimeInfo.LineNumber);
+        int targetLine = FindBlockBoundary(RuntimeInfo.LineNumber);
         if (targetLine < 0)
         {
             RuntimeInfo.Exit(ExitMessages.NoMatchingEndIf, true);
@@ -187,10 +180,10 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.LineNumber = targetLine;
     }
 
-    [Statement("else:", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green)]
+    [Statement("else:", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green, IsBlockIntermediate = true, BlockPair = "end_if")]
     public void Else(string _)
     {
-        int targetLine = FindEndIf(RuntimeInfo.LineNumber);
+        int targetLine = FindBlockBoundary(RuntimeInfo.LineNumber);
         if (targetLine < 0)
         {
             RuntimeInfo.Exit(ExitMessages.NoMatchingEndIf, true);
@@ -200,12 +193,12 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.LineNumber = targetLine;
     }
 
-    [Statement("end_if", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green)]
+    [Statement("end_if", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green, IsBlockEnd = true)]
     public void EndIf(string _)
     {
     }
 
-    [Statement("while", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = ":")]
+    [Statement("while", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = ":", BlockPair = "end_while")]
     public void While(string args)
     {
         args = args.Trim();
@@ -229,7 +222,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
             return;
         }
 
-        int endWhileLine = FindEndWhile(RuntimeInfo.LineNumber);
+        int endWhileLine = FindBlockBoundary(RuntimeInfo.LineNumber);
         if (endWhileLine < 0)
         {
             RuntimeInfo.Exit(ExitMessages.NoMatchingEndWhile, true);
@@ -239,10 +232,10 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.LineNumber = endWhileLine;
     }
 
-    [Statement("end_while", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green)]
+    [Statement("end_while", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green, IsBlockEnd = true)]
     public void EndWhile(string _)
     {
-        int whileLine = FindWhile(RuntimeInfo.LineNumber);
+        int whileLine = FindBlockBoundary(RuntimeInfo.LineNumber);
         if (whileLine < 0)
         {
             RuntimeInfo.Exit(ExitMessages.NoMatchingWhile, true);
@@ -265,11 +258,8 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
             return;
         }
-        else
-        {
-            RuntimeInfo.IsInFunction = false;
-        }
 
+        RuntimeInfo.IsInFunction = false;
         RuntimeInfo.Exit(ExitMessages.PlannedTermination, false);
     }
 
@@ -286,11 +276,8 @@ internal class CodeFlowStatements : StatementRuntimeInformation
 
             return;
         }
-        else
-        {
-            RuntimeInfo.IsInFunction = false;
-        }
 
+        RuntimeInfo.IsInFunction = false;
         RuntimeInfo.Exit(ExitMessages.PlannedTerminationCancelingTasks, true);
     }
 
@@ -306,136 +293,8 @@ internal class CodeFlowStatements : StatementRuntimeInformation
         RuntimeInfo.Exit(message, false);
     }
 
-    private static string NormalizeBlockName(string value)
+    private int FindBlockBoundary(int currentLine)
     {
-        return value.Trim().TrimEnd(':').Trim();
-    }
-
-    private (int TargetLine, bool IsElse) FindElseOrEndIf(int currentLine)
-    {
-        int depth = 0;
-
-        for (int i = currentLine + 1; i < RuntimeInfo.Lines.Count; i++)
-        {
-            string line = RuntimeInfo.Lines[i].Content.Trim().Replace("\r", string.Empty);
-
-            if (IsIfStart(line))
-            {
-                depth++;
-                continue;
-            }
-
-            if (line == "end_if")
-            {
-                if (depth == 0)
-                {
-                    return (i, false);
-                }
-
-                depth--;
-                continue;
-            }
-
-            if (line == "else:" && depth == 0)
-            {
-                return (i, true);
-            }
-        }
-
-        return (-1, false);
-    }
-
-    private int FindEndIf(int currentLine)
-    {
-        int depth = 0;
-
-        for (int i = currentLine + 1; i < RuntimeInfo.Lines.Count; i++)
-        {
-            string line = RuntimeInfo.Lines[i].Content.Trim().Replace("\r", string.Empty);
-
-            if (IsIfStart(line))
-            {
-                depth++;
-                continue;
-            }
-
-            if (line == "end_if")
-            {
-                if (depth == 0)
-                {
-                    return i;
-                }
-
-                depth--;
-            }
-        }
-
-        return -1;
-    }
-
-    private static bool IsIfStart(string line)
-    {
-        return line.StartsWith("if ", StringComparison.Ordinal) && line.EndsWith(':');
-    }
-
-    private int FindEndWhile(int currentLine)
-    {
-        int depth = 0;
-
-        for (int i = currentLine + 1; i < RuntimeInfo.Lines.Count; i++)
-        {
-            string line = RuntimeInfo.Lines[i].Content.Trim().Replace("\r", string.Empty);
-
-            if (IsWhileStart(line))
-            {
-                depth++;
-                continue;
-            }
-
-            if (line == "end_while")
-            {
-                if (depth == 0)
-                {
-                    return i;
-                }
-
-                depth--;
-            }
-        }
-
-        return -1;
-    }
-
-    private int FindWhile(int currentLine)
-    {
-        int depth = 0;
-
-        for (int i = currentLine - 1; i >= 0; i--)
-        {
-            string line = RuntimeInfo.Lines[i].Content.Trim().Replace("\r", string.Empty);
-
-            if (line == "end_while")
-            {
-                depth++;
-                continue;
-            }
-
-            if (IsWhileStart(line))
-            {
-                if (depth == 0)
-                {
-                    return i;
-                }
-
-                depth--;
-            }
-        }
-
-        return -1;
-    }
-
-    private static bool IsWhileStart(string line)
-    {
-        return line.StartsWith("while ", StringComparison.Ordinal) && line.EndsWith(':');
+        return RuntimeInfo.BlockBoundaries.TryGetValue(currentLine, out int cached) ? cached : -1;
     }
 }

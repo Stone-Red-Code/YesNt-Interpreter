@@ -26,6 +26,8 @@ internal sealed class RuntimeInformation
 
     public Dictionary<string, string> GlobalVariables { get; set; } = [];
     public Dictionary<string, int> Functions { get; } = [];
+    public Dictionary<int, int> BlockBoundaries { get; } = [];
+    internal Action PreScanLinesAction { get; set; }
     public Stack<FunctionScope> FunctionCallStack { get; } = new();
     public Stack<string> InParametersStack { get; } = new();
     public Stack<string> OutParametersStack { get; set; } = new();
@@ -173,6 +175,7 @@ internal sealed class RuntimeInformation
         GlobalVariables.Clear();
         Labels.Clear();
         Functions.Clear();
+        BlockBoundaries.Clear();
         FunctionCallStack.Clear();
         InParametersStack.Clear();
         OutParametersStack.Clear();
@@ -187,8 +190,7 @@ internal sealed class RuntimeInformation
         IsInFunction = false;
         IsLocalSearch = false;
         LineNumber = 0;
-        TaskId = internalTaskId + 1;
-        internalTaskId++;
+        TaskId = ++internalTaskId;
     }
 
     private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopAllTasks)

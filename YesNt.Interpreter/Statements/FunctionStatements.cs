@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
@@ -33,14 +33,7 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        if (RuntimeInfo.Functions.ContainsKey(key))
-        {
-            RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
-        }
-        else
-        {
-            RuntimeInfo.Functions.Add(key, RuntimeInfo.LineNumber);
-        }
+        RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
 
         if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchFunction) && RuntimeInfo.SearchFunction == key)
         {
@@ -59,18 +52,7 @@ internal class FunctionStatements : StatementRuntimeInformation
     [Statement("%out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetOutParameter(string args)
     {
-        while (args.Contains("%out"))
-        {
-            if (RuntimeInfo.OutParametersStack.Count == 0)
-            {
-                RuntimeInfo.Exit(ExitMessages.NoOutArgumentInStack, true);
-                return;
-            }
-
-            args = args.ReplaceFirstOccurrence("%out", RuntimeInfo.OutParametersStack.Pop());
-        }
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessStackParameters(args, "%out", RuntimeInfo.OutParametersStack, RuntimeInfo, ExitMessages.NoOutArgumentInStack);
     }
 
     [Statement("%has_out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
@@ -122,18 +104,7 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        while (args.Contains("%in"))
-        {
-            if (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count == 0)
-            {
-                RuntimeInfo.Exit(ExitMessages.NoInArgumentInStack, true);
-                return;
-            }
-
-            args = args.ReplaceFirstOccurrence("%in", RuntimeInfo.FunctionCallStack.Peek().Arguments.Pop());
-        }
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessStackParameters(args, "%in", RuntimeInfo.FunctionCallStack.Peek().Arguments, RuntimeInfo, ExitMessages.NoInArgumentInStack);
     }
 
     [Statement("%has_in", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
@@ -181,10 +152,8 @@ internal class FunctionStatements : StatementRuntimeInformation
             }
             return;
         }
-        else
-        {
-            RuntimeInfo.IsInFunction = false;
-        }
+
+        RuntimeInfo.IsInFunction = false;
 
         if (RuntimeInfo.FunctionCallStack.Count > 0)
         {
@@ -203,10 +172,5 @@ internal class FunctionStatements : StatementRuntimeInformation
     public void ClearCallStack(string _)
     {
         RuntimeInfo.FunctionCallStack.Clear();
-    }
-
-    private static string NormalizeBlockName(string value)
-    {
-        return value.Trim().TrimEnd(':').Trim();
     }
 }

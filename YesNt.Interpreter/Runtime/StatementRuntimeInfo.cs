@@ -13,4 +13,12 @@ internal abstract class StatementRuntimeInformation
     /// Injected by the generated registry before any handler is invoked.
     /// </summary>
     public RuntimeInformation RuntimeInfo { get; set; }
+
+    /// <summary>
+    /// Trims surrounding whitespace and a trailing colon from a block or function name.
+    /// </summary>
+    protected static string NormalizeBlockName(string value)
+    {
+        return value.Trim().TrimEnd(':').Trim();
+    }
 }

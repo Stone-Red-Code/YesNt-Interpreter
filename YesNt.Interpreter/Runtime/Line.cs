@@ -1,4 +1,6 @@
-﻿namespace YesNt.Interpreter.Runtime;
+﻿using System.Collections.Generic;
+
+namespace YesNt.Interpreter.Runtime;
 
 /// <summary>
 /// Represents a single source line together with its location metadata.

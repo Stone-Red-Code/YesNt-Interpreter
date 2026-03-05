@@ -16,20 +16,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("calc", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.High)]
     public void Calculate(string args)
     {
-        MatchCollection matches = CalculationRegex().Matches(args.FromSafeString());
-
-        for (int i = 0; i < matches.Count; i++)
-        {
-            string res = Evaluator.Calculate(matches[i].Value);
-            if (res is null)
-            {
-                RuntimeInfo.Exit(ExitMessages.InvalidOperation, true);
-                return;
-            }
-            args = args.FromSafeString().Replace(matches[i].Value, res);
-        }
-
-        RuntimeInfo.CurrentLine = args;
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessCalculations(args.FromSafeString(), RuntimeInfo, CalculationRegex());
     }
 
     [Statement("eval", SearchMode.EndOfLine, SpaceAround.Start, ConsoleColor.DarkYellow, Priority = Priority.VeryHigh)]
@@ -100,6 +87,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
                 {
                     RuntimeInfo.Lines.Insert(RuntimeInfo.LineNumber + i, new Line(lines[i], Path.GetFileName(path), i));
                 }
+                RuntimeInfo.PreScanLinesAction?.Invoke();
                 RuntimeInfo.LineNumber--;
             }
             catch

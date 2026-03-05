@@ -1,8 +1,10 @@
-using System.Text.RegularExpressions;
+using System;
+using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
+using YesNt.Interpreter.Utilities;
 
 namespace YesNt.Interpreter.Statements;
 
@@ -11,32 +13,16 @@ internal partial class VariableStatements : StatementRuntimeInformation
     [Statement("var", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
     public void DefineVariable(string args)
     {
-        string[] parts = args.Split('=');
-        if (parts.Length == 2)
-        {
-            string key = parts[0].Trim();
-            if (key.Contains(' '))
-            {
-                RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
-            }
-
-            if (RuntimeInfo.Variables.ContainsKey(key))
-            {
-                RuntimeInfo.Variables[key] = parts[1].Trim();
-            }
-            else
-            {
-                RuntimeInfo.Variables.Add(key, parts[1].Trim());
-            }
-        }
-        else
-        {
-            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
-        }
+        DefineVariableIn(RuntimeInfo.Variables, args);
     }
 
     [Statement("global", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
     public void DefineGlobalVariable(string args)
+    {
+        DefineVariableIn(RuntimeInfo.GlobalVariables, args);
+    }
+
+    private void DefineVariableIn(Dictionary<string, string> dict, string args)
     {
         string[] parts = args.Split('=');
         if (parts.Length == 2)
@@ -47,14 +33,7 @@ internal partial class VariableStatements : StatementRuntimeInformation
                 RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
             }
 
-            if (RuntimeInfo.GlobalVariables.ContainsKey(key))
-            {
-                RuntimeInfo.GlobalVariables[key] = parts[1].Trim();
-            }
-            else
-            {
-                RuntimeInfo.GlobalVariables.Add(key, parts[1].Trim());
-            }
+            dict[key] = parts[1].Trim();
         }
         else
         {
@@ -84,38 +63,6 @@ internal partial class VariableStatements : StatementRuntimeInformation
     [Statement("${", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest, Separator = "}")]
     public void ReadVariable(string _)
     {
-        if (!RuntimeInfo.CurrentLine.Contains("${"))
-        {
-            return;
-        }
-
-        MatchCollection matches = VariableStatementRegex().Matches(RuntimeInfo.CurrentLine);
-
-        if (matches.Count <= 0)
-        {
-            return;
-        }
-
-        for (int i = 0; i < matches.Count; i++)
-        {
-            string varName = matches[i].Groups[1].Value;
-            if (RuntimeInfo.Variables.TryGetValue(varName, out string value))
-            {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace(matches[i].Value, value);
-            }
-            else if (RuntimeInfo.GlobalVariables.TryGetValue(varName, out value))
-            {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace(matches[i].Value, value);
-            }
-            else if (!RuntimeInfo.IsSearching)
-            {
-                RuntimeInfo.Exit(ExitMessages.VariableNotFound(varName), true);
-                return;
-            }
-        }
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessVariables(RuntimeInfo.CurrentLine, RuntimeInfo);
     }
-
-    [GeneratedRegex("\\$\\{([a-zA-Z0-9]+)\\}")]
-    private static partial Regex VariableStatementRegex();
 }
-

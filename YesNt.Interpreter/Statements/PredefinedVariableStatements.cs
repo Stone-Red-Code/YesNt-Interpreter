@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Runtime.InteropServices;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -14,51 +15,36 @@ internal class PredefinedVariableStatements : StatementRuntimeInformation
     [Statement("%time", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetUnixTimestamp(string args)
     {
-        args = args.Replace("%time", DateTimeOffset.Now.ToUnixTimeSeconds().ToString());
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessSimplePlaceholders(args, "%time", DateTimeOffset.Now.ToUnixTimeSeconds().ToString()).TrimEnd();
     }
 
     [Statement("%os", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetOperatingSystem(string args)
     {
-        args = args.Replace("%os", Environment.OSVersion.Platform.ToString());
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessSimplePlaceholders(args, "%os", Environment.OSVersion.Platform.ToString()).TrimEnd();
     }
 
     [Statement("%cpu", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetProcessorArchitecture(string args)
     {
-        args = args.Replace("%cpu", System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString());
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessSimplePlaceholders(args, "%cpu", System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString()).TrimEnd();
     }
 
     [Statement("%is64", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetIsOperatingSystem64Bit(string args)
     {
-        args = args.Replace("%is64", $"{Environment.Is64BitOperatingSystem}");
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessSimplePlaceholders(args, "%is64", Environment.Is64BitOperatingSystem.ToString()).TrimEnd();
     }
 
     [Statement("%pi", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetPi(string args)
     {
-        args = args.Replace("%pi", Math.PI.ToString());
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessSimplePlaceholders(args, "%pi", Math.PI.ToString()).TrimEnd();
     }
 
     [Statement("%rand", SearchMode.Contains, SpaceAround.None, ConsoleColor.Blue, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void GetRandom(string args)
     {
-        while (args.Contains("%rand"))
-        {
-            args = args.ReplaceFirstOccurrence("%rand", random.Next(32767, int.MaxValue).ToString());
-        }
-
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessDynamicPlaceholders(args, "%rand", () => random.Next(32767, int.MaxValue).ToString()).TrimEnd();
     }
 }

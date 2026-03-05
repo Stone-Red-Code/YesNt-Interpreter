@@ -64,13 +64,30 @@ public static class StringExtensions
     /// <returns>The safe-string encoded representation.</returns>
     public static string ToSafeString(this string input)
     {
-        StringBuilder output = new StringBuilder();
-        foreach (char c in input)
+        if (string.IsNullOrEmpty(input))
         {
-            _ = output.Append($"\v{c}\v");
+            return input;
         }
 
-        return ReplaceOnce(output.ToString(), ReplacementRules);
+        StringBuilder output = new StringBuilder(input.Length * 3);
+        foreach (char c in input)
+        {
+            string s = c.ToString();
+            if (ReplacementRules.TryGetValue(s, out string replacement))
+            {
+                _ = output.Append('\v');
+                _ = output.Append(replacement);
+                _ = output.Append('\v');
+            }
+            else
+            {
+                _ = output.Append('\v');
+                _ = output.Append(c);
+                _ = output.Append('\v');
+            }
+        }
+
+        return output.ToString();
     }
 
     /// <summary>
@@ -80,7 +97,35 @@ public static class StringExtensions
     /// <returns>The decoded plain string.</returns>
     public static string FromSafeString(this string input)
     {
-        return ReplaceOnce(input.Replace("\v", string.Empty), reverseReplacementRules);
+        if (string.IsNullOrEmpty(input) || (!input.Contains('\v') && !input.Contains('\x01')))
+        {
+            return input;
+        }
+
+        string stripped = input.Replace("\v", string.Empty);
+        if (!stripped.Contains('\x01'))
+        {
+            return stripped;
+        }
+
+        StringBuilder output = new StringBuilder(stripped.Length);
+        for (int i = 0; i < stripped.Length; i++)
+        {
+            if (stripped[i] == '\x01' && i + 4 < stripped.Length && stripped[i + 4] == '\x01')
+            {
+                string code = stripped.Substring(i, 5);
+                if (reverseReplacementRules.TryGetValue(code, out string value))
+                {
+                    _ = output.Append(value);
+                    i += 4;
+                    continue;
+                }
+            }
+
+            _ = output.Append(stripped[i]);
+        }
+
+        return output.ToString();
     }
 
     /// <summary>
@@ -92,7 +137,11 @@ public static class StringExtensions
     /// <returns><see langword="true"/> if parsing succeeded; otherwise <see langword="false"/>.</returns>
     public static bool ToStandardizedNumber(this string input, out double result)
     {
-        return double.TryParse(input.FromSafeString().Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out result);
+        if (input.IndexOf(',') != -1)
+        {
+            input = input.Replace(',', '.');
+        }
+        return double.TryParse(input, NumberStyles.Any, CultureInfo.InvariantCulture, out result);
     }
 
     /// <summary>Replaces only the first occurrence of <paramref name="oldValue"/> in the string.</summary>
@@ -130,25 +179,5 @@ public static class StringExtensions
         }
 
         return count;
-    }
-
-    private static string ReplaceOnce(string input, Dictionary<string, string> replacementRules)
-    {
-        // \x01emp\x01/string.Empty is a special case, it is used to represent empty strings and won't work with the normal rules because an empty string always matches and causes an infinite loop 3 letter abbreviation
-        IEnumerable<KeyValuePair<string, string>> matches = replacementRules.Where(rule => rule.Key != string.Empty && input.Contains(rule.Key, StringComparison.Ordinal));
-        if (!matches.Any())
-        {
-            return input;
-        }
-
-        KeyValuePair<string, string> match = matches.First();
-        int startIndex = input.IndexOf(match.Key, StringComparison.Ordinal);
-        int endIndex = startIndex + match.Key.Length;
-
-        string before = ReplaceOnce(input[..startIndex], replacementRules);
-        string replaced = match.Value;
-        string after = ReplaceOnce(input[endIndex..], replacementRules);
-
-        return before + replaced + after;
     }
 }

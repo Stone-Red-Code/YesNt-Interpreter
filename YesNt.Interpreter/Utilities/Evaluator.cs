@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -19,11 +19,13 @@ internal static partial class Evaluator
     /// </returns>
     public static bool? EvaluateCondition(string input)
     {
-        if (input.ToLower().FromSafeString().Trim() == "true")
+        input = input.FromSafeString();
+        string lower = input.ToLower().Trim();
+        if (lower == "true")
         {
             return true;
         }
-        else if (input.ToLower().FromSafeString().Trim() == "false")
+        else if (lower == "false")
         {
             return false;
         }
@@ -31,16 +33,16 @@ internal static partial class Evaluator
         string[] parts = input.Split("==");
         if (parts.Length == 2)
         {
-            string part1 = parts[0].FromSafeString().Trim();
-            string part2 = parts[1].FromSafeString().Trim();
+            string part1 = parts[0].Trim();
+            string part2 = parts[1].Trim();
             return part1 == part2;
         }
 
         parts = input.Split("!=");
         if (parts.Length == 2)
         {
-            string part1 = parts[0].FromSafeString().Trim();
-            string part2 = parts[1].FromSafeString().Trim();
+            string part1 = parts[0].Trim();
+            string part2 = parts[1].Trim();
             return part1 != part2;
         }
 
@@ -89,23 +91,26 @@ internal static partial class Evaluator
     /// <returns>The result as a culture-invariant numeric string, or <c>"NaN"</c> if evaluation failed.</returns>
     public static string Calculate(string input)
     {
+        input = input.FromSafeString();
         input = PlusPlusRegex().Replace(input, "+");
         input = MinusMinusRegex().Replace(input, "+");
         input = MinusPlusRegex().Replace(input, "-");
         input = PlusMinusRegex().Replace(input, "-");
 
-        string yes = Calculate(input, '+');
-        return yes;
+        return CalculateInternal(input, '+');
     }
 
-    private static string Calculate(string input, char op)
+    private static string CalculateInternal(string input, char op)
     {
-        if (input is null)
+        if (string.IsNullOrWhiteSpace(input))
         {
             return null;
         }
 
-        input = input.FromSafeString();
+        if (input.ToStandardizedNumber(out double quickNum))
+        {
+            return quickNum.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
 
         MatchCollection matches = ParenthesesRegex().Matches(input);
         while (matches.Count > 0)
@@ -113,7 +118,7 @@ internal static partial class Evaluator
             for (int i = 0; i < matches.Count; i++)
             {
                 string calc = matches[i].Value.Substring(1, matches[i].Length - 2);
-                string ret = Calculate(calc);
+                string ret = CalculateInternal(calc, '+');
                 input = input.Replace(matches[i].Value, ret);
             }
             matches = ParenthesesRegex().Matches(input);
@@ -136,11 +141,11 @@ internal static partial class Evaluator
 
             part = op switch
             {
-                '+' => Calculate(part, '-'),
-                '-' => Calculate(part, '*'),
-                '*' => Calculate(part, '/'),
-                '/' => Calculate(part, '%'),
-                '%' => Calculate(part, '^'),
+                '+' => CalculateInternal(part, '-'),
+                '-' => CalculateInternal(part, '*'),
+                '*' => CalculateInternal(part, '/'),
+                '/' => CalculateInternal(part, '%'),
+                '%' => CalculateInternal(part, '^'),
                 _ => part
             };
 

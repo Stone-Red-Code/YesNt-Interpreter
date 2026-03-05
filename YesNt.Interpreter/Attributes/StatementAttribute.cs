@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using YesNt.Interpreter.Enums;
 
@@ -59,6 +59,24 @@ public class StatementAttribute : Attribute
     /// to match. Used to differentiate overloaded keywords (e.g. <c>call</c> vs <c>call … with …</c>).
     /// </summary>
     public string Separator { get; set; }
+
+    /// <summary>
+    /// Gets or sets the name of the statement that marks the end of this block.
+    /// Used for block boundary caching (e.g., "while" has BlockPair = "end_while").
+    /// </summary>
+    public string BlockPair { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this statement is the end of a block.
+    /// Used for block boundary caching (e.g., "end_while" has IsBlockEnd = true).
+    /// </summary>
+    public bool IsBlockEnd { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this statement is an intermediate part of a block
+    /// (e.g., "else:" between "if" and "end_if").
+    /// </summary>
+    public bool IsBlockIntermediate { get; set; }
 
     /// <summary>
     /// Initializes a new <see cref="StatementAttribute"/> with a syntax-highlight color.
