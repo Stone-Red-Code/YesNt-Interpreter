@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>yesnt</id>
+    <version>1.0.0.0</version>
+    <title>YesNt</title>
+    <authors>Stone_Red</authors>
+    <projectUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter</projectUrl>
+    <licenseUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter</projectSourceUrl>
+    <bugTrackerUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter/issues</bugTrackerUrl>
+    <tags>yesnt scripting language interpreter code-editor</tags>
+    <summary>A line-based, interpreted scripting language and terminal code editor</summary>
+    <description>
+      **Usage**
+
+      1. Download &amp; install the latest release
+      - Chocolatey (Windows): `choco install yesnt`
+      - Snapcraft (Linux): `snap install yesnt`
+      - GitHub (Windows/Linux): [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
+      2. Run a script with the interpreter CLI
+      - `yesnt script.ynt` runs a script
+      3. Or use the terminal code editor
+      - `yesntcode` opens the editor (optional path to load a file)
+      - `run` / `debug` to execute the open script
+      - `format` to auto-format indentation
+    </description>
+    <releaseNotes>https://github.com/Stone-Red-Code/YesNt-Interpreter/releases/latest</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+    <file src="..\src\YesNt.Interpreter.App\bin\Release\net10.0\**" target="tools" />
+    <file src="..\src\YesNt.CodeEditor\bin\Release\net10.0\**" target="tools" exclude="..\src\YesNt.CodeEditor\bin\Release\net10.0\YesNt.Interpreter.*" />
+  </files>
+</package>

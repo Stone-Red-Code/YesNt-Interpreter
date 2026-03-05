@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YesNt.Interpreter", "YesNt.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{52024699-4F8E-40F6-AF03-71DDB4A1DC06}"
 	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
+		..\.editorconfig = ..\.editorconfig
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "YesNt.Interpreter.Tests", "YesNt.Interpreter.Tests\YesNt.Interpreter.Tests.csproj", "{2F95DCA7-3E43-4F2E-8FB2-067F0EC962B1}"

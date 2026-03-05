@@ -1,0 +1,58 @@
+name: yesnt
+version: "1.0.0.0"
+grade: stable
+summary: A line-based, interpreted scripting language and terminal code editor
+description: |
+  YesNt is a line-based, interpreted scripting language. The core idea is simple: each line maps to one primary statement. Lines are processed top-to-bottom, and inline tokens (like `${variable}` or `%read_line`) are substituted before the statement executes. Postfix modifiers like `calc` and `task` can also appear at the end of a line to evaluate arithmetic or fork execution into a background thread.
+
+  **Usage**
+
+  1. Download & install the latest release
+   - Chocolatey (Windows): `choco install yesnt`
+   - Snapcraft (Linux): `snap install yesnt`
+   - GitHub (Windows/Linux): [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
+  2. Run a script with the interpreter CLI
+   - `yesnt script.ynt` runs a script
+  3. Or use the terminal code editor
+   - `yesntcode` opens the editor (optional path to load a file)
+   - `run` / `debug` to execute the open script
+   - `format` to auto-format indentation
+
+base: core22
+architectures:
+  - build-on: amd64
+  - build-on: arm64
+
+confinement: strict
+
+parts:
+  yesnt:
+    plugin: dotnet
+    dotnet-build-configuration: Release
+    dotnet-self-contained-runtime-identifier: linux-x64
+    source: ./src/YesNt.Interpreter.App
+    build-packages:
+      - dotnet-sdk-10.0
+    stage-packages:
+      - libicu70
+  yesntcode:
+    plugin: dotnet
+    dotnet-build-configuration: Release
+    dotnet-self-contained-runtime-identifier: linux-x64
+    source: ./src/YesNt.CodeEditor
+    build-packages:
+      - dotnet-sdk-10.0
+    stage-packages:
+      - libicu70
+
+apps:
+  yesnt:
+    command: yesnt
+    plugs:
+      - home
+      - network
+  yesntcode:
+    command: yesntcode
+    plugs:
+      - home
+      - network
