@@ -201,6 +201,24 @@ public class CodeFlowTests
     }
 
     [TestMethod]
+    public void GotoInsideLoopExitsLoopTest()
+    {
+        List<string> lines =
+        [
+            "var hit = no",
+            "while 1 == 1:",
+            "var hit = yes",
+            "goto done",
+            "end_while",
+            "label done:",
+            "${hit}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "yes");
+    }
+
+
+    [TestMethod]
     public void LabelWithoutColonFailsTest()
     {
         List<string> lines =

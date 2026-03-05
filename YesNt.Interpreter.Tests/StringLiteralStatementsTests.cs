@@ -59,6 +59,48 @@ public class StringLiteralStatementsTests
     }
 
     [TestMethod]
+    public void EmptyStringLiteralHasLengthZeroTest()
+    {
+        List<string> lines =
+        [
+            "var x = \"\"",
+            "length ${x}",
+            "var len = %out",
+            "${len}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "0");
+    }
+
+    [TestMethod]
+    public void EscapedBackslashProducesLiteralBackslashTest()
+    {
+        List<string> lines =
+        [
+            "var msg = \"\\\\n\"",   // YesNt source: "\\n" → \n (backslash + n, 2 chars)
+            "length ${msg}",
+            "var len = %out",
+            "${len}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "2");
+    }
+
+    [TestMethod]
+    public void UnknownEscapeSequenceBecomesCharTest()
+    {
+        List<string> lines =
+        [
+            "var msg = \"\\q\"",   // YesNt source: "\q" → q (1 char)
+            "length ${msg}",
+            "var len = %out",
+            "${len}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "1");
+    }
+
+    [TestMethod]
     public void UnterminatedStringLiteralFailsTest()
     {
         List<string> lines =

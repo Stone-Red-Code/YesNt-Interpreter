@@ -64,6 +64,32 @@ public class ProcessingStatementsTests
     }
 
     [TestMethod]
+    public void CalcRespectsPrecedenceTest()
+    {
+        YesNtAssert.IsLineEqual("2 + 3 * 4 calc", "14");
+    }
+
+    [TestMethod]
+    public void CalcParenthesesOverridePrecedenceTest()
+    {
+        YesNtAssert.IsLineEqual("(2 + 3) * 4 calc", "20");
+    }
+
+    [TestMethod]
+    public void SleepZeroIsValidTest()
+    {
+        List<string> lines =
+        [
+            "sleep 0",
+            "var result = ok",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "ok");
+    }
+
+
+    [TestMethod]
     public void SleepInvalidValueFailsTest()
     {
         List<string> lines =
@@ -151,6 +177,27 @@ public class ProcessingStatementsTests
         ];
 
         YesNtAssert.IsLastLineEqual(lines, "1", timeout: 3000);
+    }
+
+    [TestMethod]
+    public void MultipleTasksRunConcurrentlyTest()
+    {
+        List<string> lines =
+        [
+            "global a = 0",
+            "global b = 0",
+            "global a = 1 task",
+            "global b = 2 task",
+            "while ${a} == 0:",
+            "sleep 10",
+            "end_while",
+            "while ${b} == 0:",
+            "sleep 10",
+            "end_while",
+            "${b}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "2", timeout: 3000);
     }
 }
 

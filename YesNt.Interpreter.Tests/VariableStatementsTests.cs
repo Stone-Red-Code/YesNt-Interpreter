@@ -92,6 +92,34 @@ public class VariableStatementsTests
     }
 
     [TestMethod]
+    public void OverwriteVariableTest()
+    {
+        List<string> lines =
+        [
+            "var x = first",
+            "var x = second",
+            "${x}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "second");
+    }
+
+    [TestMethod]
+    public void EmptyStringVariableHasLengthZeroTest()
+    {
+        List<string> lines =
+        [
+            "var x = \"\"",
+            "length ${x}",
+            "var len = %out",
+            "${len}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "0");
+    }
+
+
+    [TestMethod]
     public void MissingVariableReferenceFailsTest()
     {
         List<string> lines =

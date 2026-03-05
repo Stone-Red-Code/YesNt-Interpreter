@@ -133,6 +133,25 @@ public class FunctionStatementsTests
     }
 
     [TestMethod]
+    public void LocalVariableDoesNotLeakToCallerTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func modify:",
+            "var x = inner",
+            "return",
+            "label main:",
+            "var x = outer",
+            "call modify",
+            "${x}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "outer");
+    }
+
+
+    [TestMethod]
     public void ClearCallStackRunsTest()
     {
         List<string> lines =
@@ -143,6 +162,67 @@ public class FunctionStatementsTests
         ];
 
         YesNtAssert.IsLastLineEqual(lines, "ok");
+    }
+
+    // --- Error path tests ---
+
+    [TestMethod]
+    public void AccessInWithoutArgFailsTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func noin:",
+            "var x = %in",
+            "return",
+            "label main:",
+            "call noin"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "No in argument in stack");
+    }
+
+    // --- Nested scope tests ---
+
+    [TestMethod]
+    public void GlobalModifiedInsideFunctionIsVisibleAfterReturnTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func setglobal:",
+            "global shared = modified",
+            "return",
+            "label main:",
+            "global shared = original",
+            "call setglobal",
+            "${shared}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "modified");
+    }
+
+    [TestMethod]
+    public void NestedFunctionCallsHaveIndependentLocalScopesTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func outer:",
+            "var x = outer_val",
+            "call inner",
+            "push_out ${x}",
+            "return",
+            "func inner:",
+            "var x = inner_val",
+            "return",
+            "label main:",
+            "call outer",
+            "var result = %out",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "outer_val");
     }
 }
 
