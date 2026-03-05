@@ -193,6 +193,81 @@ public class AddStatementTests
     }
 
     [TestMethod]
+    public void RemoveStatementCausesInvalidStatementTest()
+    {
+        List<string> lines =
+        [
+            "sleep 100"
+        ];
+
+        YesNtAssert.ContainsTerminationMessageWithSetup(lines, "Invalid statement", interpreter =>
+        {
+            interpreter.RemoveStatement("sleep");
+        });
+    }
+
+    [TestMethod]
+    public void DisabledStatementIsIgnoredTest()
+    {
+        List<string> lines =
+        [
+            "var x = hello",
+            "${x}"
+        ];
+
+        YesNtAssert.ContainsTerminationMessageWithSetup(lines, "Variable \"x\" not found", interpreter =>
+        {
+            interpreter.DisableStatement("var");
+        });
+    }
+
+    [TestMethod]
+    public void DisabledStatementCanBeReenabledTest()
+    {
+        List<string> lines =
+        [
+            "var result = overwritten",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqualWithSetup(lines, "overwritten", setup: interpreter =>
+        {
+            interpreter.DisableStatement("var");
+            interpreter.EnableStatement("var");
+        });
+    }
+
+    [TestMethod]
+    public void DisableNonExistentStatementIsNoOpTest()
+    {
+        List<string> lines =
+        [
+            "var x = ok",
+            "${x}"
+        ];
+
+        YesNtAssert.IsLastLineEqualWithSetup(lines, "ok", setup: interpreter =>
+        {
+            interpreter.DisableStatement("nonexistent_keyword");
+        });
+    }
+
+    [TestMethod]
+    public void EnableNonDisabledStatementIsNoOpTest()
+    {
+        List<string> lines =
+        [
+            "var x = ok",
+            "${x}"
+        ];
+
+        YesNtAssert.IsLastLineEqualWithSetup(lines, "ok", setup: interpreter =>
+        {
+            interpreter.EnableStatement("var");
+        });
+    }
+
+    [TestMethod]
     public void AddStatementWithHighPriorityRunsBeforeNormalTest()
     {
         List<string> lines =
@@ -216,5 +291,47 @@ public class AddStatementTests
         });
 
         Assert.IsTrue(highPriorityOrder < normalPriorityOrder, "High priority statement should execute before Normal priority");
+    }
+
+    [TestMethod]
+    public void AddStatementAloneDoesNotReplaceBuiltinTest()
+    {
+        // Adding a custom 'var' handler without RemoveStatement first means BOTH handlers fire.
+        // The built-in still sets the variable, so ${x} resolves normally.
+        List<string> lines =
+        [
+            "var x = original",
+            "${x}"
+        ];
+
+        bool customHandlerCalled = false;
+
+        YesNtAssert.IsLastLineEqualWithSetup(lines, "original", setup: interpreter =>
+        {
+            interpreter.AddStatement("var", SearchMode.StartOfLine, SpaceAround.End, _ =>
+            {
+                customHandlerCalled = true;
+            });
+        });
+
+        Assert.IsTrue(customHandlerCalled, "Custom handler should have fired alongside the built-in");
+    }
+
+    [TestMethod]
+    public void RemoveThenAddStatementReplacesBuiltinTest()
+    {
+        // RemoveStatement + AddStatement correctly replaces the built-in.
+        // The built-in 'var' is gone, so only the custom handler fires.
+        List<string> lines =
+        [
+            "var x = original",
+            "${x}"
+        ];
+
+        YesNtAssert.ContainsTerminationMessageWithSetup(lines, "Variable \"x\" not found", interpreter =>
+        {
+            interpreter.RemoveStatement("var");
+            interpreter.AddStatement("var", SearchMode.StartOfLine, SpaceAround.End, _ => { });
+        });
     }
 }

@@ -12,9 +12,10 @@ to embed the YesNt interpreter and run scripts programmatically.
 3. [Running an in-memory script](#running-an-in-memory-script)
 4. [Capturing output (debug mode)](#capturing-output-debug-mode)
 5. [Adding custom statements](#adding-custom-statements)
-6. [Stopping a script](#stopping-a-script)
-7. [Reading registered statements](#reading-registered-statements)
-8. [API reference](#api-reference)
+6. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
+7. [Stopping a script](#stopping-a-script)
+8. [Reading registered statements](#reading-registered-statements)
+9. [API reference](#api-reference)
 
 ---
 
@@ -167,6 +168,76 @@ Use `StatementAttribute.Priority` to control ordering relative to built-in state
 
 ---
 
+## Removing and disabling built-in statements
+
+Use these methods to restrict which built-in keywords are available — useful for sandboxing
+or replacing a built-in with a custom implementation.
+
+### `RemoveStatement` — permanent removal
+
+Removes all handlers for the given keyword. Any script line that would have matched the
+keyword now triggers an **"Invalid statement"** error.
+
+```csharp
+var interpreter = new YesNtInterpreter();
+
+// Prevent scripts from launching external processes.
+interpreter.RemoveStatement("exec");
+
+interpreter.Execute(new List<string> { "exec notepad" });
+// Terminates with: Invalid statement
+```
+
+### `DisableStatement` — silent no-op
+
+Disables all handlers for the keyword. The keyword still **matches** (so no error is raised),
+but has no effect. Use `EnableStatement` to restore the original behaviour.
+
+```csharp
+var interpreter = new YesNtInterpreter();
+
+// Make sleep a no-op so tests don't actually wait.
+interpreter.DisableStatement("sleep");
+
+interpreter.Execute(new List<string>
+{
+    "sleep 10000",         // does nothing
+    "var x = done",
+    "print_line ${x}",     // prints: done
+});
+```
+
+### `EnableStatement` — restore a disabled statement
+
+Restores the original handlers saved when `DisableStatement` was called.
+Has no effect if the statement is not currently disabled.
+
+```csharp
+interpreter.DisableStatement("sleep");
+// ... configure other things ...
+interpreter.EnableStatement("sleep");   // sleep works normally again
+```
+
+### Replacing a built-in statement
+
+Call `RemoveStatement` to remove the built-in handlers, then `AddStatement` to install your own.
+Simply calling `AddStatement` with the same keyword name will **not** replace the built-in —
+it will add a second handler that fires alongside the original.
+
+```csharp
+// Replace the built-in 'exec' with a sandboxed version that only allows 'echo'.
+interpreter.RemoveStatement("exec");
+interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =>
+{
+    if (args.Trim() != "echo")
+        throw new InvalidOperationException("exec is restricted");
+
+    System.Diagnostics.Process.Start("cmd", "/c echo (sandboxed)");
+});
+```
+
+---
+
 ## Stopping a script
 
 ```csharp
@@ -252,6 +323,15 @@ public void AddStatement(StatementAttribute attribute, Action<string> handler);
 // Register a custom statement (convenience overloads)
 public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler);
 public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color, Action<string> handler);
+
+// Remove a built-in or custom statement permanently
+public void RemoveStatement(string name);
+
+// Disable a statement (silent no-op; reversible)
+public void DisableStatement(string name);
+
+// Re-enable a previously disabled statement
+public void EnableStatement(string name);
 
 // Request graceful stop
 public void Stop();

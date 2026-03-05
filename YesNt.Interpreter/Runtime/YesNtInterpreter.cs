@@ -44,6 +44,7 @@ public class YesNtInterpreter
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
     private Dictionary<StatementAttribute, Action<string>> statements;
     private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
+    private readonly Dictionary<string, List<KeyValuePair<StatementAttribute, Action<string>>>> disabledStatements = new();
 
     /// <summary>
     /// Gets a read-only snapshot of all currently registered statements.
@@ -83,7 +84,10 @@ public class YesNtInterpreter
 
     /// <summary>
     /// Registers a custom statement using a pre-built <see cref="StatementAttribute"/>.
-    /// If a statement with the same attribute key already exists it will be replaced.
+    /// If a statement with the same attribute key (identical field values) already exists it will be replaced;
+    /// otherwise a new entry is added. Built-in statements use distinct attribute instances, so passing a
+    /// newly constructed attribute with the same name will <b>add</b> a second handler rather than replacing
+    /// the built-in. Use <see cref="RemoveStatement"/> first to replace a built-in keyword.
     /// The statement list is re-sorted by priority after insertion.
     /// </summary>
     /// <param name="attribute">The attribute describing the keyword, search mode, and priority.</param>
@@ -123,6 +127,71 @@ public class YesNtInterpreter
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
+    }
+
+    /// <summary>
+    /// Permanently removes all built-in or custom statements that match <paramref name="name"/>.
+    /// After removal, any script line that would have matched triggers an "Invalid statement" error.
+    /// </summary>
+    /// <param name="name">The keyword of the statement(s) to remove.</param>
+    public void RemoveStatement(string name)
+    {
+        foreach (StatementAttribute key in statements.Keys.Where(k => k.Name == name).ToList())
+        {
+            statements.Remove(key);
+        }
+
+        disabledStatements.Remove(name);
+    }
+
+    /// <summary>
+    /// Disables all statements matching <paramref name="name"/> by replacing their handlers with
+    /// a no-op. The keyword still matches (so no "Invalid statement" error is raised), but the
+    /// statement has no effect. Use <see cref="EnableStatement"/> to restore original behaviour.
+    /// </summary>
+    /// <param name="name">The keyword of the statement(s) to disable.</param>
+    public void DisableStatement(string name)
+    {
+        if (disabledStatements.ContainsKey(name))
+        {
+            return;
+        }
+
+        List<KeyValuePair<StatementAttribute, Action<string>>> matching =
+            statements.Where(kv => kv.Key.Name == name).ToList();
+
+        if (matching.Count == 0)
+        {
+            return;
+        }
+
+        disabledStatements[name] = matching;
+
+        foreach (KeyValuePair<StatementAttribute, Action<string>> kv in matching)
+        {
+            statements[kv.Key] = _ => { };
+        }
+    }
+
+    /// <summary>
+    /// Re-enables statements previously disabled with <see cref="DisableStatement"/>,
+    /// restoring their original handlers.
+    /// Has no effect if the statement is not currently disabled.
+    /// </summary>
+    /// <param name="name">The keyword of the statement(s) to re-enable.</param>
+    public void EnableStatement(string name)
+    {
+        if (!disabledStatements.TryGetValue(name, out List<KeyValuePair<StatementAttribute, Action<string>>> saved))
+        {
+            return;
+        }
+
+        foreach (KeyValuePair<StatementAttribute, Action<string>> kv in saved)
+        {
+            statements[kv.Key] = kv.Value;
+        }
+
+        disabledStatements.Remove(name);
     }
 
     /// <summary>

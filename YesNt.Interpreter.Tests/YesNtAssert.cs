@@ -79,6 +79,12 @@ internal static class YesNtAssert
         StringAssert.Contains(debugOutput, expectedFragment);
     }
 
+    public static void ContainsTerminationMessageWithSetup(List<string> lines, string expectedMessageFragment, Action<YesNtInterpreter> setup, int timeout = 1000)
+    {
+        (_, string debugOutput) = ExecuteAndCapture(lines, timeout, setup);
+        StringAssert.Contains(debugOutput, expectedMessageFragment);
+    }
+
     public static string? GetLastLineWithSetup(List<string> lines, Action<YesNtInterpreter> setup, int timeout = 1000)
     {
         (DebugEventArgs? debugEventArgs, _) = ExecuteAndCapture(lines, timeout, setup);
