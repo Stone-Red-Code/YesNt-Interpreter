@@ -76,6 +76,7 @@ public class ConsoleStatementsTests
     }
 
     [TestMethod]
+    [DoNotParallelize] // timing-sensitive: relies on Thread.Sleep to let the interpreter reach %read_key
     public void ReadKeyCanBeInterruptedByStopTest()
     {
         YesNtInterpreter interpreter = new YesNtInterpreter();

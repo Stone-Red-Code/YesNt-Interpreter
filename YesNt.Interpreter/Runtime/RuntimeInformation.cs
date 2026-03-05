@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using YesNt.Interpreter.Utilities;
 
@@ -191,7 +192,7 @@ internal sealed class RuntimeInformation
         IsLocalSearch = false;
         LineNumber = 0;
 #pragma warning disable S2696 // internalTaskId is a shared counter intentionally incremented by each Reset call
-        TaskId = ++internalTaskId;
+        TaskId = Interlocked.Increment(ref internalTaskId);
 #pragma warning restore S2696
     }
 
