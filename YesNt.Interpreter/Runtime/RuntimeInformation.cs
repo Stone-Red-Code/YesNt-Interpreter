@@ -190,7 +190,9 @@ internal sealed class RuntimeInformation
         IsInFunction = false;
         IsLocalSearch = false;
         LineNumber = 0;
+#pragma warning disable S2696 // internalTaskId is a shared counter intentionally incremented by each Reset call
         TaskId = ++internalTaskId;
+#pragma warning restore S2696
     }
 
     private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopAllTasks)

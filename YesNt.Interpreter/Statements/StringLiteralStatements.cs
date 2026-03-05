@@ -19,6 +19,7 @@ internal class StringLiteralStatements : StatementRuntimeInformation
 
         StringBuilder output = new StringBuilder(args.Length);
 
+#pragma warning disable S127 // i is intentionally advanced to track position within quoted literals and escape sequences
         for (int i = 0; i < args.Length; i++)
         {
             char current = args[i];
@@ -50,6 +51,7 @@ internal class StringLiteralStatements : StatementRuntimeInformation
 
                 _ = literal.Append(ch);
             }
+#pragma warning restore S127
 
             if (!closed)
             {

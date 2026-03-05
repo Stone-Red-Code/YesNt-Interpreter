@@ -170,6 +170,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     [Statement("end_if", SearchMode.Exact, SpaceAround.None, ConsoleColor.Green, IsBlockEnd = true)]
     public void EndIf(string _)
     {
+        // Intentionally empty: end_if is a block-boundary marker only; no runtime action needed.
     }
 
     [Statement("while", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Green, Priority = Priority.VeryLow, Separator = ":", BlockPair = "end_while")]

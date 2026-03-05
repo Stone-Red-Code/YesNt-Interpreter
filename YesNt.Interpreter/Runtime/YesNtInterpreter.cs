@@ -439,9 +439,11 @@ public class YesNtInterpreter
             string content = runtimeInfo.Lines[i].Content;
             List<StatementHandler> matchingHandlers = [];
 
+#pragma warning disable S3267 // foreach + if is intentional here; LINQ .Where() would add overhead in this scan loop
             foreach (StatementHandler handler in statementHandlers)
             {
                 if (IsPossibleMatch(content, handler))
+#pragma warning restore S3267
                 {
                     matchingHandlers.Add(handler);
 
@@ -458,14 +460,11 @@ public class YesNtInterpreter
                     }
 
                     // Track block ends
-                    if (handler.Attribute.IsBlockEnd)
+                    if (handler.Attribute.IsBlockEnd && openBlocks.TryGetValue(handler.Attribute.Name, out Stack<int> endStack) && endStack.Count > 0)
                     {
-                        if (openBlocks.TryGetValue(handler.Attribute.Name, out Stack<int> stack) && stack.Count > 0)
-                        {
-                            int startLine = stack.Pop();
-                            runtimeInfo.BlockBoundaries[startLine] = i;
-                            runtimeInfo.BlockBoundaries[i] = startLine;
-                        }
+                        int startLine = endStack.Pop();
+                        runtimeInfo.BlockBoundaries[startLine] = i;
+                        runtimeInfo.BlockBoundaries[i] = startLine;
                     }
 
                     // Track block intermediates (e.g., else:): pop the opener, record boundary, push self

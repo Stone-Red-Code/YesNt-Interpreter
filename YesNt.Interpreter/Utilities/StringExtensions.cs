@@ -25,8 +25,6 @@ namespace YesNt.Interpreter.Utilities;
 /// </remarks>
 public static class StringExtensions
 {
-    private static readonly Dictionary<string, string> reverseReplacementRules;
-
     /// <summary>
     /// Gets the table that maps special characters to their safe-string escape codes.
     /// Keys are the original characters; values are the three-letter tilde codes.
@@ -50,10 +48,7 @@ public static class StringExtensions
         {"",   "\x01" + "emp" + "\x01" },
     };
 
-    static StringExtensions()
-    {
-        reverseReplacementRules = ReplacementRules.ToDictionary(x => x.Value, x => x.Key);
-    }
+    private static readonly Dictionary<string, string> reverseReplacementRules = ReplacementRules.ToDictionary(x => x.Value, x => x.Key);
 
     /// <summary>
     /// Encodes a string into safe-string format so that special characters cannot accidentally
@@ -109,6 +104,7 @@ public static class StringExtensions
         }
 
         StringBuilder output = new StringBuilder(stripped.Length);
+#pragma warning disable S127 // i is intentionally advanced by 4 when a 5-char escape code is consumed
         for (int i = 0; i < stripped.Length; i++)
         {
             if (stripped[i] == '\x01' && i + 4 < stripped.Length && stripped[i + 4] == '\x01')
@@ -124,6 +120,7 @@ public static class StringExtensions
 
             _ = output.Append(stripped[i]);
         }
+#pragma warning restore S127
 
         return output.ToString();
     }

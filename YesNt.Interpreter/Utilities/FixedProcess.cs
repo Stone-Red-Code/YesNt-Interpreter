@@ -7,6 +7,7 @@ using System.Threading;
 
 namespace YesNt.Interpreter.Utilities;
 
+/// <summary>Represents the method that handles the <see cref="FixedProcess.OutputDataReceived"/> and <see cref="FixedProcess.ErrorDataReceived"/> events.</summary>
 public delegate void DataReceivedEventHandler(object sender, DataReceivedEventArgs e);
 
 internal delegate void UserCallBack(string data);
@@ -81,6 +82,7 @@ internal class FixedProcess : Process
     }
 }
 
+/// <summary>Provides data for the <see cref="FixedProcess.OutputDataReceived"/> and <see cref="FixedProcess.ErrorDataReceived"/> events.</summary>
 public class DataReceivedEventArgs : EventArgs
 {
     internal string _data;
