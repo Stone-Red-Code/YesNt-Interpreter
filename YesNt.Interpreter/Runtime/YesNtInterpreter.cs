@@ -71,6 +71,17 @@ public class YesNtInterpreter
     }
 
     /// <summary>
+    /// Initializes a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
+    /// </summary>
+    public YesNtInterpreter()
+    {
+        GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
+
+        runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
+        runtimeInfo.OnLineExecuted += e => OnLineExecuted?.Invoke(e);
+    }
+
+    /// <summary>
     /// Registers a custom statement using a pre-built <see cref="StatementAttribute"/>.
     /// If a statement with the same attribute key already exists it will be replaced.
     /// The statement list is re-sorted by priority after insertion.
@@ -112,17 +123,6 @@ public class YesNtInterpreter
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
-    }
-
-    /// <summary>
-    /// Initialises a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
-    /// </summary>
-    public YesNtInterpreter()
-    {
-        GeneratedStatementRegistry.Register(runtimeInfo, out statements, out staticStatements);
-
-        runtimeInfo.OnDebugOutput += (s) => OnDebugOutput?.Invoke(s);
-        runtimeInfo.OnLineExecuted += e => OnLineExecuted?.Invoke(e);
     }
 
     /// <summary>
