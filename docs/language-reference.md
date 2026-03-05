@@ -311,7 +311,7 @@ goto <name>
 ```
 
 `label` marks a target. `goto` performs an unconditional jump to that label.
-Labels are scoped to the current function; you cannot jump to a label outside the calling function.
+At the top level, labels are file-scoped — you can jump to any label in the file. Inside a function, labels are restricted to the current function; you cannot jump to a label outside the calling function.
 
 ```ynt
 label loop:
@@ -618,7 +618,8 @@ to return to the caller instead of terminating that execution flow with `exit`.
 sleep <milliseconds>
 ```
 
-Pauses execution for the given number of milliseconds. Respects cancellation: if the script is
+Pauses execution for the given number of milliseconds. The argument must be a whole-number integer.
+Respects cancellation: if the script is
 stopped (e.g. via `abort_all` from another task), `sleep` returns early.
 
 ```ynt

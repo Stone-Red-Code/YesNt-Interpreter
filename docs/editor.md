@@ -18,17 +18,17 @@ If you pass a file path, it is loaded on startup.
 
 ## Command mode commands
 
-| Command               | Description                                               |
-| --------------------- | --------------------------------------------------------- |
-| `edit`                | Switch to edit mode                                       |
-| `line <n>`            | Jump to line `n` and switch to edit mode                  |
-| `save [path]`         | Save to current path or a new path                        |
-| `load <path>`         | Load a file                                               |
-| `new`                 | Create new file                                           |
-| `format`              | Auto-format indentation                                   |
-| `run [path]`          | Run script                                                |
-| `debug [path] [step]` | Run in debug mode (`step` enables step-by-step execution) |
-| `exit`                | Close the editor                                          |
+| Command               | Description                                                         |
+| --------------------- | ------------------------------------------------------------------- |
+| `edit`                | Switch to edit mode                                                 |
+| `line <n>`            | Jump to line `n` and switch to edit mode                            |
+| `save [path]`         | Save to current path or a new path                                  |
+| `load <path>`         | Load a file                                                         |
+| `new`                 | Create new file                                                     |
+| `format`              | Auto-format indentation                                             |
+| `run [path]`          | Save then run script (runs unsaved buffer if no path is set)        |
+| `debug [path] [step]` | Save then run in debug mode (`step` enables step-by-step execution) |
+| `exit`                | Close the editor                                                    |
 
 ## Edit mode controls
 

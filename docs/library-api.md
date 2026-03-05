@@ -163,7 +163,7 @@ interpreter.AddStatement(attr, args => Console.WriteLine($"[LOG] {args}"));
 | `End`      | A space must follow the keyword  |
 | `StartEnd` | Spaces required on both sides    |
 
-Custom statements run at `Priority.Normal` by default. Lower priority values run first.
+Custom statements run at `Priority.Normal` by default. Statements with a higher-ranking enum member (`PreProcessing` → `Highest` → … → `VeryLow`) run first; `VeryLow` runs last.
 Use `StatementAttribute.Priority` to control ordering relative to built-in statements.
 
 ---
