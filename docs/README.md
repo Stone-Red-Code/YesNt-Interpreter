@@ -1,6 +1,6 @@
 # YesNt Documentation
 
-YesNt is a line-based, interpreted scripting language inspired by assembly.
+YesNt is a line-based, interpreted scripting language.
 Each line is one statement. There are no multi-line expressions.
 
 ## Guides

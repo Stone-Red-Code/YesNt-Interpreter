@@ -170,10 +170,10 @@ Use `StatementAttribute.Priority` to control ordering relative to built-in state
 
 ## Removing and disabling built-in statements
 
-Use these methods to restrict which built-in keywords are available — useful for sandboxing
+Use these methods to restrict which built-in keywords are available, useful for sandboxing
 or replacing a built-in with a custom implementation.
 
-### `RemoveStatement` — permanent removal
+### `RemoveStatement` - permanent removal
 
 Removes all handlers for the given keyword. Any script line that would have matched the
 keyword now triggers an **"Invalid statement"** error.
@@ -188,7 +188,7 @@ interpreter.Execute(new List<string> { "exec notepad" });
 // Terminates with: Invalid statement
 ```
 
-### `DisableStatement` — silent no-op
+### `DisableStatement` - silent no-op
 
 Disables all handlers for the keyword. The keyword still **matches** (so no error is raised),
 but has no effect. Use `EnableStatement` to restore the original behaviour.
@@ -207,7 +207,7 @@ interpreter.Execute(new List<string>
 });
 ```
 
-### `EnableStatement` — restore a disabled statement
+### `EnableStatement` - restore a disabled statement
 
 Restores the original handlers saved when `DisableStatement` was called.
 Has no effect if the statement is not currently disabled.
@@ -221,7 +221,7 @@ interpreter.EnableStatement("sleep");   // sleep works normally again
 ### Replacing a built-in statement
 
 Call `RemoveStatement` to remove the built-in handlers, then `AddStatement` to install your own.
-Simply calling `AddStatement` with the same keyword name will **not** replace the built-in —
+Simply calling `AddStatement` with the same keyword name will **not** replace the built-in statement,
 it will add a second handler that fires alongside the original.
 
 ```csharp

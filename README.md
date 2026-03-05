@@ -6,12 +6,12 @@
 
 ## What is it?
 
-YesNt is an interpreted scripting language inspired by assembly. The core idea is simple: each line maps to one primary statement. Lines are processed top-to-bottom, and inline tokens (like `${variable}` or `%read_line`) are substituted before the statement executes. Postfix modifiers like `calc` and `task` can also appear at the end of a line to evaluate arithmetic or fork execution into a background thread.
+YesNt is a line-based, interpreted scripting language. The core idea is simple: each line maps to one primary statement. Lines are processed top-to-bottom, and inline tokens (like `${variable}` or `%read_line`) are substituted before the statement executes. Postfix modifiers like `calc` and `task` can also appear at the end of a line to evaluate arithmetic or fork execution into a background thread.
 
 **Key characteristics:**
 
 - **Line-based execution:** Lines are processed top-to-bottom. Each line is a self-contained statement
-- **Assembly-inspired control flow:** Labels, `goto`, and conditional jumps alongside structured `if`/`while` blocks
+- **Explicit control flow:** Labels, `goto`, and conditional jumps alongside structured `if`/`while` blocks
 - **Explicit scoping:** `var` for function-local variables, `global` for cross-scope shared state
 - **Functions with stacks:** Arguments and return values are passed via explicit push/pop stacks (`push_in`, `%in`, `push_out`, `%out`)
 - **Background tasks:** Any line can be forked into a background execution flow with `task`
