@@ -1,0 +1,12 @@
+func add_one:
+    var x = %in
+    var y = ${x} + 1 calc
+    push_out ${y}
+return
+
+var i = 0
+while ${i} < 60000:
+    call add_one with ${i}
+    var i = %out
+end_while
+print_line ${i}

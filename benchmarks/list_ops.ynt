@@ -1,0 +1,15 @@
+list numbers new
+var i = 0
+while ${i} < 30000:
+    list numbers add ${i}
+    var i = ${i} + 1 calc
+end_while
+
+var i = 0
+var sum = 0
+while ${i} < 30000:
+    list numbers get ${i}
+    var sum = ${sum} + %out calc
+    var i = ${i} + 1 calc
+end_while
+print_line ${sum}
