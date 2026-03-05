@@ -105,7 +105,7 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Registers a custom statement without a syntax-highlight colour.
+    /// Registers a custom statement without a syntax-highlight color.
     /// </summary>
     /// <param name="name">The keyword that identifies this statement in source code.</param>
     /// <param name="searchMode">Where in the line the keyword is matched.</param>
@@ -117,12 +117,12 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Registers a custom statement with a syntax-highlight colour.
+    /// Registers a custom statement with a syntax-highlight color.
     /// </summary>
     /// <param name="name">The keyword that identifies this statement in source code.</param>
     /// <param name="searchMode">Where in the line the keyword is matched.</param>
     /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
-    /// <param name="consoleColor">The colour used for syntax highlighting in the code editor.</param>
+    /// <param name="consoleColor">The color used for syntax highlighting in the code editor.</param>
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
@@ -147,7 +147,7 @@ public class YesNtInterpreter
     /// <summary>
     /// Disables all statements matching <paramref name="name"/> by replacing their handlers with
     /// a no-op. The keyword still matches (so no "Invalid statement" error is raised), but the
-    /// statement has no effect. Use <see cref="EnableStatement"/> to restore original behaviour.
+    /// statement has no effect. Use <see cref="EnableStatement"/> to restore original behavior.
     /// </summary>
     /// <param name="name">The keyword of the statement(s) to disable.</param>
     public void DisableStatement(string name)

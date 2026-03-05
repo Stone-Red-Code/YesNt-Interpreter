@@ -15,7 +15,7 @@ internal static partial class Evaluator
     /// <param name="input">The condition expression, which may contain safe-string encoded values.</param>
     /// <returns>
     /// <see langword="true"/> or <see langword="false"/> if the condition could be evaluated;
-    /// <see langword="null"/> if the expression is not a recognised condition form (treated as an error by callers).
+    /// <see langword="null"/> if the expression is not a recognized condition form (treated as an error by callers).
     /// </returns>
     public static bool? EvaluateCondition(string input)
     {
@@ -83,7 +83,7 @@ internal static partial class Evaluator
     /// Evaluates a numeric arithmetic expression string and returns the result as a string.
     /// Supports <c>+</c>, <c>-</c>, <c>*</c>, <c>/</c>, <c>%</c> (modulo), and <c>^</c> (power) operators
     /// with standard precedence (<c>^</c> highest, <c>+</c>/<c>-</c> lowest) and parentheses.
-    /// Adjacent sign characters (<c>++</c>, <c>--</c>, <c>-+</c>, <c>+-</c>) are normalised before evaluation.
+    /// Adjacent sign characters (<c>++</c>, <c>--</c>, <c>-+</c>, <c>+-</c>) are normalized before evaluation.
     /// </summary>
     /// <param name="input">The arithmetic expression to evaluate.</param>
     /// <returns>The result as a culture-invariant numeric string, or <c>"NaN"</c> if evaluation failed.</returns>

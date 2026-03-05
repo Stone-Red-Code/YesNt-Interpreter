@@ -26,7 +26,7 @@ public class StatementAttribute : Attribute
     /// <summary>Gets which sides of the keyword must be padded with a space.</summary>
     public SpaceAround SpaceAround { get; }
 
-    /// <summary>Gets or sets the syntax-highlight colour used by the code editor.</summary>
+    /// <summary>Gets or sets the syntax-highlight color used by the code editor.</summary>
     public ConsoleColor Color { get; set; }
 
     /// <summary>
@@ -61,12 +61,12 @@ public class StatementAttribute : Attribute
     public string Separator { get; set; }
 
     /// <summary>
-    /// Initialises a new <see cref="StatementAttribute"/> with a syntax-highlight colour.
+    /// Initializes a new <see cref="StatementAttribute"/> with a syntax-highlight color.
     /// </summary>
     /// <param name="name">The keyword that identifies this statement.</param>
     /// <param name="searchMode">Where in the line the keyword is matched.</param>
     /// <param name="spaceAround">Which sides of the keyword require a surrounding space.</param>
-    /// <param name="color">The colour used for syntax highlighting in the code editor.</param>
+    /// <param name="color">The color used for syntax highlighting in the code editor.</param>
     public StatementAttribute(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color)
     {
         Name = name;
@@ -76,7 +76,7 @@ public class StatementAttribute : Attribute
     }
 
     /// <summary>
-    /// Initialises a new <see cref="StatementAttribute"/> without a syntax-highlight colour.
+    /// Initializes a new <see cref="StatementAttribute"/> without a syntax-highlight color.
     /// The statement will be excluded from syntax highlighting.
     /// </summary>
     /// <param name="name">The keyword that identifies this statement.</param>

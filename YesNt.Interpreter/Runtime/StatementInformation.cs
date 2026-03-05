@@ -19,7 +19,7 @@ public class StatementInformation
     /// <summary>Gets which sides of the keyword must be padded with a space.</summary>
     public SpaceAround SpaceAround { get; internal set; }
 
-    /// <summary>Gets the syntax-highlight colour for this statement.</summary>
+    /// <summary>Gets the syntax-highlight color for this statement.</summary>
     public ConsoleColor Color { get; internal set; }
 
     /// <summary>
