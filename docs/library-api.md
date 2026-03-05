@@ -124,6 +124,37 @@ interpreter.AddStatement("log", SearchMode.StartOfLine, SpaceAround.End, args =>
 interpreter.Execute(new List<string> { "log Hello from custom statement" });
 ```
 
+### Accessing script state from a handler
+
+Pass an `Action<string, IStatementContext>` instead of `Action<string>` to receive the current
+script state. `IStatementContext` exposes the variable tables, the current line, the line number,
+and the ability to terminate execution.
+
+```csharp
+using YesNt.Interpreter.Runtime;
+
+interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End,
+    (args, ctx) =>
+    {
+        // args is e.g. "result 42" — parse however your syntax demands
+        string[] parts = args.Split(' ', 2);
+        if (parts.Length == 2)
+            ctx.Variables[parts[0]] = parts[1];
+        else
+            ctx.Exit("set_var requires: <name> <value>", isError: true);
+    });
+```
+
+`IStatementContext` provides:
+
+| Property                 | Type                        | Description                                                                |
+| ------------------------ | --------------------------- | -------------------------------------------------------------------------- |
+| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                 |
+| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
+| `CurrentLine`            | `string`                    | The line text being processed; write here for inline-substitution handlers |
+| `LineNumber`             | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
+| `Exit(message, isError)` | `void`                      | Terminate execution; `isError: true` signals an error condition            |
+
 ### With a syntax-highlight colour
 
 ```csharp
@@ -240,6 +271,9 @@ interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =
 
 ## Stopping a script
 
+Call `Stop()` from any thread to request graceful termination. The script stops at the next line
+boundary (or immediately if it is currently blocked waiting for console input).
+
 ```csharp
 var interpreter = new YesNtInterpreter();
 
@@ -250,6 +284,27 @@ var thread = new System.Threading.Thread(() =>
 thread.Start();
 System.Threading.Thread.Sleep(500);
 interpreter.Stop();   // signals the script to terminate at the next line boundary
+thread.Join();
+```
+
+### Stopping a script that blocks on `%read_key`
+
+When a script blocks waiting for keyboard input, use the `OnWaitingForInput` event instead of a
+fixed `Thread.Sleep`. The event fires at the exact moment the interpreter enters the blocking poll
+loop, so calling `Stop()` immediately after is always safe regardless of system load.
+
+```csharp
+var interpreter = new YesNtInterpreter();
+var waitingForInput = new System.Threading.AutoResetEvent(false);
+
+interpreter.OnWaitingForInput += () => waitingForInput.Set();
+
+var thread = new System.Threading.Thread(() =>
+    interpreter.Execute(new List<string> { "var key = %read_key" }));
+
+thread.Start();
+waitingForInput.WaitOne(TimeSpan.FromSeconds(5)); // wait until blocked on input
+interpreter.Stop();
 thread.Join();
 ```
 
@@ -301,12 +356,15 @@ Creates a new interpreter instance and registers all built-in statements.
 #### Events
 
 ```csharp
-public event Action<string>        OnDebugOutput;
+public event Action<string>         OnDebugOutput;
 public event Action<DebugEventArgs> OnLineExecuted;
+public event Action                 OnWaitingForInput;
 ```
 
-Only raised in debug mode (`isDebugMode: true`).
+`OnDebugOutput` and `OnLineExecuted` are only raised in debug mode (`isDebugMode: true`).
 `OnLineExecuted` receives `null` only on EOF completion.
+`OnWaitingForInput` is raised (in any mode) immediately before the interpreter blocks on
+`%read_key`. Use it to call `Stop()` deterministically without relying on `Thread.Sleep`.
 
 #### Methods
 
@@ -319,10 +377,13 @@ public void Execute(List<string> lines, bool isDebugMode = false);
 
 // Register a custom statement (full control)
 public void AddStatement(StatementAttribute attribute, Action<string> handler);
+public void AddStatement(StatementAttribute attribute, Action<string, IStatementContext> handler);
 
 // Register a custom statement (convenience overloads)
 public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler);
+public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string, IStatementContext> handler);
 public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color, Action<string> handler);
+public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor color, Action<string, IStatementContext> handler);
 
 // Remove a built-in or custom statement permanently
 public void RemoveStatement(string name);
@@ -343,3 +404,22 @@ public void Stop();
 // Read-only snapshot of all registered statements
 public ReadOnlyCollection<StatementInformation> StatementInformation { get; }
 ```
+
+---
+
+### `IStatementContext`
+
+```csharp
+public interface IStatementContext  // YesNt.Interpreter.Runtime
+```
+
+Passed to `Action<string, IStatementContext>` handlers registered via `AddStatement`.
+Provides access to the script state that a built-in statement handler would have.
+
+| Member                   | Type                        | Description                                                               |
+| ------------------------ | --------------------------- | ------------------------------------------------------------------------- |
+| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                |
+| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                            |
+| `CurrentLine`            | `string`                    | The line being processed; write here for inline-substitution handlers     |
+| `LineNumber`             | `int`                       | Zero-based index of the next line to execute; set this to implement jumps |
+| `Exit(message, isError)` | `void`                      | Terminate execution with a message; `isError: true` signals an error      |

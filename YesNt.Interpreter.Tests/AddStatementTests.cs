@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
+using YesNt.Interpreter.Runtime;
 
 namespace YesNt.Interpreter.Tests;
 
@@ -332,5 +333,45 @@ public class AddStatementTests
             interpreter.RemoveStatement("var");
             interpreter.AddStatement("var", SearchMode.StartOfLine, SpaceAround.End, _ => { });
         });
+    }
+
+    [TestMethod]
+    public void AddStatementWithRuntimeInfoCanSetVariableTest()
+    {
+        List<string> lines =
+        [
+            "set_var foo",
+            "${foo}"
+        ];
+
+        YesNtAssert.IsLastLineEqualWithSetup(lines, "hello", interpreter =>
+        {
+            interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End, (args, rt) =>
+            {
+                rt.Variables[args] = "hello";
+            });
+        });
+    }
+
+    [TestMethod]
+    public void AddStatementWithRuntimeInfoCanReadVariableTest()
+    {
+        List<string> lines =
+        [
+            "var greeting = world",
+            "echo_var greeting"
+        ];
+
+        string? captured = null;
+
+        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        {
+            interpreter.AddStatement("echo_var", SearchMode.StartOfLine, SpaceAround.End, (args, rt) =>
+            {
+                _ = rt.Variables.TryGetValue(args, out captured);
+            });
+        });
+
+        Assert.AreEqual("world", captured);
     }
 }

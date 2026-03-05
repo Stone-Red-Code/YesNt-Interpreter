@@ -112,6 +112,20 @@ public class YesNtInterpreter
     }
 
     /// <summary>
+    /// Registers a custom statement using a pre-built <see cref="StatementAttribute"/>,
+    /// with access to the script's <see cref="IStatementContext"/> (variables, line number, output, etc.).
+    /// </summary>
+    /// <param name="attribute">The attribute describing the keyword, search mode, and priority.</param>
+    /// <param name="handler">
+    /// The delegate invoked when the statement matches. Receives the argument text and the current
+    /// <see cref="IStatementContext"/> for reading/writing script state.
+    /// </param>
+    public void AddStatement(StatementAttribute attribute, Action<string, IStatementContext> handler)
+    {
+        AddStatement(attribute, args => handler(args, runtimeInfo));
+    }
+
+    /// <summary>
     /// Registers a simple custom statement with default settings.
     /// </summary>
     /// <param name="name">The keyword to match.</param>
@@ -119,6 +133,22 @@ public class YesNtInterpreter
     /// <param name="spaceAround">Which sides of the keyword must be padded with a space.</param>
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
+    {
+        AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
+    }
+
+    /// <summary>
+    /// Registers a simple custom statement with default settings,
+    /// with access to the script's <see cref="IStatementContext"/> (variables, line number, output, etc.).
+    /// </summary>
+    /// <param name="name">The keyword to match.</param>
+    /// <param name="searchMode">Where in the line the keyword is searched for.</param>
+    /// <param name="spaceAround">Which sides of the keyword must be padded with a space.</param>
+    /// <param name="handler">
+    /// The delegate invoked when the statement matches. Receives the argument text and the current
+    /// <see cref="IStatementContext"/> for reading/writing script state.
+    /// </param>
+    public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string, IStatementContext> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
     }
@@ -132,6 +162,23 @@ public class YesNtInterpreter
     /// <param name="consoleColor">The color used for syntax highlighting.</param>
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
+    {
+        AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
+    }
+
+    /// <summary>
+    /// Registers a simple custom statement with a specific syntax-highlight color,
+    /// with access to the script's <see cref="IStatementContext"/> (variables, line number, output, etc.).
+    /// </summary>
+    /// <param name="name">The keyword to match.</param>
+    /// <param name="searchMode">Where in the line the keyword is searched for.</param>
+    /// <param name="spaceAround">Which sides of the keyword must be padded with a space.</param>
+    /// <param name="consoleColor">The color used for syntax highlighting.</param>
+    /// <param name="handler">
+    /// The delegate invoked when the statement matches. Receives the argument text and the current
+    /// <see cref="IStatementContext"/> for reading/writing script state.
+    /// </param>
+    public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string, IStatementContext> handler)
     {
         AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
     }

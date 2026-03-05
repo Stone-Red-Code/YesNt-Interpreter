@@ -13,7 +13,7 @@ namespace YesNt.Interpreter.Runtime;
 /// <see cref="RuntimeInformation"/> whose <see cref="ParentRuntimeInformation"/> points back
 /// to the main execution context.
 /// </summary>
-internal sealed class RuntimeInformation
+internal sealed class RuntimeInformation : IStatementContext
 {
     public event Action<string> OnDebugOutput;
 
