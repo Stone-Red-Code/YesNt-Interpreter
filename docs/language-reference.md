@@ -421,7 +421,7 @@ Only valid inside a function.
 
 ```ynt
 func greet:
-    if %has_in == True call do_greet
+    if %has_in call do_greet
 return
 ```
 
@@ -452,7 +452,7 @@ print_line ${total}
 
 ```ynt
 call maybe_produce
-if %has_out == True call consume_result
+if %has_out call consume_result
 ```
 
 ### Clear the call stack - `clear_call_stack`
