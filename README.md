@@ -1,4 +1,4 @@
-![YesNt](https://socialify.git.ci/Stone-Red-Code/YesNt-Interpreter/image?description=1&forks=1&issues=1&name=1&pattern=Signal&pulls=1&stargazers=1&theme=Auto)
+![YesNt-Interpreter](https://socialify.git.ci/Stone-Red-Code/YesNt-Interpreter/image?description=1&font=Inter&forks=1&issues=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FStone-Red-Code%2FYesNt-Interpreter%2Frefs%2Fheads%2Fdevelop%2Fassets%2FLogo.svg&name=1&pattern=Diagonal+Stripes&pulls=1&stargazers=1&theme=Auto)
 
 - [Documentation](docs/README.md)
 - [Language Reference](docs/language-reference.md)
