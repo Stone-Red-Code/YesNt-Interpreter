@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
-using YesNt.Interpreter.Runtime;
 
 namespace YesNt.Interpreter.Tests;
 
@@ -21,7 +20,7 @@ public class AddStatementTests
 
         string? capturedArgs = null;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement("my_command", SearchMode.StartOfLine, SpaceAround.End, args =>
             {
@@ -42,7 +41,7 @@ public class AddStatementTests
 
         bool handlerCalled = false;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement("custom_cmd", SearchMode.StartOfLine, SpaceAround.End, _ =>
             {
@@ -63,9 +62,9 @@ public class AddStatementTests
 
         bool handlerCalled = false;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
-            var attr = new StatementAttribute("attr_cmd", SearchMode.StartOfLine, SpaceAround.End);
+            StatementAttribute attr = new StatementAttribute("attr_cmd", SearchMode.StartOfLine, SpaceAround.End);
             interpreter.AddStatement(attr, _ =>
             {
                 handlerCalled = true;
@@ -85,7 +84,7 @@ public class AddStatementTests
 
         bool handlerCalled = false;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement("exact_cmd", SearchMode.Exact, SpaceAround.None, _ =>
             {
@@ -106,7 +105,7 @@ public class AddStatementTests
 
         bool handlerCalled = false;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement(" ~mark~ ", SearchMode.Contains, SpaceAround.None, _ =>
             {
@@ -127,7 +126,7 @@ public class AddStatementTests
 
         bool handlerCalled = false;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement(" !end", SearchMode.EndOfLine, SpaceAround.None, _ =>
             {
@@ -148,7 +147,7 @@ public class AddStatementTests
 
         string? capturedArgs = null;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement("capture_cmd", SearchMode.StartOfLine, SpaceAround.End, args =>
             {
@@ -279,7 +278,7 @@ public class AddStatementTests
         int highPriorityOrder = -1;
         int normalPriorityOrder = -1;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement(
                 new StatementAttribute("priority_cmd", SearchMode.StartOfLine, SpaceAround.End) { Priority = Priority.High },

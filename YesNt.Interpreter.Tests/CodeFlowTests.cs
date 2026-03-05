@@ -217,7 +217,6 @@ public class CodeFlowTests
         YesNtAssert.IsLastLineEqual(lines, "yes");
     }
 
-
     [TestMethod]
     public void LabelWithoutColonFailsTest()
     {

@@ -26,15 +26,58 @@ internal static class ExitMessages
     internal const string NoInArgumentInStack = "No in argument in stack";
     internal const string NoFunctionInStack = "No function in stack";
 
-    internal static string LabelNotFound(string label) => $"Label \"{label}\" not found";
-    internal static string FunctionNotFound(string function) => $"Function \"{function}\" not found";
-    internal static string VariableNotFound(string variable) => $"Variable \"{variable}\" not found";
-    internal static string ListNotFound(string list) => $"List \"{list}\" not found";
-    internal static string InvalidIndex(string rawIndex) => $"\"{rawIndex}\" is not a valid index";
-    internal static string IndexOutOfRange(int index) => $"Index {index} out of range";
-    internal static string InvalidTimeoutValue(string value) => $"\"{value}\" is not a valid time-out value";
-    internal static string CouldNotLoadFile(string path) => $"Could not load file \"{path}\"";
-    internal static string CouldNotFindFile(string path) => $"Could not find file \"{path}\"";
-    internal static string CannotFindFile(string path) => $"Cannot find file \"{path}\".";
-    internal static string FailedToStart(string program, string message) => $"Failed to start \"{program}\". {message}";
+    internal static string LabelNotFound(string label)
+    {
+        return $"Label \"{label}\" not found";
+    }
+
+    internal static string FunctionNotFound(string function)
+    {
+        return $"Function \"{function}\" not found";
+    }
+
+    internal static string VariableNotFound(string variable)
+    {
+        return $"Variable \"{variable}\" not found";
+    }
+
+    internal static string ListNotFound(string list)
+    {
+        return $"List \"{list}\" not found";
+    }
+
+    internal static string InvalidIndex(string rawIndex)
+    {
+        return $"\"{rawIndex}\" is not a valid index";
+    }
+
+    internal static string IndexOutOfRange(int index)
+    {
+        return $"Index {index} out of range";
+    }
+
+    internal static string InvalidTimeoutValue(string value)
+    {
+        return $"\"{value}\" is not a valid time-out value";
+    }
+
+    internal static string CouldNotLoadFile(string path)
+    {
+        return $"Could not load file \"{path}\"";
+    }
+
+    internal static string CouldNotFindFile(string path)
+    {
+        return $"Could not find file \"{path}\"";
+    }
+
+    internal static string CannotFindFile(string path)
+    {
+        return $"Cannot find file \"{path}\".";
+    }
+
+    internal static string FailedToStart(string program, string message)
+    {
+        return $"Failed to start \"{program}\". {message}";
+    }
 }

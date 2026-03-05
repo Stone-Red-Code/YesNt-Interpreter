@@ -118,7 +118,6 @@ public class VariableStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "0");
     }
 
-
     [TestMethod]
     public void MissingVariableReferenceFailsTest()
     {

@@ -46,7 +46,7 @@ public class ConsoleStatementsTests
             "clear"
         ];
 
-        _ = Assert.ThrowsException<IOException>(() => YesNtAssert.GetLastLine(lines));
+        _ = Assert.Throws<IOException>(() => YesNtAssert.GetLastLine(lines));
     }
 
     [TestMethod]
@@ -80,7 +80,7 @@ public class ConsoleStatementsTests
     {
         YesNtInterpreter interpreter = new YesNtInterpreter();
 
-        AutoResetEvent onDone= new AutoResetEvent(false);
+        AutoResetEvent onDone = new AutoResetEvent(false);
         StringBuilder output = new StringBuilder();
 
         interpreter.OnDebugOutput += (s) => _ = output.Append(s);

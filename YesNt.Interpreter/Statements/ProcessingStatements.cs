@@ -50,7 +50,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         _ = Task.Run(() =>
         {
             YesNtInterpreter interpreter = new YesNtInterpreter();
-        interpreter.Execute(lines, RuntimeInfo.GlobalVariables, lineNumber, RuntimeInfo);
+            interpreter.Execute(lines, RuntimeInfo.GlobalVariables, lineNumber, RuntimeInfo);
         });
 
         RuntimeInfo.CurrentLine = string.Empty;

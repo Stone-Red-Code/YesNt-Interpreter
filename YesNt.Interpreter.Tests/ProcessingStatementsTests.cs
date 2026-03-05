@@ -88,7 +88,6 @@ public class ProcessingStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "ok");
     }
 
-
     [TestMethod]
     public void SleepInvalidValueFailsTest()
     {

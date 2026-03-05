@@ -44,7 +44,7 @@ public class YesNtInterpreter
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
     private Dictionary<StatementAttribute, Action<string>> statements;
     private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
-    private readonly Dictionary<string, List<KeyValuePair<StatementAttribute, Action<string>>>> disabledStatements = new();
+    private readonly Dictionary<string, List<KeyValuePair<StatementAttribute, Action<string>>>> disabledStatements = [];
 
     /// <summary>
     /// Gets a read-only snapshot of all currently registered statements.
@@ -138,10 +138,10 @@ public class YesNtInterpreter
     {
         foreach (StatementAttribute key in statements.Keys.Where(k => k.Name == name).ToList())
         {
-            statements.Remove(key);
+            _ = statements.Remove(key);
         }
 
-        disabledStatements.Remove(name);
+        _ = disabledStatements.Remove(name);
     }
 
     /// <summary>
@@ -191,7 +191,7 @@ public class YesNtInterpreter
             statements[kv.Key] = kv.Value;
         }
 
-        disabledStatements.Remove(name);
+        _ = disabledStatements.Remove(name);
     }
 
     /// <summary>

@@ -8,19 +8,20 @@ using System.Text;
 namespace YesNt.Interpreter.Generator;
 
 [Generator]
-public sealed class StatementRegistryGenerator : ISourceGenerator
+public sealed class StatementRegistryGenerator : IIncrementalGenerator
 {
     private const string StatementAttributeName = "YesNt.Interpreter.Attributes.StatementAttribute";
     private const string StaticStatementAttributeName = "YesNt.Interpreter.Attributes.StaticStatementAttribute";
 
-    public void Initialize(GeneratorInitializationContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        context.RegisterSourceOutput(
+            context.CompilationProvider,
+            Execute);
     }
 
-    public void Execute(GeneratorExecutionContext context)
+    private static void Execute(SourceProductionContext context, Compilation compilation)
     {
-        Compilation compilation = context.Compilation;
-
         List<MethodRegistration> statementMethods = [];
         List<MethodRegistration> staticStatementMethods = [];
 

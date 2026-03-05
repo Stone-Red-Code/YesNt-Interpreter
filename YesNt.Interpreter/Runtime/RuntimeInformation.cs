@@ -23,9 +23,7 @@ internal sealed class RuntimeInformation
     private static int internalTaskId = 0;
     private readonly Dictionary<string, string> topVariables = [];
     private readonly Dictionary<string, List<string>> topLists = [];
-    private readonly Dictionary<string, int> topLabels = [];
-    private RuntimeInformation parentRuntimeInformation;
-    private int taskId = 0;
+
     public Dictionary<string, string> GlobalVariables { get; set; } = [];
     public Dictionary<string, int> Functions { get; } = [];
     public Stack<FunctionScope> FunctionCallStack { get; } = new();
@@ -41,7 +39,7 @@ internal sealed class RuntimeInformation
     public bool IsDebugMode { get; set; } = false;
     public string WorkingDirectory { get; set; } = string.Empty;
     public bool IsTask => ParentRuntimeInformation is not null;
-    public int TaskId => IsTask ? taskId : 0;
+    public int TaskId { get => IsTask ? field : 0; private set; } = 0;
     public bool InternalIsInFunction { get; set; }
 
     public bool IsInFunction
@@ -53,18 +51,15 @@ internal sealed class RuntimeInformation
     public Dictionary<string, string> Variables => FunctionCallStack.Count == 0 ? topVariables : FunctionCallStack.Peek().Variables;
     public Dictionary<string, List<string>> Lists => FunctionCallStack.Count == 0 ? topLists : FunctionCallStack.Peek().Lists;
 
-    public Dictionary<string, int> Labels => FunctionCallStack.Count == 0 ? topLabels : FunctionCallStack.Peek().Labels;
+    public Dictionary<string, int> Labels { get => FunctionCallStack.Count == 0 ? field : FunctionCallStack.Peek().Labels; } = [];
 
     public RuntimeInformation ParentRuntimeInformation
     {
-        get => parentRuntimeInformation;
+        get;
         set
         {
-            parentRuntimeInformation = value;
-            if (parentRuntimeInformation is not null)
-            {
-                parentRuntimeInformation.OnExit += ParentRuntimeInformation_OnExit;
-            }
+            field = value;
+            field?.OnExit += ParentRuntimeInformation_OnExit;
         }
     }
 
@@ -73,7 +68,7 @@ internal sealed class RuntimeInformation
 
     public void WriteLine(string output, bool forceWrite = false)
     {
-        if ((Stop && !forceWrite) || (parentRuntimeInformation?.StopAllTasks == true && !forceWrite))
+        if ((Stop && !forceWrite) || (ParentRuntimeInformation?.StopAllTasks == true && !forceWrite))
         {
             return;
         }
@@ -82,7 +77,7 @@ internal sealed class RuntimeInformation
         {
             if (IsTask)
             {
-                parentRuntimeInformation!.WriteLine(output.FromSafeString(), forceWrite);
+                ParentRuntimeInformation!.WriteLine(output.FromSafeString(), forceWrite);
             }
             else
             {
@@ -97,7 +92,7 @@ internal sealed class RuntimeInformation
 
     public void Write(string output, bool forceWrite = false)
     {
-        if ((Stop && !forceWrite) || (parentRuntimeInformation?.StopAllTasks == true && !forceWrite))
+        if ((Stop && !forceWrite) || (ParentRuntimeInformation?.StopAllTasks == true && !forceWrite))
         {
             return;
         }
@@ -106,7 +101,7 @@ internal sealed class RuntimeInformation
         {
             if (IsTask)
             {
-                parentRuntimeInformation!.Write(output.FromSafeString(), forceWrite);
+                ParentRuntimeInformation!.Write(output.FromSafeString(), forceWrite);
             }
             else
             {
@@ -154,7 +149,7 @@ internal sealed class RuntimeInformation
         {
             StopAllTasks = true;
             OnExit?.Invoke(message, StopAllTasks);
-            parentRuntimeInformation?.Exit(ExitMessages.TerminatedByChildTask, true);
+            ParentRuntimeInformation?.Exit(ExitMessages.TerminatedByChildTask, true);
         }
     }
 
@@ -162,7 +157,7 @@ internal sealed class RuntimeInformation
     {
         if (IsTask)
         {
-            parentRuntimeInformation.LineExecuted(debugEventArgs);
+            ParentRuntimeInformation.LineExecuted(debugEventArgs);
         }
         else
         {
@@ -192,10 +187,8 @@ internal sealed class RuntimeInformation
         IsInFunction = false;
         IsLocalSearch = false;
         LineNumber = 0;
-        taskId = internalTaskId + 1;
-#pragma warning disable S2696 // Instance members should not write to "static" fields
+        TaskId = internalTaskId + 1;
         internalTaskId++;
-#pragma warning restore S2696 // Instance members should not write to "static" fields
     }
 
     private void ParentRuntimeInformation_OnExit(string exitMessage, bool stopAllTasks)

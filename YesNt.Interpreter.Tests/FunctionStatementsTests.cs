@@ -150,7 +150,6 @@ public class FunctionStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "outer");
     }
 
-
     [TestMethod]
     public void ClearCallStackRunsTest()
     {
