@@ -107,4 +107,3 @@ public class ConsoleStatementsTests
         StringAssert.Contains(output.ToString(), "Terminated by external process");
     }
 }
-

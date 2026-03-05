@@ -129,4 +129,3 @@ public class VariableStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Variable \"missing\" not found");
     }
 }
-

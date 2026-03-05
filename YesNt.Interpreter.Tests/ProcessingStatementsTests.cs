@@ -199,4 +199,3 @@ public class ProcessingStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "2", timeout: 3000);
     }
 }
-

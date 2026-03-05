@@ -430,9 +430,9 @@ public class YesNtInterpreter
     {
         runtimeInfo.BlockBoundaries.Clear();
         lineMatchingHandlers = new List<List<StatementHandler>>(runtimeInfo.Lines.Count);
-        
+
         // Dictionary to track open blocks by their expected end statement name
-        var openBlocks = new Dictionary<string, Stack<int>>();
+        Dictionary<string, Stack<int>> openBlocks = [];
 
         for (int i = 0; i < runtimeInfo.Lines.Count; i++)
         {
@@ -449,7 +449,7 @@ public class YesNtInterpreter
                     string blockPair = handler.Attribute.BlockPair;
                     if (!string.IsNullOrEmpty(blockPair) && !handler.Attribute.IsBlockIntermediate)
                     {
-                        if (!openBlocks.TryGetValue(blockPair, out var stack))
+                        if (!openBlocks.TryGetValue(blockPair, out Stack<int> stack))
                         {
                             stack = new Stack<int>();
                             openBlocks[blockPair] = stack;
@@ -460,7 +460,7 @@ public class YesNtInterpreter
                     // Track block ends
                     if (handler.Attribute.IsBlockEnd)
                     {
-                        if (openBlocks.TryGetValue(handler.Attribute.Name, out var stack) && stack.Count > 0)
+                        if (openBlocks.TryGetValue(handler.Attribute.Name, out Stack<int> stack) && stack.Count > 0)
                         {
                             int startLine = stack.Pop();
                             runtimeInfo.BlockBoundaries[startLine] = i;
@@ -474,7 +474,7 @@ public class YesNtInterpreter
                         string intermediatePair = handler.Attribute.BlockPair;
                         if (!string.IsNullOrEmpty(intermediatePair))
                         {
-                            if (!openBlocks.TryGetValue(intermediatePair, out var stack))
+                            if (!openBlocks.TryGetValue(intermediatePair, out Stack<int> stack))
                             {
                                 stack = new Stack<int>();
                                 openBlocks[intermediatePair] = stack;

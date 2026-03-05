@@ -46,4 +46,3 @@ public class SystemStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Failed to start \"does_not_exist_abc_xyz\"");
     }
 }
-

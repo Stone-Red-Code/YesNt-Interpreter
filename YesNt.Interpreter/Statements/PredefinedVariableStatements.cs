@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;

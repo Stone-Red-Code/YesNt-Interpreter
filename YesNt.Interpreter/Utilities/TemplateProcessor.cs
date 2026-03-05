@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using YesNt.Interpreter.Runtime;
 
 namespace YesNt.Interpreter.Utilities;
@@ -16,33 +17,39 @@ internal static class TemplateProcessor
     /// </summary>
     public static string ProcessVariables(string input, RuntimeInformation runtimeInfo)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
 
         int startIdx = input.IndexOf("${", StringComparison.Ordinal);
-        if (startIdx == -1) return input;
+        if (startIdx == -1)
+        {
+            return input;
+        }
 
         StringBuilder sb = new StringBuilder(input.Length);
         int lastIdx = 0;
 
         while (startIdx != -1)
         {
-            sb.Append(input, lastIdx, startIdx - lastIdx);
+            _ = sb.Append(input, lastIdx, startIdx - lastIdx);
             int endIdx = input.IndexOf('}', startIdx + 2);
             if (endIdx == -1)
             {
-                sb.Append("${");
+                _ = sb.Append("${");
                 lastIdx = startIdx + 2;
             }
             else
             {
-                string varName = input.Substring(startIdx + 2, endIdx - (startIdx + 2));
+                string varName = input[(startIdx + 2)..endIdx];
                 if (runtimeInfo.Variables.TryGetValue(varName, out string value))
                 {
-                    sb.Append(value);
+                    _ = sb.Append(value);
                 }
                 else if (runtimeInfo.GlobalVariables.TryGetValue(varName, out value))
                 {
-                    sb.Append(value);
+                    _ = sb.Append(value);
                 }
                 else if (!runtimeInfo.IsSearching)
                 {
@@ -51,9 +58,9 @@ internal static class TemplateProcessor
                 }
                 else
                 {
-                    sb.Append("${");
-                    sb.Append(varName);
-                    sb.Append('}');
+                    _ = sb.Append("${");
+                    _ = sb.Append(varName);
+                    _ = sb.Append('}');
                 }
 
                 lastIdx = endIdx + 1;
@@ -62,7 +69,7 @@ internal static class TemplateProcessor
             startIdx = input.IndexOf("${", lastIdx, StringComparison.Ordinal);
         }
 
-        sb.Append(input, lastIdx, input.Length - lastIdx);
+        _ = sb.Append(input, lastIdx, input.Length - lastIdx);
         return sb.ToString();
     }
 
@@ -71,10 +78,16 @@ internal static class TemplateProcessor
     /// </summary>
     public static string ProcessStackParameters(string input, string placeholder, Stack<string> stack, RuntimeInformation runtimeInfo, string emptyStackMessage)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
 
         int startIdx = input.IndexOf(placeholder, StringComparison.Ordinal);
-        if (startIdx == -1) return input;
+        if (startIdx == -1)
+        {
+            return input;
+        }
 
         StringBuilder sb = new StringBuilder(input.Length);
         int lastIdx = 0;
@@ -82,18 +95,18 @@ internal static class TemplateProcessor
 
         while (startIdx != -1)
         {
-            sb.Append(input, lastIdx, startIdx - lastIdx);
+            _ = sb.Append(input, lastIdx, startIdx - lastIdx);
             if (stack.Count == 0)
             {
                 runtimeInfo.Exit(emptyStackMessage, true);
                 return input;
             }
-            sb.Append(stack.Pop());
+            _ = sb.Append(stack.Pop());
             lastIdx = startIdx + placeholderLen;
             startIdx = input.IndexOf(placeholder, lastIdx, StringComparison.Ordinal);
         }
 
-        sb.Append(input, lastIdx, input.Length - lastIdx);
+        _ = sb.Append(input, lastIdx, input.Length - lastIdx);
         return sb.ToString();
     }
 
@@ -102,9 +115,7 @@ internal static class TemplateProcessor
     /// </summary>
     public static string ProcessSimplePlaceholders(string input, string placeholder, string value)
     {
-        if (string.IsNullOrEmpty(input)) return input;
-
-        return input.Replace(placeholder, value, StringComparison.Ordinal);
+        return string.IsNullOrEmpty(input) ? input : input.Replace(placeholder, value, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -112,10 +123,16 @@ internal static class TemplateProcessor
     /// </summary>
     public static string ProcessDynamicPlaceholders(string input, string placeholder, Func<string> valueProvider)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
 
         int startIdx = input.IndexOf(placeholder, StringComparison.Ordinal);
-        if (startIdx == -1) return input;
+        if (startIdx == -1)
+        {
+            return input;
+        }
 
         StringBuilder sb = new StringBuilder(input.Length);
         int lastIdx = 0;
@@ -123,13 +140,13 @@ internal static class TemplateProcessor
 
         while (startIdx != -1)
         {
-            sb.Append(input, lastIdx, startIdx - lastIdx);
-            sb.Append(valueProvider());
+            _ = sb.Append(input, lastIdx, startIdx - lastIdx);
+            _ = sb.Append(valueProvider());
             lastIdx = startIdx + placeholderLen;
             startIdx = input.IndexOf(placeholder, lastIdx, StringComparison.Ordinal);
         }
 
-        sb.Append(input, lastIdx, input.Length - lastIdx);
+        _ = sb.Append(input, lastIdx, input.Length - lastIdx);
         return sb.ToString();
     }
 
@@ -138,10 +155,16 @@ internal static class TemplateProcessor
     /// </summary>
     public static string ProcessCalculations(string input, RuntimeInformation runtimeInfo, Regex calculationRegex)
     {
-        if (string.IsNullOrEmpty(input)) return input;
+        if (string.IsNullOrEmpty(input))
+        {
+            return input;
+        }
 
         MatchCollection matches = calculationRegex.Matches(input);
-        if (matches.Count == 0) return input;
+        if (matches.Count == 0)
+        {
+            return input;
+        }
 
         StringBuilder sb = new StringBuilder(input.Length);
         int lastIdx = 0;
@@ -149,19 +172,19 @@ internal static class TemplateProcessor
         for (int i = 0; i < matches.Count; i++)
         {
             Match match = matches[i];
-            sb.Append(input, lastIdx, match.Index - lastIdx);
-            
+            _ = sb.Append(input, lastIdx, match.Index - lastIdx);
+
             string res = Evaluator.Calculate(match.Value);
             if (res is null)
             {
                 runtimeInfo.Exit(ExitMessages.InvalidOperation, true);
                 return input;
             }
-            sb.Append(res);
+            _ = sb.Append(res);
             lastIdx = match.Index + match.Length;
         }
 
-        sb.Append(input, lastIdx, input.Length - lastIdx);
+        _ = sb.Append(input, lastIdx, input.Length - lastIdx);
         return sb.ToString();
     }
 }

@@ -78,4 +78,3 @@ public class CodeFlowStatementsTests
         YesNtAssert.ContainsTerminationMessage(lines, "Function \"nowhere\" not found");
     }
 }
-

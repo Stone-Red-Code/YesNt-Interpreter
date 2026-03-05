@@ -224,4 +224,3 @@ public class FunctionStatementsTests
         YesNtAssert.IsLastLineEqual(lines, "outer_val");
     }
 }
-
