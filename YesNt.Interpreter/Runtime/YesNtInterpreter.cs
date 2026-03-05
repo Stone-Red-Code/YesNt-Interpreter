@@ -449,17 +449,10 @@ public class YesNtInterpreter
 
         if (!File.Exists(path))
         {
-            Console.WriteLine($"File \"{path}\" not found!");
             return false;
         }
 
         string[] lines = File.ReadAllLines(path);
-
-        if (lines.Length <= 0)
-        {
-            Console.WriteLine($"File \"{path}\" is empty!");
-            return false;
-        }
 
         runtimeInfo.WorkingDirectory = Path.GetDirectoryName(path);
 

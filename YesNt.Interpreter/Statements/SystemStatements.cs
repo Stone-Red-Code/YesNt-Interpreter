@@ -64,7 +64,7 @@ internal class SystemStatements : StatementRuntimeInformation
         }
     }
 
-    private static void Process_ErrorDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
+    private void Process_ErrorDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
     {
         if (string.IsNullOrWhiteSpace(e.Data))
         {
@@ -72,10 +72,10 @@ internal class SystemStatements : StatementRuntimeInformation
         }
 
         outputStack.Push(e.Data.ToSafeString());
-        Console.Write("Error: " + e.Data);
+        RuntimeInfo.Write("Error: " + e.Data);
     }
 
-    private static void Process_OutputDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
+    private void Process_OutputDataReceived(Utilities.DataReceivedEventArgs e, Stack<string> outputStack)
     {
         if (string.IsNullOrWhiteSpace(e.Data))
         {
@@ -83,7 +83,7 @@ internal class SystemStatements : StatementRuntimeInformation
         }
 
         outputStack.Push(e.Data.ToSafeString());
-        Console.Write(e.Data);
+        RuntimeInfo.Write(e.Data);
     }
 
     private void StartProcess(string name, string args)
