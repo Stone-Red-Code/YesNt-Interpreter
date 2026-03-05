@@ -1,121 +1,67 @@
-﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
+using YesNt.Interpreter.Utilities;
 
-namespace YesNt.Interpreter.Statements
+namespace YesNt.Interpreter.Statements;
+
+internal partial class VariableStatements : StatementRuntimeInformation
 {
-    internal class VariableStatements : StatementRuntimeInformation
+    [Statement("var", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
+    public void DefineVariable(string args)
     {
-        [Statement("<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
-        public void DefineVariable(string args)
+        DefineVariableIn(RuntimeInfo.Variables, args);
+    }
+
+    [Statement("global", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.DarkBlue, Priority = Priority.VeryLow, Separator = "=")]
+    public void DefineGlobalVariable(string args)
+    {
+        DefineVariableIn(RuntimeInfo.GlobalVariables, args);
+    }
+
+    private void DefineVariableIn(Dictionary<string, string> dict, string args)
+    {
+        string[] parts = args.Split('=');
+        if (parts.Length == 2)
         {
-            string[] parts = args.Split('=');
-            if (parts.Length == 2)
+            string key = parts[0].Trim();
+            if (key.Contains(' '))
             {
-                string key = parts[0].Trim();
-                if (key.Contains(' '))
-                {
-                    RuntimeInfo.Exit("Invalid Syntax", true);
-                }
+                RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
+            }
 
-                if (RuntimeInfo.Variables.ContainsKey(key))
-                {
-                    RuntimeInfo.Variables[key] = parts[1].Trim();
-                }
-                else
-                {
-                    RuntimeInfo.Variables.Add(key, parts[1].Trim());
-                }
-            }
-            else
-            {
-                RuntimeInfo.Exit("Invalid syntax", true);
-            }
+            dict[key] = parts[1].Trim();
         }
-
-        [Statement("!<", SearchMode.StartOfLine, SpaceAround.None, Priority = Priority.VeryLow)]
-        public void DefineGlobalVariable(string args)
+        else
         {
-            string[] parts = args.Split('=');
-            if (parts.Length == 2)
-            {
-                string key = parts[0].Trim();
-                if (key.Contains(' '))
-                {
-                    RuntimeInfo.Exit("Invalid Syntax", true);
-                }
-
-                if (RuntimeInfo.GloablVariables.ContainsKey(key))
-                {
-                    RuntimeInfo.GloablVariables[key] = parts[1].Trim();
-                }
-                else
-                {
-                    RuntimeInfo.GloablVariables.Add(key, parts[1].Trim());
-                }
-            }
-            else
-            {
-                RuntimeInfo.Exit("Invalid syntax", true);
-            }
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
         }
+    }
 
-        [Statement("del", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.Red, Priority = Priority.VeryLow)]
-        public void DeleteVariable(string args)
+    [Statement("delete", SearchMode.StartOfLine, SpaceAround.End, System.ConsoleColor.Red, Priority = Priority.VeryLow)]
+    public void DeleteVariable(string args)
+    {
+        string key = args.Trim();
+
+        if (RuntimeInfo.Variables.ContainsKey(key))
         {
-            string key = args.Trim();
-
-            if (RuntimeInfo.Variables.ContainsKey(key))
-            {
-                RuntimeInfo.Variables.Remove(key);
-            }
-            else if (RuntimeInfo.GloablVariables.ContainsKey(key))
-            {
-                RuntimeInfo.GloablVariables.Remove(key);
-            }
-            else
-            {
-                RuntimeInfo.Exit($"Variable \"{key}\" not found", true);
-            }
+            _ = RuntimeInfo.Variables.Remove(key);
         }
-
-        [Statement(">", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest)]
-        public void ReadVariable(string _)
+        else if (RuntimeInfo.GlobalVariables.ContainsKey(key))
         {
-            if (!RuntimeInfo.CurrentLine.Contains('>'))
-            {
-                return;
-            }
-
-            foreach (KeyValuePair<string, string> variable in RuntimeInfo.Variables)
-            {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
-            }
-
-            foreach (KeyValuePair<string, string> variable in RuntimeInfo.GloablVariables)
-            {
-                RuntimeInfo.CurrentLine = RuntimeInfo.CurrentLine.Replace($">{variable.Key}", variable.Value);
-            }
-
-            if (RuntimeInfo.IsSearching)
-            {
-                return;
-            }
-
-            MatchCollection matches = Regex.Matches(RuntimeInfo.CurrentLine, @">[a-zA-Z0-9]+");
-
-            for (int i = 0; i < matches.Count; i++)
-            {
-                string varName = matches[i].Value.Replace(">", string.Empty);
-                if (!RuntimeInfo.Variables.ContainsKey(varName) && !RuntimeInfo.GloablVariables.ContainsKey(varName))
-                {
-                    RuntimeInfo.Exit($"Variable \"{varName}\" not found", true);
-                    return;
-                }
-            }
+            _ = RuntimeInfo.GlobalVariables.Remove(key);
         }
+        else
+        {
+            RuntimeInfo.Exit(ExitMessages.VariableNotFound(key), true);
+        }
+    }
+
+    [Statement("${", SearchMode.Contains, SpaceAround.None, Priority = Priority.Highest, Separator = "}")]
+    public void ReadVariable(string _)
+    {
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessVariables(RuntimeInfo.CurrentLine, RuntimeInfo);
     }
 }

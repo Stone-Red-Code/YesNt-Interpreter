@@ -1,159 +1,176 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
 using YesNt.Interpreter.Utilities;
 
-namespace YesNt.CodeEditor
+namespace YesNt.CodeEditor;
+
+internal partial class SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
 {
-    internal class SyntaxHighlighter
+    private readonly ReadOnlyCollection<StatementInformation> statementInformation = statementInformation;
+    private readonly string[] replacementValues = StringExtensions.ReplacementRules.Values.ToArray();
+
+    public static string Base64Encode(string plainText)
     {
-        private readonly ReadOnlyCollection<StatementInformation> statementInformation;
+        byte[] plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+        return System.Convert.ToBase64String(plainTextBytes);
+    }
 
-        public SyntaxHighlighter(ReadOnlyCollection<StatementInformation> statementInformation)
+    public static string Base64Decode(string base64EncodedData)
+    {
+        byte[] base64EncodedBytes = System.Convert.FromBase64String(base64EncodedData);
+        return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
+    }
+
+    public void Write(string input)
+    {
+        input = input.Replace("\0", string.Empty);
+
+        if (input.TrimStart(' ').StartsWith('#'))
         {
-            this.statementInformation = statementInformation;
+            input = AddColorInformation(input, input, ConsoleColor.Gray, SearchMode.Exact);
         }
-
-        public void Write(string input)
+        else
         {
-            input = input.Replace("\0", string.Empty);
-
-            if (input.StartsWith('#'))
+            MatchCollection matches = StringRegex().Matches(input);
+            for (int i = 0; i < matches.Count; i++)
             {
-                input = AddColorInformation(input, input, ConsoleColor.Gray, SearchMode.Exact);
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkYellow, SearchMode.Contains);
             }
-            else
+
+            matches = VariableRegex().Matches(input);
+            for (int i = 0; i < matches.Count; i++)
             {
-                MatchCollection matches = Regex.Matches(input, @"!!.");
-                for (int i = 0; i < matches.Count; i++)
+                input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
+            }
+
+            for (int i = 0; i < replacementValues.Length; i++)
+            {
+                input = AddColorInformation(input, replacementValues[i], ConsoleColor.Blue, SearchMode.Contains);
+            }
+
+            foreach (StatementInformation statement in statementInformation)
+            {
+                if (statement.IgnoreSyntaxHighlighting)
                 {
-                    input = AddColorInformation(input, matches[i].Value, Console.ForegroundColor, SearchMode.Contains);
+                    continue;
                 }
 
-                foreach (StatementInformation statement in statementInformation)
+                string name = statement.SpaceAround switch
                 {
-                    if (statement.IgnoreSyntaxHighlighting)
+                    SpaceAround.StartEnd => $" {statement.Name.Trim()} ",
+                    SpaceAround.Start => $" {statement.Name.Trim()}",
+                    SpaceAround.End => $"{statement.Name.Trim()} ",
+                    _ => statement.Name.Trim()
+                };
+                input = input.TrimEnd(' ');
+                string inputTrim = input.Trim(' ');
+                if (statement.SearchMode == SearchMode.StartOfLine && inputTrim.StartsWith(name))
+                {
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
+                    {
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Separator is not null)
                     {
                         continue;
                     }
-
-                    string name = statement.SpaceAround switch
-                    {
-                        SpaceAround.StartEnd => $" {statement.Name.Trim()} ",
-                        SpaceAround.Start => $" {statement.Name.Trim()}",
-                        SpaceAround.End => $"{statement.Name.Trim()} ",
-                        _ => statement.Name
-                    };
-                    input = input.TrimEnd();
-                    if (statement.SearchMode == SearchMode.StartOfLine && input.StartsWith(name))
-                    {
-                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                        {
-                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                        }
-                        else if (statement.Seperator is not null)
-                        {
-                            continue;
-                        }
-                        input = AddColorInformation(input, input[..name.Length], statement.Color, statement.SearchMode);
-                    }
-                    if (statement.SearchMode == SearchMode.Contains && $" {input} ".Contains(name))
-                    {
-                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                        {
-                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                        }
-                        else if (statement.Seperator is not null)
-                        {
-                            continue;
-                        }
-                        input = AddColorInformation($"{input} ", $"{input} ".Substring($"{input} ".IndexOf(name), name.Length), statement.Color, statement.SearchMode);
-                    }
-                    if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
-                    {
-                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                        {
-                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                        }
-                        else if (statement.Seperator is not null)
-                        {
-                            continue;
-                        }
-                        input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
-                    }
-                    if (statement.SearchMode == SearchMode.Exact && input.Equals(name))
-                    {
-                        if (statement.Seperator is not null && input.Contains(statement.Seperator))
-                        {
-                            input = AddColorInformation(input, statement.Seperator, statement.Color, SearchMode.StartOfLine);
-                        }
-                        else if (statement.Seperator is not null)
-                        {
-                            continue;
-                        }
-                        input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
-                    }
+                    input = AddColorInformation(input, name, statement.Color, statement.SearchMode);
                 }
-
-                matches = Regex.Matches(input, @">[a-zA-Z0-9]+");
-                for (int i = 0; i < matches.Count; i++)
+                else if (statement.SearchMode == SearchMode.Contains && input.Contains(name))
                 {
-                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.Cyan, SearchMode.Contains);
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
+                    {
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Separator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input.Substring(input.IndexOf(name), name.Length), statement.Color, statement.SearchMode);
                 }
-
-                matches = Regex.Matches(input, @"^<[a-zA-Z0-9]+");
-                for (int i = 0; i < matches.Count; i++)
+                else if (statement.SearchMode == SearchMode.EndOfLine && input.EndsWith(name))
                 {
-                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.DarkCyan, SearchMode.StartOfLine);
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
+                    {
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Separator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input[^name.Length..], statement.Color, statement.SearchMode);
                 }
-
-                matches = Regex.Matches(input, @"^!<[a-zA-Z0-9]+");
-                for (int i = 0; i < matches.Count; i++)
+                else if (statement.SearchMode == SearchMode.Exact && inputTrim.Equals(name))
                 {
-                    input = AddColorInformation(input, matches[i].Value, ConsoleColor.Blue, SearchMode.StartOfLine);
+                    if (statement.Separator is not null && input.Contains(statement.Separator))
+                    {
+                        input = AddColorInformation(input, statement.Separator, statement.Color, SearchMode.StartOfLine);
+                    }
+                    else if (statement.Separator is not null)
+                    {
+                        continue;
+                    }
+                    input = AddColorInformation(input, input, statement.Color, statement.SearchMode);
                 }
             }
-
-            foreach (string part in input.Split("\0"))
-            {
-                ConsoleColor consoleColor;
-                string messagePart = part;
-
-                string stringColor = Regex.Match(messagePart, "(?<=(\\r))(.*)(?=\\r)").Value;
-                bool succ = int.TryParse(stringColor, out int colorIndex);
-                if (succ && colorIndex >= 0 && colorIndex < 16)
-                {
-                    messagePart = messagePart.Replace($"\r{stringColor}\r", string.Empty);
-                    consoleColor = (ConsoleColor)colorIndex;
-                }
-                else
-                {
-                    consoleColor = ConsoleColor.White;
-                }
-
-                if (consoleColor == Console.BackgroundColor)
-                {
-                    consoleColor = ConsoleColor.White;
-                }
-                Console.ForegroundColor = consoleColor;
-                Console.Write(messagePart);
-            }
-            Console.ForegroundColor = ConsoleColor.Gray;
         }
 
-        private static string AddColorInformation(string originalString, string value, ConsoleColor color, SearchMode searchMode)
+        foreach (string part in input.Split("\0"))
         {
-            int spacesAtEnd = value.WhiteSpaceAtEnd();
-            string reult = searchMode switch
+            ConsoleColor consoleColor;
+            string messagePart = part;
+
+            string stringColor = StringColorRegex().Match(messagePart).Value;
+            bool succ = int.TryParse(stringColor, out int colorIndex);
+            if (succ && colorIndex >= 0 && colorIndex < 16)
             {
-                SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd)),
-                SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd)),
-                _ => originalString.Replace(value, $"\0\r{(int)color}\r{value.TrimEnd()}\0" + new string(' ', spacesAtEnd))
-            };
-            return reult;
+                messagePart = Base64Decode(messagePart.Replace("\x01" + stringColor + "\x01", string.Empty));
+                consoleColor = (ConsoleColor)colorIndex;
+            }
+            else
+            {
+                consoleColor = ConsoleColor.White;
+            }
+
+            if (consoleColor == Console.BackgroundColor)
+            {
+                consoleColor = ConsoleColor.White;
+            }
+            Console.ForegroundColor = consoleColor;
+            Console.Write(messagePart);
         }
+        Console.ForegroundColor = ConsoleColor.Gray;
     }
+
+    private static string AddColorInformation(string originalString, string value, ConsoleColor color, SearchMode searchMode)
+    {
+        int spacesAtEnd = value.WhiteSpaceAtEnd();
+
+        string base64Value = Base64Encode(value.TrimEnd());
+
+        string result = searchMode switch
+        {
+            SearchMode.StartOfLine => originalString.ReplaceFirstOccurrence(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd)),
+            SearchMode.EndOfLine => originalString.ReplaceLastOccurrence(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd)),
+            _ => originalString.Replace(value, $"\0\x01{(int)color}\x01{base64Value}\0" + new string(' ', spacesAtEnd))
+        };
+        return result;
+    }
+
+    // This regex matches variables in the format ${variableName}, where variableName consists of alphanumeric characters.
+    [GeneratedRegex("\\$\\{[a-zA-Z0-9]+\\}")]
+    private static partial Regex VariableRegex();
+
+    // This regex matches string literals, taking into account escaped quotes and backslashes.
+    [GeneratedRegex(@"(?<!\\)(?:\\\\{2})*""(?:\\.|[^""\\])*""")]
+    private static partial Regex StringRegex();
+
+    // This regex matches the color information embedded in the string, which is in the format \x01{colorIndex}\x01{base64EncodedValue}.
+    [GeneratedRegex(@"(?<=(\x01))(.*)(?=\x01)")]
+    private static partial Regex StringColorRegex();
 }

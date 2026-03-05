@@ -1,21 +1,4 @@
-﻿namespace YesNt.CodeEditor
-{
-    internal static class Program
-    {
-        private static void Main(string[] args)
-        {
-            TextEditor textEditor;
+﻿using YesNt.CodeEditor;
 
-            if (args.Length > 0)
-            {
-                textEditor = new TextEditor(args[0]);
-            }
-            else
-            {
-                textEditor = new TextEditor();
-            }
-
-            textEditor.Run();
-        }
-    }
-}
+TextEditor textEditor = args.Length > 0 ? new TextEditor(args[0]) : new TextEditor();
+textEditor.Run();

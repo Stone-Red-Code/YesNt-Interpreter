@@ -1,0 +1,7 @@
+var i = 0
+var sum = 0
+while ${i} < 200000:
+    var i = ${i} + 1 calc
+    var sum = ${sum} + ${i} calc
+end_while
+print_line ${sum}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Platforms>AnyCPU;x64</Platforms>
+    <PublishAot>True</PublishAot>
+    <AssemblyName>yesnt</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YesNt.Interpreter\YesNt.Interpreter.csproj" />
+  </ItemGroup>
+
+</Project>

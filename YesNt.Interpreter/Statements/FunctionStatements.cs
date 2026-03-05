@@ -1,200 +1,176 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
+using YesNt.Interpreter.Utilities;
 
-namespace YesNt.Interpreter.Statements
+namespace YesNt.Interpreter.Statements;
+
+internal class FunctionStatements : StatementRuntimeInformation
 {
-    internal class FunctionStatements : StatementRuntimeInformation
+    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":")]
+    public void FindFunction(string args)
     {
-        [Statement("fnc", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
-        public void FindFunction(string args)
+        if (RuntimeInfo.InternalIsInFunction)
         {
-            if (RuntimeInfo.InternalIsInFunction)
-            {
-                RuntimeInfo.Exit("Nested functions are not allowed", true);
-                return;
-            }
-
-            string key = args.Trim();
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
-            }
-            else
-            {
-                RuntimeInfo.Functions.Add(key, RuntimeInfo.LineNumber);
-            }
-
-            if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchFunction) && RuntimeInfo.SearchFunction == key)
-            {
-                RuntimeInfo.SearchFunction = string.Empty;
-            }
-
-            RuntimeInfo.IsInFunction = true;
+            RuntimeInfo.Exit(ExitMessages.NestedFunctionsNotAllowed, true);
+            return;
         }
 
-        [Statement("in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
-        public void AddInParameter(string args)
+        string functionDeclaration = args.Trim();
+        if (!functionDeclaration.EndsWith(':'))
         {
-            RuntimeInfo.InParametersStack.Push(args);
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
+            return;
         }
 
-        [Statement("out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
-        public void GetOutParameter(string args)
+        string key = NormalizeBlockName(functionDeclaration);
+        if (string.IsNullOrWhiteSpace(key))
         {
-            if (RuntimeInfo.OutParametersStack.Count == 0)
-            {
-                RuntimeInfo.Exit("No out argument in stack", true);
-                return;
-            }
-
-            if (RuntimeInfo.Variables.ContainsKey(args))
-            {
-                RuntimeInfo.Variables[args] = RuntimeInfo.OutParametersStack.Pop();
-            }
-            else
-            {
-                RuntimeInfo.Variables.Add(args, RuntimeInfo.OutParametersStack.Pop());
-            }
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
+            return;
         }
 
-        [Statement("%iso", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
-        public void CheckIfOutParameterAvalible(string args)
-        {
-            args += " ";
-            args = args.Replace("%iso", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
+        RuntimeInfo.Functions[key] = RuntimeInfo.LineNumber;
 
-            RuntimeInfo.CurrentLine = args.TrimEnd();
+        if (!string.IsNullOrWhiteSpace(RuntimeInfo.SearchFunction) && RuntimeInfo.SearchFunction == key)
+        {
+            RuntimeInfo.SearchFunction = string.Empty;
         }
 
-        [Statement("cal", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Seperator = "|")]
-        public void Call(string args)
+        RuntimeInfo.IsInFunction = true;
+    }
+
+    [Statement("push_in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    public void AddInParameter(string args)
+    {
+        RuntimeInfo.InParametersStack.Push(args);
+    }
+
+    [Statement("%out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    public void GetOutParameter(string args)
+    {
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessStackParameters(args, "%out", RuntimeInfo.OutParametersStack, RuntimeInfo, ExitMessages.NoOutArgumentInStack);
+    }
+
+    [Statement("%has_out", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    public void CheckIfOutParameterAvailable(string args)
+    {
+        args = args.Replace("%has_out", (RuntimeInfo.OutParametersStack.Count > 0).ToString());
+
+        RuntimeInfo.CurrentLine = args.TrimEnd();
+    }
+
+    [Statement("call", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, Priority = Priority.Low, Separator = " with ")]
+    public void Call(string args)
+    {
+        string[] parts = args.Split(" with ", 2, StringSplitOptions.None);
+        if (parts.Length != 2)
         {
-            string[] parts = args.Split('|');
-            if (parts.Length != 2)
-            {
-                RuntimeInfo.Exit("Invalid syntax", true);
-                return;
-            }
-
-            string key = parts[0].Trim();
-            string[] functionArgumets = parts[1].Split(',');
-
-            foreach (string argumanet in functionArgumets)
-            {
-                RuntimeInfo.InParametersStack.Push(argumanet.Trim());
-            }
-
-            RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
-            RuntimeInfo.InParametersStack.Clear();
-            RuntimeInfo.CurrentLine = string.Empty;
-
-            if (RuntimeInfo.Functions.ContainsKey(key))
-            {
-                RuntimeInfo.LineNumber = RuntimeInfo.Functions[key];
-            }
-            else
-            {
-                RuntimeInfo.SearchFunction = key;
-            }
+            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
+            return;
         }
 
-        [Statement("get", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
-        public void GetInParameter(string args)
+        string key = NormalizeBlockName(parts[0]);
+        string[] functionArguments = parts[1].Split(',');
+
+        foreach (string argument in functionArguments)
         {
-            if (!RuntimeInfo.IsInFunction)
-            {
-                RuntimeInfo.Exit("Statement not allowed outside of function", true);
-                return;
-            }
-
-            if (RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count == 0)
-            {
-                RuntimeInfo.Exit("No in argument in stack", true);
-                return;
-            }
-
-            if (RuntimeInfo.Variables.ContainsKey(args))
-            {
-                RuntimeInfo.Variables[args] = RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop();
-            }
-            else
-            {
-                RuntimeInfo.Variables.Add(args, RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Pop());
-            }
+            RuntimeInfo.InParametersStack.Push(argument.Trim());
         }
 
-        [Statement("%isi", SearchMode.Contains, SpaceAround.End, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
-        public void CheckIfInParameterAvalible(string args)
+        RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
+        RuntimeInfo.InParametersStack.Clear();
+        RuntimeInfo.CurrentLine = string.Empty;
+
+        if (RuntimeInfo.Functions.TryGetValue(key, out int value))
         {
-            if (!RuntimeInfo.IsInFunction)
-            {
-                RuntimeInfo.Exit("Statement not allowed outside of function", true);
-                return;
-            }
+            RuntimeInfo.LineNumber = value;
+        }
+        else
+        {
+            RuntimeInfo.SearchFunction = key;
+        }
+    }
 
-            args += " ";
-            args = args.Replace("%isi", (RuntimeInfo.FunctionCallStack.Peek().Arguemtns.Count > 0).ToString());
-
-            RuntimeInfo.CurrentLine = args.TrimEnd();
+    [Statement("%in", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    public void GetInParameter(string args)
+    {
+        if (!RuntimeInfo.IsInFunction)
+        {
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
+            return;
         }
 
-        [Statement("put", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
-        public void AddOutParameter(string args)
-        {
-            if (!RuntimeInfo.IsInFunction)
-            {
-                RuntimeInfo.Exit("Statement not allowed outside of function", true);
-                return;
-            }
+        RuntimeInfo.CurrentLine = TemplateProcessor.ProcessStackParameters(args, "%in", RuntimeInfo.FunctionCallStack.Peek().Arguments, RuntimeInfo, ExitMessages.NoInArgumentInStack);
+    }
 
-            RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
+    [Statement("%has_in", SearchMode.Contains, SpaceAround.None, ConsoleColor.Yellow, KeepStatementInArgs = true, Priority = Priority.Highest)]
+    public void CheckIfInParameterAvailable(string args)
+    {
+        if (!RuntimeInfo.IsInFunction)
+        {
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
+            return;
         }
 
-        [Statement("ret", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
-        public void Return(string _)
+        args = args.Replace("%has_in", (RuntimeInfo.FunctionCallStack.Peek().Arguments.Count > 0).ToString());
+
+        RuntimeInfo.CurrentLine = args.TrimEnd();
+    }
+
+    [Statement("push_out", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
+    public void AddOutParameter(string args)
+    {
+        if (!RuntimeInfo.IsInFunction)
         {
-            if (!RuntimeInfo.IsInFunction)
-            {
-                RuntimeInfo.Exit("Statement not allowed outside of function", true);
-                return;
-            }
-
-            if (RuntimeInfo.IsSearching)
-            {
-                RuntimeInfo.IsInFunction = false;
-
-                if (RuntimeInfo.IsLocalSearch)
-                {
-                    RuntimeInfo.Exit($"Label \"{RuntimeInfo.SearchLabel}\" not found", true);
-                }
-                return;
-            }
-            else
-            {
-                RuntimeInfo.IsInFunction = false;
-            }
-
-            if (RuntimeInfo.FunctionCallStack.Count > 0)
-            {
-                FunctionScope functionScope = RuntimeInfo.FunctionCallStack.Pop();
-
-                RuntimeInfo.OutParametersStack = new Stack<string>(functionScope.Results);
-                RuntimeInfo.LineNumber = functionScope.CallerLine;
-            }
-            else
-            {
-                RuntimeInfo.Exit("No function in stack", true);
-            }
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
+            return;
         }
 
-        [Statement("ccs", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
-        public void ClearCallStack(string _)
+        RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
+    }
+
+    [Statement("return", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    public void Return(string _)
+    {
+        if (!RuntimeInfo.IsInFunction)
         {
-            RuntimeInfo.FunctionCallStack.Clear();
+            RuntimeInfo.Exit(ExitMessages.StatementNotAllowedOutsideFunction, true);
+            return;
         }
+
+        if (RuntimeInfo.IsSearching)
+        {
+            RuntimeInfo.IsInFunction = false;
+
+            if (RuntimeInfo.IsLocalSearch)
+            {
+                RuntimeInfo.Exit(ExitMessages.LabelNotFound(RuntimeInfo.SearchLabel), true);
+            }
+            return;
+        }
+
+        RuntimeInfo.IsInFunction = false;
+
+        if (RuntimeInfo.FunctionCallStack.Count > 0)
+        {
+            FunctionScope functionScope = RuntimeInfo.FunctionCallStack.Pop();
+
+            RuntimeInfo.OutParametersStack = new Stack<string>(functionScope.Results);
+            RuntimeInfo.LineNumber = functionScope.CallerLine;
+        }
+        else
+        {
+            RuntimeInfo.Exit(ExitMessages.NoFunctionInStack, true);
+        }
+    }
+
+    [Statement("clear_call_stack", SearchMode.Exact, SpaceAround.None, ConsoleColor.Red)]
+    public void ClearCallStack(string _)
+    {
+        RuntimeInfo.FunctionCallStack.Clear();
     }
 }
