@@ -20,12 +20,14 @@ jobs:
 
       - name: Build and Pack
         shell: pwsh
-        run: ./choco/build.ps1
+        working-directory: ./choco
+        run: ./build.ps1
         env:
           CI: true
 
       - name: Push to Chocolatey
         shell: pwsh
+        working-directory: ./choco
         run: |
           $package = Get-ChildItem *.nupkg | Select-Object -First 1
           if ($package) {
