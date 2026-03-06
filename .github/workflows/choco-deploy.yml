@@ -20,7 +20,8 @@ jobs:
 
       - name: Build and Pack
         shell: pwsh
-        run: ./choco/build.ps1
+        working-directory: ./choco
+        run: ./build.ps1
         env:
           CI: true
 
