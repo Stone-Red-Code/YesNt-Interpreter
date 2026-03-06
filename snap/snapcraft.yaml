@@ -30,12 +30,14 @@ parts:
     plugin: dotnet
     dotnet-version: '10.0'
     dotnet-configuration: Release
-    source: ./src/YesNt.Interpreter.App
+    source: .
+    dotnet-project: src/YesNt.Interpreter.App/YesNt.Interpreter.App.csproj
   yesntcode:
     plugin: dotnet
     dotnet-version: '10.0'
     dotnet-configuration: Release
-    source: ./src/YesNt.CodeEditor
+    source: .
+    dotnet-project: src/YesNt.CodeEditor/YesNt.CodeEditor.csproj
 
 apps:
   yesnt:
