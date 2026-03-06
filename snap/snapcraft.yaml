@@ -19,8 +19,9 @@ description: |
    - `format` to auto-format indentation
 
 base: core24
-architectures:
-  - build-on: [amd64, arm64]
+platforms:
+  amd64:
+  arm64:
 
 confinement: strict
 
@@ -28,12 +29,12 @@ parts:
   yesnt:
     plugin: dotnet
     dotnet-version: '10.0'
-    dotnet-build-configuration: Release
+    dotnet-configuration: Release
     source: ./src/YesNt.Interpreter.App
   yesntcode:
     plugin: dotnet
     dotnet-version: '10.0'
-    dotnet-build-configuration: Release
+    dotnet-configuration: Release
     source: ./src/YesNt.CodeEditor
 
 apps:
