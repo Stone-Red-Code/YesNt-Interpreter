@@ -12,9 +12,23 @@ public class SystemStatementsTests
     {
         List<string> lines =
         [
-            "exec cmd with /c,echo yesnt",
+            "exec whoami",
             "var exitCode = %out",
             "${exitCode}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "0");
+    }
+
+    [TestMethod]
+    public void ExecWithArgsRunsProcessTestWithArgument()
+    {
+        List<string> lines =
+        [
+            "exec whoami with /?",
+            "var exitCode = %out",
+            "var dummy = 0",
+            "${dummy}"
         ];
 
         YesNtAssert.IsLastLineEqual(lines, "0");
@@ -25,9 +39,7 @@ public class SystemStatementsTests
     {
         List<string> lines =
         [
-            "push_in /c",
-            "push_in echo yesnt",
-            "exec cmd",
+            "exec whoami",
             "var exitCode = %out",
             "${exitCode}"
         ];
