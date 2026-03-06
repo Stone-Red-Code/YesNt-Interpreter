@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -61,6 +62,13 @@ internal class ConsoleStatements : StatementRuntimeInformation
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Won't work if static")]
     public void Clear(string _)
     {
-        Console.Clear();
+        try
+        {
+            Console.Clear();
+        }
+        catch (IOException)
+        {
+            // Silently fail if the console is not interactive
+        }
     }
 }

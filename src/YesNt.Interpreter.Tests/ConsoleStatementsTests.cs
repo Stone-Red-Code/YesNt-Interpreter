@@ -39,14 +39,16 @@ public class ConsoleStatementsTests
     }
 
     [TestMethod]
-    public void ClearThrowsInNonInteractiveConsoleTest()
+    public void ClearDoesNotCrashInNonInteractiveConsoleTest()
     {
         List<string> lines =
         [
-            "clear"
+            "clear",
+            "var dummy = 0",
+            "${dummy}"
         ];
 
-        _ = Assert.Throws<IOException>(() => YesNtAssert.GetLastLine(lines));
+        YesNtAssert.IsLastLineEqual(lines, "0");
     }
 
     [TestMethod]
