@@ -29,26 +29,34 @@ parts:
   yesnt:
     plugin: dotnet
     dotnet-version: '10.0'
-    dotnet-configuration: Release
-    dotnet-self-contained: true
     source: .
-    dotnet-project: src/YesNt.Interpreter.App/YesNt.Interpreter.App.csproj
     build-packages:
       - clang
       - zlib1g-dev
+    override-build: |
+      dotnet publish \
+        --configuration Release \
+        --runtime linux-x64 \
+        --self-contained true \
+        --output "$CRAFT_PART_INSTALL" \
+        src/YesNt.Interpreter.App/YesNt.Interpreter.App.csproj
     stage:
       - -YesNt.Interpreter.*
       - -*.dbg
   yesntcode:
     plugin: dotnet
     dotnet-version: '10.0'
-    dotnet-configuration: Release
-    dotnet-self-contained: true
     source: .
-    dotnet-project: src/YesNt.CodeEditor/YesNt.CodeEditor.csproj
     build-packages:
       - clang
       - zlib1g-dev
+    override-build: |
+      dotnet publish \
+        --configuration Release \
+        --runtime linux-x64 \
+        --self-contained true \
+        --output "$CRAFT_PART_INSTALL" \
+        src/YesNt.CodeEditor/YesNt.CodeEditor.csproj
     stage:
       - -YesNt.Interpreter.*
       - -*.dbg
