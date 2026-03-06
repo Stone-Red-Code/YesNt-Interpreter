@@ -27,7 +27,9 @@ YesNt is intentionally minimal and is well suited for:
 ## Usage
 
 1. Download & install the latest release
-   - GitHub: [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
+   - Chocolatey (Windows): `choco install yesnt`
+   - Snapcraft (Linux): `snap install yesnt`
+   - GitHub (Windows/Linux): [releases](https://github.com/Stone-Red-Code/YesNt-Interpreter/releases)
 2. Run a script with the interpreter CLI
    - `yesnt script.ynt` runs a script
 3. Or use the terminal code editor
