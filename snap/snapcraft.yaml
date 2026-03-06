@@ -18,32 +18,23 @@ description: |
    - `run` / `debug` to execute the open script
    - `format` to auto-format indentation
 
-base: core22
+base: core24
 architectures:
-  - build-on: amd64
-  - build-on: arm64
+  - build-on: [amd64, arm64]
 
 confinement: strict
 
 parts:
   yesnt:
     plugin: dotnet
+    dotnet-version: '10.0'
     dotnet-build-configuration: Release
-    dotnet-self-contained-runtime-identifier: linux-x64
     source: ./src/YesNt.Interpreter.App
-    build-packages:
-      - dotnet-sdk-10.0
-    stage-packages:
-      - libicu70
   yesntcode:
     plugin: dotnet
+    dotnet-version: '10.0'
     dotnet-build-configuration: Release
-    dotnet-self-contained-runtime-identifier: linux-x64
     source: ./src/YesNt.CodeEditor
-    build-packages:
-      - dotnet-sdk-10.0
-    stage-packages:
-      - libicu70
 
 apps:
   yesnt:
