@@ -20,7 +20,7 @@ YesNt is a line-based, interpreted scripting language. The core idea is simple: 
 YesNt is intentionally minimal and is well suited for:
 
 - Scripting in games or applications where simple syntax and customizability are needed
-- Rapid prototyping or automation tasks where a lightweight embedded language is beneficial
+- Automation tasks where a lightweight embedded language is beneficial
 - Educational purposes to learn language design by adding new statements or modifying existing ones
 - Embedding as a scripting engine in larger C# projects, with the ability to expose custom functionality through registered statements
 

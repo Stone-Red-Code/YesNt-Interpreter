@@ -5,7 +5,7 @@
 ## Start the editor
 
 ```bash
-dotnet run --project YesNt.CodeEditor -- [optional-path-to-file.ynt]
+yesntcode [optional-path-to-file.ynt]
 ```
 
 If you pass a file path, it is loaded on startup.

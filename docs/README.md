@@ -16,7 +16,7 @@ Each line is one statement. There are no multi-line expressions.
 ### Running a script from the command line
 
 ```bash
-dotnet run --project YesNt.Interpreter.App -- path/to/script.ynt
+yesnt path/to/script.ynt
 ```
 
 ### Hello world
