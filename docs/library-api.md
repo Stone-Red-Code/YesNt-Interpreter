@@ -21,7 +21,30 @@ to embed the YesNt interpreter and run scripts programmatically.
 
 ## Adding the reference
 
-Add a project reference to `YesNt.Interpreter` in your `.csproj`:
+### Via NuGet (recommended)
+
+Install the [`YesNt.Interpreter`](https://www.nuget.org/packages/YesNt.Interpreter/) package using one of the following methods.
+
+**.NET CLI:**
+```
+dotnet add package YesNt.Interpreter
+```
+
+**Package Manager Console:**
+```
+Install-Package YesNt.Interpreter
+```
+
+**`.csproj`:**
+```xml
+<ItemGroup>
+  <PackageReference Include="YesNt.Interpreter" Version="*" />
+</ItemGroup>
+```
+
+### Via project reference
+
+If you have cloned the repository and want to reference the source directly, add a project reference in your `.csproj`:
 
 ```xml
 <ItemGroup>
