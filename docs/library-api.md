@@ -1,6 +1,6 @@
 # YesNt Library API
 
-The `YesNt.Interpreter` project is a .NET 8 class library. You can reference it from any C# project
+The `YesNt.Interpreter` project is a .NET 10 class library. You can reference it from any C# project
 to embed the YesNt interpreter and run scripts programmatically.
 
 ---
