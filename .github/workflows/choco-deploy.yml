@@ -1,0 +1,36 @@
+name: Deploy Chocolatey Package
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x' # Uses latest available 10.0 SDK
+
+      - name: Build and Pack
+        shell: pwsh
+        run: ./choco/build.ps1
+        env:
+          CI: true
+
+      - name: Push to Chocolatey
+        shell: pwsh
+        run: |
+          $package = Get-ChildItem *.nupkg | Select-Object -First 1
+          if ($package) {
+              choco push $($package.Name) --source "https://push.chocolatey.org/" --api-key ${{ secrets.CHOCO_API_KEY }}
+          } else {
+              Write-Error "No .nupkg file found to push."
+              exit 1
+          }
