@@ -27,6 +27,7 @@ jobs:
 
       - name: Push to Chocolatey
         shell: pwsh
+        working-directory: ./choco
         run: |
           $package = Get-ChildItem *.nupkg | Select-Object -First 1
           if ($package) {
