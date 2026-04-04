@@ -186,7 +186,7 @@ interpreter.AddStatement("log", SearchMode.StartOfLine, SpaceAround.End,
     args => Console.WriteLine($"[LOG] {args}"));
 ```
 
-### Using a pre-built `StatementAttribute`
+### Using a `StatementAttribute`
 
 ```csharp
 using YesNt.Interpreter.Attributes;
@@ -301,34 +301,12 @@ boundary (or immediately if it is currently blocked waiting for console input).
 var interpreter = new YesNtInterpreter();
 
 // Start the script on a background thread so we can stop it from this thread.
-var thread = new System.Threading.Thread(() =>
+var task = Task.Run(() =>
     interpreter.Execute(new List<string> { "while True:", "sleep 100", "end_while" }));
 
-thread.Start();
-System.Threading.Thread.Sleep(500);
+await Task.Delay(500);
 interpreter.Stop();   // signals the script to terminate at the next line boundary
-thread.Join();
-```
-
-### Stopping a script that blocks on `%read_key`
-
-When a script blocks waiting for keyboard input, use the `OnWaitingForInput` event instead of a
-fixed `Thread.Sleep`. The event fires at the exact moment the interpreter enters the blocking poll
-loop, so calling `Stop()` immediately after is always safe regardless of system load.
-
-```csharp
-var interpreter = new YesNtInterpreter();
-var waitingForInput = new System.Threading.AutoResetEvent(false);
-
-interpreter.OnWaitingForInput += () => waitingForInput.Set();
-
-var thread = new System.Threading.Thread(() =>
-    interpreter.Execute(new List<string> { "var key = %read_key" }));
-
-thread.Start();
-waitingForInput.WaitOne(TimeSpan.FromSeconds(5)); // wait until blocked on input
-interpreter.Stop();
-thread.Join();
+await task;
 ```
 
 ---
