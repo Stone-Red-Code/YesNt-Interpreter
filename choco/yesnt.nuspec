@@ -9,10 +9,13 @@
     <licenseUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <projectSourceUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter</projectSourceUrl>
+    <docsUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter/tree/main/docs</docsUrl>
     <bugTrackerUrl>https://github.com/Stone-Red-Code/YesNt-Interpreter/issues</bugTrackerUrl>
     <tags>yesnt scripting language interpreter code-editor</tags>
     <summary>A line-based, interpreted scripting language and terminal code editor</summary>
     <description>
+      YesNt is a line-based, interpreted scripting language. The core idea is simple: each line maps to one primary statement. Lines are processed top-to-bottom, and inline tokens (like `${variable}` or `%read_line`) are substituted before the statement executes. Postfix modifiers like `calc` and `task` can also appear at the end of a line to evaluate arithmetic or fork execution into a background thread.
+
       **Usage**
 
       1. Download &amp; install the latest release
