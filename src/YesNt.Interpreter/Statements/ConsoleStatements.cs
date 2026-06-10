@@ -41,7 +41,7 @@ internal class ConsoleStatements : StatementRuntimeInformation
                 RuntimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
                 return;
             }
-            args = args.ReplaceFirstOccurrence("%read_line ", input.ToSafeString() + " ");
+            args = args.ReplaceFirstOccurrence("%read_line", input.ToSafeString());
         }
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
@@ -53,7 +53,7 @@ internal class ConsoleStatements : StatementRuntimeInformation
         while (args.Contains("%read_key"))
         {
             string input = ConsoleExtensions.ReadKey(RuntimeInfo).ToString();
-            args = args.ReplaceFirstOccurrence("%read_key ", input.ToSafeString() + " ");
+            args = args.ReplaceFirstOccurrence("%read_key", input.ToSafeString());
         }
         RuntimeInfo.CurrentLine = args.TrimEnd();
     }
