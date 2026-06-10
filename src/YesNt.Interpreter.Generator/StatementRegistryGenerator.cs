@@ -87,7 +87,6 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         _ = sb.AppendLine("#nullable enable");
         _ = sb.AppendLine("using System;");
         _ = sb.AppendLine("using System.Collections.Generic;");
-        _ = sb.AppendLine("using System.Linq;");
         _ = sb.AppendLine();
         _ = sb.AppendLine("namespace YesNt.Interpreter.Runtime;");
         _ = sb.AppendLine();
@@ -95,8 +94,8 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         _ = sb.AppendLine("{");
         _ = sb.AppendLine("    internal static void Register(");
         _ = sb.AppendLine("        RuntimeInformation runtimeInfo,");
-        _ = sb.AppendLine("        out Dictionary<global::YesNt.Interpreter.Attributes.StatementAttribute, Action<string>> statements,");
-        _ = sb.AppendLine("        out List<KeyValuePair<global::YesNt.Interpreter.Attributes.StaticStatementAttribute, Action>> staticStatements)");
+        _ = sb.AppendLine("        out Dictionary<global::YesNt.Interpreter.Attributes.StatementAttributeContainer, Action<string>> statements,");
+        _ = sb.AppendLine("        out List<KeyValuePair<global::YesNt.Interpreter.Attributes.StaticStatementAttributeContainer, Action>> staticStatements)");
         _ = sb.AppendLine("    {");
 
         List<INamedTypeSymbol> allTypes = statementMethods
@@ -117,36 +116,39 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
             _ = sb.AppendLine($"        {instanceName}.RuntimeInfo = runtimeInfo;");
         }
 
-        _ = sb.AppendLine("        var statementEntries = new List<KeyValuePair<global::YesNt.Interpreter.Attributes.StatementAttribute, Action<string>>>();");
+        _ = sb.AppendLine("        var statementEntries = new List<KeyValuePair<global::YesNt.Interpreter.Attributes.StatementAttributeContainer, Action<string>>>();");
 
         foreach (MethodRegistration method in statementMethods
             .OrderBy(x => x.ContainingType.ToDisplayString())
             .ThenBy(x => x.Method.Name))
         {
             string instanceName = instanceNames[method.ContainingType];
-            string attributeCreation = BuildAttributeCreation("global::YesNt.Interpreter.Attributes.StatementAttribute", method.Attribute);
+            string attributeCreation = BuildAttributeCreation("global::YesNt.Interpreter.Attributes.StatementAttributeContainer", method.Attribute);
             _ = sb.AppendLine($"        statementEntries.Add(new({attributeCreation}, {instanceName}.{method.Method.Name}));");
         }
 
-        _ = sb.AppendLine("        var staticEntries = new List<KeyValuePair<global::YesNt.Interpreter.Attributes.StaticStatementAttribute, Action>>();");
+        _ = sb.AppendLine("        var staticEntries = new List<KeyValuePair<global::YesNt.Interpreter.Attributes.StaticStatementAttributeContainer, Action>>();");
 
         foreach (MethodRegistration method in staticStatementMethods
             .OrderBy(x => x.ContainingType.ToDisplayString())
             .ThenBy(x => x.Method.Name))
         {
             string instanceName = instanceNames[method.ContainingType];
-            string attributeCreation = BuildAttributeCreation("global::YesNt.Interpreter.Attributes.StaticStatementAttribute", method.Attribute);
+            string attributeCreation = BuildAttributeCreation("global::YesNt.Interpreter.Attributes.StaticStatementAttributeContainer", method.Attribute);
             _ = sb.AppendLine($"        staticEntries.Add(new({attributeCreation}, {instanceName}.{method.Method.Name}));");
         }
 
-        _ = sb.AppendLine("        statements = statementEntries");
-        _ = sb.AppendLine("            .OrderBy(s => s.Key.Priority)");
-        _ = sb.AppendLine("            .ThenByDescending(s => s.Key.Name.Length)");
-        _ = sb.AppendLine("            .ToDictionary(x => x.Key, x => x.Value);");
+        _ = sb.AppendLine("        statementEntries.Sort((a, b) =>");
+        _ = sb.AppendLine("        {");
+        _ = sb.AppendLine("            int cmp = a.Key.Priority.CompareTo(b.Key.Priority);");
+        _ = sb.AppendLine("            return cmp != 0 ? cmp : b.Key.Name.Length.CompareTo(a.Key.Name.Length);");
+        _ = sb.AppendLine("        });");
+        _ = sb.AppendLine("        statements = new Dictionary<global::YesNt.Interpreter.Attributes.StatementAttributeContainer, Action<string>>();");
+        _ = sb.AppendLine("        foreach (var entry in statementEntries)");
+        _ = sb.AppendLine("            statements.Add(entry.Key, entry.Value);");
         _ = sb.AppendLine();
-        _ = sb.AppendLine("        staticStatements = staticEntries");
-        _ = sb.AppendLine("            .OrderBy(s => s.Key.Priority)");
-        _ = sb.AppendLine("            .ToList();");
+        _ = sb.AppendLine("        staticEntries.Sort((a, b) => a.Key.Priority.CompareTo(b.Key.Priority));");
+        _ = sb.AppendLine("        staticStatements = staticEntries;");
         _ = sb.AppendLine("    }");
         _ = sb.AppendLine("}");
 

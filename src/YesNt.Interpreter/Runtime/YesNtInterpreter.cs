@@ -28,11 +28,11 @@ public class YesNtInterpreter
     public event Action<string> OnDebugOutput;
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
-    private Dictionary<StatementAttribute, Action<string>> statements;
+    private Dictionary<StatementAttributeContainer, Action<string>> statements;
     private List<StatementHandler> statementHandlers;
     private List<List<StatementHandler>> lineMatchingHandlers = [];
-    private readonly List<KeyValuePair<StaticStatementAttribute, Action>> staticStatements;
-    private readonly Dictionary<string, List<KeyValuePair<StatementAttribute, Action<string>>>> disabledStatements = [];
+    private readonly List<KeyValuePair<StaticStatementAttributeContainer, Action>> staticStatements;
+    private readonly Dictionary<string, List<KeyValuePair<StatementAttributeContainer, Action<string>>>> disabledStatements = [];
 
     /// <summary>
     /// Gets a read-only snapshot of all currently registered statements.
@@ -88,7 +88,7 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Registers a custom statement using a pre-built <see cref="StatementAttribute"/>.
+    /// Registers a custom statement using a pre-built <see cref="StatementAttributeContainer"/>.
     /// If a statement with the same attribute key (identical field values) already exists it will be replaced;
     /// otherwise a new entry is added. Built-in statements use distinct attribute instances, so passing a
     /// newly constructed attribute with the same name will <b>add</b> a second handler rather than replacing
@@ -98,15 +98,26 @@ public class YesNtInterpreter
     /// <param name="attribute">The attribute describing the keyword, search mode, and priority.</param>
     /// <param name="handler">
     /// The delegate invoked when the statement matches. Receives the argument text
-    /// (the part of the line after the keyword, unless <see cref="StatementAttribute.KeepStatementInArgs"/> is set).
+    /// (the part of the line after the keyword, unless <see cref="StatementAttributeContainer.KeepStatementInArgs"/> is set).
     /// </param>
-    public void AddStatement(StatementAttribute attribute, Action<string> handler)
+    public void AddStatement(StatementAttributeContainer attribute, Action<string> handler)
     {
         statements[attribute] = handler;
-        statements = statements
-            .OrderBy(s => s.Key.Priority)
-            .ThenByDescending(s => s.Key.Name.Length)
-            .ToDictionary(x => x.Key, x => x.Value);
+
+        List<KeyValuePair<StatementAttributeContainer, Action<string>>> entries = [.. statements];
+        entries.Sort((a, b) =>
+        {
+            int cmp = a.Key.Priority.CompareTo(b.Key.Priority);
+            return cmp != 0 ? cmp : b.Key.Name.Length.CompareTo(a.Key.Name.Length);
+        });
+
+        statements = [];
+
+        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> entry in entries)
+        {
+            statements.Add(entry.Key, entry.Value);
+        }
+
         UpdateStatementHandlers();
         PreScanLines();
     }
@@ -120,7 +131,7 @@ public class YesNtInterpreter
     /// The delegate invoked when the statement matches. Receives the argument text and the current
     /// <see cref="IStatementContext"/> for reading/writing script state.
     /// </param>
-    public void AddStatement(StatementAttribute attribute, Action<string, IStatementContext> handler)
+    public void AddStatement(StatementAttributeContainer attribute, Action<string, IStatementContext> handler)
     {
         AddStatement(attribute, args => handler(args, runtimeInfo));
     }
@@ -134,7 +145,7 @@ public class YesNtInterpreter
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
     {
-        AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
+        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround), handler);
     }
 
     /// <summary>
@@ -150,7 +161,7 @@ public class YesNtInterpreter
     /// </param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string, IStatementContext> handler)
     {
-        AddStatement(new StatementAttribute(name, searchMode, spaceAround), handler);
+        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround), handler);
     }
 
     /// <summary>
@@ -163,7 +174,7 @@ public class YesNtInterpreter
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
-        AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
+        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround, consoleColor), handler);
     }
 
     /// <summary>
@@ -180,7 +191,7 @@ public class YesNtInterpreter
     /// </param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string, IStatementContext> handler)
     {
-        AddStatement(new StatementAttribute(name, searchMode, spaceAround, consoleColor), handler);
+        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround, consoleColor), handler);
     }
 
     /// <summary>
@@ -189,7 +200,7 @@ public class YesNtInterpreter
     /// <param name="name">The keyword to remove.</param>
     public void RemoveStatement(string name)
     {
-        foreach (StatementAttribute key in statements.Keys.Where(k => k.Name == name).ToList())
+        foreach (StatementAttributeContainer key in statements.Keys.Where(k => k.Name == name).ToList())
         {
             _ = statements.Remove(key);
         }
@@ -212,7 +223,7 @@ public class YesNtInterpreter
             return;
         }
 
-        List<KeyValuePair<StatementAttribute, Action<string>>> matching =
+        List<KeyValuePair<StatementAttributeContainer, Action<string>>> matching =
             statements.Where(kv => kv.Key.Name == name).ToList();
 
         if (matching.Count == 0)
@@ -222,7 +233,7 @@ public class YesNtInterpreter
 
         disabledStatements[name] = matching;
 
-        foreach (KeyValuePair<StatementAttribute, Action<string>> kv in matching)
+        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> kv in matching)
         {
             statements[kv.Key] = _ => { };
         }
@@ -238,12 +249,12 @@ public class YesNtInterpreter
     /// <param name="name">The keyword of the statement(s) to re-enable.</param>
     public void EnableStatement(string name)
     {
-        if (!disabledStatements.TryGetValue(name, out List<KeyValuePair<StatementAttribute, Action<string>>> saved))
+        if (!disabledStatements.TryGetValue(name, out List<KeyValuePair<StatementAttributeContainer, Action<string>>> saved))
         {
             return;
         }
 
-        foreach (KeyValuePair<StatementAttribute, Action<string>> kv in saved)
+        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> kv in saved)
         {
             statements[kv.Key] = kv.Value;
         }
@@ -349,9 +360,9 @@ public class YesNtInterpreter
                 };
             }
 
-            foreach (KeyValuePair<StaticStatementAttribute, Action> staticStatement in staticStatements)
+            foreach (KeyValuePair<StaticStatementAttributeContainer, Action> staticStatement in staticStatements)
             {
-                StaticStatementAttribute staticStatementAttribute = staticStatement.Key;
+                StaticStatementAttributeContainer staticStatementAttribute = staticStatement.Key;
                 if (!staticStatementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
                     continue;
@@ -367,7 +378,7 @@ public class YesNtInterpreter
 
             foreach (StatementHandler handler in handlers)
             {
-                StatementAttribute statementAttribute = handler.Attribute;
+                StatementAttributeContainer statementAttribute = handler.Attribute;
 
                 if (!statementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
@@ -534,7 +545,7 @@ public class YesNtInterpreter
 
     private static bool IsPossibleMatch(string content, StatementHandler handler)
     {
-        StatementAttribute attr = handler.Attribute;
+        StatementAttributeContainer attr = handler.Attribute;
         string fullName = handler.FullName;
 
         return attr.SearchMode switch
