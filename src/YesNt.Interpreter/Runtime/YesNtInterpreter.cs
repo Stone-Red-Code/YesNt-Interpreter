@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -58,6 +59,13 @@ public class YesNtInterpreter
             return new ReadOnlyCollection<StatementInformation>(information);
         }
     }
+
+    /// <summary>
+    /// <see langword="true"/> from the moment <see cref="Prepare(string, bool)"/> (or any
+    /// <c>Execute</c> overload) is called until the script finishes or is stopped.
+    /// Use this to drive step/run loops: <c>while (interpreter.IsRunning) interpreter.Step(10);</c>
+    /// </summary>
+    public bool IsRunning { get; private set; }
 
     /// <summary>
     /// Initializes a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
@@ -274,7 +282,53 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Executes a YesNt script file.
+    /// Loads a YesNt script file and prepares it for stepped execution.
+    /// After this call <see cref="IsRunning"/> is <see langword="true"/> and you can drive
+    /// execution with <see cref="Step"/>, <see cref="RunFor"/>, or <see cref="RunToCompletion"/>.
+    /// </summary>
+    /// <param name="path">The path to the <c>.ynt</c> script file.</param>
+    /// <param name="isDebugMode">
+    /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> instead of
+    /// <see cref="Console"/> and line-execution events are raised via <see cref="OnLineExecuted"/>.
+    /// </param>
+    public void Prepare(string path, bool isDebugMode = false)
+    {
+        runtimeInfo.Reset();
+        runtimeInfo.IsDebugMode = isDebugMode;
+        if (LoadFile(path))
+        {
+            IsRunning = true;
+        }
+    }
+
+    /// <summary>
+    /// Loads an in-memory script and prepares it for stepped execution.
+    /// After this call <see cref="IsRunning"/> is <see langword="true"/> and you can drive
+    /// execution with <see cref="Step"/>, <see cref="RunFor"/>, or <see cref="RunToCompletion"/>.
+    /// </summary>
+    /// <param name="lines">The script lines to load.</param>
+    /// <param name="isDebugMode">
+    /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> and
+    /// line-execution events are raised via <see cref="OnLineExecuted"/>.
+    /// </param>
+    public void Prepare(IEnumerable<string> lines, bool isDebugMode = false)
+    {
+        runtimeInfo.Reset();
+        runtimeInfo.IsDebugMode = isDebugMode;
+
+        int i = 0;
+        foreach (string line in lines)
+        {
+            string content = line.Trim().Replace("\r", string.Empty);
+            runtimeInfo.Lines.Add(new Line(content, "#Memory#", i++));
+        }
+
+        PreScanLines();
+        IsRunning = true;
+    }
+
+    /// <summary>
+    /// Executes a YesNt script file to completion.
     /// </summary>
     /// <param name="path">The path to the <c>.ynt</c> script file.</param>
     /// <param name="isDebugMode">
@@ -283,35 +337,22 @@ public class YesNtInterpreter
     /// </param>
     public void Execute(string path, bool isDebugMode = false)
     {
-        runtimeInfo.Reset();
-        runtimeInfo.IsDebugMode = isDebugMode;
-        if (LoadFile(path))
-        {
-            Execute();
-        }
+        Prepare(path, isDebugMode);
+        RunToCompletion();
     }
 
     /// <summary>
-    /// Executes a YesNt script supplied as an in-memory list of lines.
+    /// Executes a YesNt script supplied as an in-memory list of lines to completion.
     /// </summary>
     /// <param name="lines">The script lines to execute.</param>
     /// <param name="isDebugMode">
     /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> and
     /// line-execution events are raised via <see cref="OnLineExecuted"/>.
     /// </param>
-    public void Execute(List<string> lines, bool isDebugMode = false)
+    public void Execute(IEnumerable<string> lines, bool isDebugMode = false)
     {
-        runtimeInfo.Reset();
-        runtimeInfo.IsDebugMode = isDebugMode;
-
-        for (int i = 0; i < lines.Count; i++)
-        {
-            string content = lines[i].Trim().Replace("\r", string.Empty);
-            runtimeInfo.Lines.Add(new Line(content, Path.GetFileName("#Memory#"), i));
-        }
-
-        PreScanLines();
-        Execute();
+        Prepare(lines, isDebugMode);
+        RunToCompletion();
     }
 
     internal void Execute(List<Line> lines, Dictionary<string, string> globalVariables, int startLine, RuntimeInformation parentRuntimeInformation)
@@ -322,22 +363,98 @@ public class YesNtInterpreter
         runtimeInfo.LineNumber = startLine;
         runtimeInfo.ParentRuntimeInformation = parentRuntimeInformation;
         runtimeInfo.GlobalVariables = globalVariables;
+
         if (parentRuntimeInformation.StopAllTasks)
         {
             runtimeInfo.Exit(ExitMessages.TerminatedByParentTask, parentRuntimeInformation.StopAllTasks);
             return;
         }
+
         PreScanLines();
-        Execute();
+        IsRunning = true;
+        RunToCompletion();
     }
 
-    private void Execute()
+    /// <summary>
+    /// Executes up to <paramref name="lines"/> script lines then pauses, leaving
+    /// <see cref="IsRunning"/> <see langword="true"/> so execution can be resumed later.
+    /// Blank lines and comments are skipped transparently and do not consume the budget.
+    /// </summary>
+    /// <param name="lines">Maximum number of executable lines to run. Defaults to 1.</param>
+    /// <returns>
+    /// <see cref="StepResult.Paused"/> if the budget was exhausted but the script is not finished;
+    /// <see cref="StepResult.Finished"/> if the script ended within the budget.
+    /// </returns>
+    public StepResult Step(int lines = 1)
     {
-        for (; runtimeInfo.LineNumber < runtimeInfo.Lines.Count; runtimeInfo.LineNumber++)
+        for (int i = 0; i < lines; i++)
+        {
+            StepResult result = StepOnce();
+            if (result != StepResult.Continue)
+            {
+                return result;
+            }
+        }
+
+        return StepResult.Paused;
+    }
+
+    /// <summary>
+    /// Runs the script for up to <paramref name="budget"/> of wall-clock time, then pauses.
+    /// The check happens between lines, so a single slow statement may overshoot slightly.
+    /// </summary>
+    /// <param name="budget">How long to run before pausing.</param>
+    /// <returns>
+    /// <see cref="StepResult.Paused"/> if the budget expired but the script is not finished;
+    /// <see cref="StepResult.Finished"/> if the script ended within the budget.
+    /// </returns>
+    public StepResult RunFor(TimeSpan budget)
+    {
+        if (!IsRunning)
+        {
+            return StepResult.Finished;
+        }
+
+        Stopwatch sw = Stopwatch.StartNew();
+
+        while (sw.Elapsed < budget)
+        {
+            StepResult result = StepOnce();
+            if (result != StepResult.Continue)
+            {
+                return result;
+            }
+        }
+
+        return StepResult.Paused;
+    }
+
+    /// <summary>
+    /// Runs the script to completion from the current position.
+    /// If the script has not been started yet (i.e. <see cref="IsRunning"/> is <see langword="false"/>)
+    /// this method returns immediately.
+    /// </summary>
+    public void RunToCompletion()
+    {
+        while (IsRunning)
+        {
+            _ = StepOnce();
+        }
+    }
+
+    private StepResult StepOnce()
+    {
+        if (!IsRunning)
+        {
+            return StepResult.Finished;
+        }
+
+        // Skip blank lines and comments without consuming the step budget.
+        while (runtimeInfo.LineNumber < runtimeInfo.Lines.Count)
         {
             if (runtimeInfo.Stop)
             {
-                break;
+                return FinishExecution();
             }
 
             Line lineObj = runtimeInfo.Lines[runtimeInfo.LineNumber];
@@ -345,9 +462,11 @@ public class YesNtInterpreter
 
             if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
             {
+                runtimeInfo.LineNumber++;
                 continue;
             }
 
+            // We have a real executable line — run it.
             DebugEventArgs debugEventArgs = null;
             if (runtimeInfo.IsDebugMode)
             {
@@ -362,8 +481,7 @@ public class YesNtInterpreter
 
             foreach (KeyValuePair<StaticStatementAttributeContainer, Action> staticStatement in staticStatements)
             {
-                StaticStatementAttributeContainer staticStatementAttribute = staticStatement.Key;
-                if (!staticStatementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
+                if (!staticStatement.Key.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
                     continue;
                 }
@@ -374,7 +492,9 @@ public class YesNtInterpreter
             bool statementFound = false;
             bool notSearchingLabel = !runtimeInfo.IsSearching;
 
-            List<StatementHandler> handlers = (runtimeInfo.LineNumber < lineMatchingHandlers.Count) ? lineMatchingHandlers[runtimeInfo.LineNumber] : [];
+            List<StatementHandler> handlers = (runtimeInfo.LineNumber < lineMatchingHandlers.Count)
+                ? lineMatchingHandlers[runtimeInfo.LineNumber]
+                : [];
 
             foreach (StatementHandler handler in handlers)
             {
@@ -425,12 +545,26 @@ public class YesNtInterpreter
             {
                 runtimeInfo.Exit(ExitMessages.InvalidStatement, true);
             }
+
             if (runtimeInfo.IsDebugMode && notSearchingLabel && debugEventArgs != null)
             {
                 debugEventArgs.CurrentLine = runtimeInfo.CurrentLine.FromSafeString();
                 runtimeInfo.LineExecuted(debugEventArgs);
             }
+
+            runtimeInfo.LineNumber++;
+
+            // A statement may have set Stop (e.g. an explicit exit keyword).
+            return runtimeInfo.Stop ? FinishExecution() : StepResult.Continue;
         }
+
+        // Fell off the end of the script.
+        return FinishExecution();
+    }
+
+    private StepResult FinishExecution()
+    {
+        IsRunning = false;
 
         if (!runtimeInfo.Stop)
         {
@@ -446,12 +580,14 @@ public class YesNtInterpreter
             {
                 runtimeInfo.Exit(ExitMessages.EndOfFile, false);
             }
-
-            if (runtimeInfo.IsDebugMode)
-            {
-                runtimeInfo.LineExecuted(null);
-            }
         }
+
+        if (runtimeInfo.IsDebugMode)
+        {
+            runtimeInfo.LineExecuted(null);
+        }
+
+        return StepResult.Finished;
     }
 
     private bool LoadFile(string path)
