@@ -88,6 +88,47 @@ interpreter.Execute(lines);
 
 ---
 
+## Stepwise and time-budgeted execution
+
+For interactive environments, game loops, or time-sliced applications, you can prepare a script and run it incrementally.
+
+### Preparing the interpreter
+Call `Prepare` instead of `Execute` to load the script without running it immediately:
+
+```csharp
+var interpreter = new YesNtInterpreter();
+interpreter.Prepare("path/to/script.ynt");
+// or: interpreter.Prepare(lines);
+```
+
+### Driving execution
+Use `IsRunning` to check if there are more lines to execute, and step by line count or run with a time budget:
+
+```csharp
+// Execute 5 lines of the script
+StepResult result = interpreter.Step(5);
+
+if (result == StepResult.Paused)
+{
+    // The line budget was exhausted; resume execution later
+}
+```
+
+Or run the interpreter with a wall-clock time limit (useful for preventing freezing in game loops):
+
+```csharp
+// Run for up to 10 milliseconds
+StepResult result = interpreter.RunFor(TimeSpan.FromMilliseconds(10));
+```
+
+You can also run the remaining script to completion:
+
+```csharp
+interpreter.RunToCompletion();
+```
+
+---
+
 ## Capturing output (debug mode)
 
 Pass `isDebugMode: true` to suppress direct console writes. Output is delivered through the
@@ -186,12 +227,12 @@ interpreter.AddStatement("log", SearchMode.StartOfLine, SpaceAround.End,
     args => Console.WriteLine($"[LOG] {args}"));
 ```
 
-### Using a `StatementAttribute`
+### Using a `StatementInformation`
 
 ```csharp
-using YesNt.Interpreter.Attributes;
+using YesNt.Interpreter.Runtime;
 
-var attr = new StatementAttribute("log", SearchMode.StartOfLine, SpaceAround.End)
+var attr = new StatementInformation("log", SearchMode.StartOfLine, SpaceAround.End)
 {
     Priority = Priority.VeryLow,
 };
@@ -218,7 +259,7 @@ interpreter.AddStatement(attr, args => Console.WriteLine($"[LOG] {args}"));
 | `StartEnd` | Spaces required on both sides    |
 
 Custom statements run at `Priority.Normal` by default. Statements with a higher-ranking enum member (`PreProcessing` → `Highest` → … → `VeryLow`) run first; `VeryLow` runs last.
-Use `StatementAttribute.Priority` to control ordering relative to built-in statements.
+Use `StatementInformation.Priority` to control ordering relative to built-in statements.
 
 ---
 
@@ -370,15 +411,30 @@ public event Action                 OnWaitingForInput;
 #### Methods
 
 ```csharp
-// Execute a .ynt file
+// Execute a .ynt file to completion
 public void Execute(string path, bool isDebugMode = false);
 
-// Execute in-memory lines
-public void Execute(List<string> lines, bool isDebugMode = false);
+// Execute in-memory lines to completion
+public void Execute(IEnumerable<string> lines, bool isDebugMode = false);
+
+// Prepare a script file for stepwise execution
+public void Prepare(string path, bool isDebugMode = false);
+
+// Prepare in-memory lines for stepwise execution
+public void Prepare(IEnumerable<string> lines, bool isDebugMode = false);
+
+// Execute up to standard line count then pause
+public StepResult Step(int lines = 1);
+
+// Run the script for up to budget duration then pause
+public StepResult RunFor(TimeSpan budget);
+
+// Execute the remaining script lines to completion
+public void RunToCompletion();
 
 // Register a custom statement (full control)
-public void AddStatement(StatementAttribute attribute, Action<string> handler);
-public void AddStatement(StatementAttribute attribute, Action<string, IStatementContext> handler);
+public void AddStatement(StatementInformation attribute, Action<string> handler);
+public void AddStatement(StatementInformation attribute, Action<string, IStatementContext> handler);
 
 // Register a custom statement (convenience overloads)
 public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler);
@@ -404,6 +460,9 @@ public void Stop();
 ```csharp
 // Read-only snapshot of all registered statements
 public ReadOnlyCollection<StatementInformation> StatementInformation { get; }
+
+// Whether a prepared script is currently active/running
+public bool IsRunning { get; }
 ```
 
 ---
@@ -424,3 +483,19 @@ Provides access to the script state that a built-in statement handler would have
 | `CurrentLine`            | `string`                    | The line being processed; write here for inline-substitution handlers     |
 | `LineNumber`             | `int`                       | Zero-based index of the next line to execute; set this to implement jumps |
 | `Exit(message, isError)` | `void`                      | Terminate execution with a message; `isError: true` signals an error      |
+
+---
+
+### `StepResult`
+
+```csharp
+public enum StepResult  // YesNt.Interpreter.Runtime
+```
+
+Returned by `Step` and `RunFor` to indicate the outcome of the incremental execution.
+
+| Value      | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| `Continue` | A line was executed and more lines remain.                     |
+| `Paused`   | The step or time budget was exhausted before the script ended. |
+| `Finished` | The script ran to completion (or terminated/exited).           |
