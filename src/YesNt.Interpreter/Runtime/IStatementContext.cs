@@ -4,7 +4,7 @@ namespace YesNt.Interpreter.Runtime;
 
 /// <summary>
 /// Exposes the script runtime state accessible to custom statement handlers registered
-/// via <see cref="YesNtInterpreter.AddStatement"/>.
+/// via <see cref="YesNtInterpreter.AddStatement(YesNt.Interpreter.Runtime.StatementInformation, System.Action{string, YesNt.Interpreter.Runtime.IStatementContext})"/>.
 /// </summary>
 public interface IStatementContext
 {
@@ -24,9 +24,9 @@ public interface IStatementContext
 
     /// <summary>Terminates execution with the given message.</summary>
     /// <param name="message">The message written to debug output.</param>
-    /// <param name="isError">
-    /// <see langword="true"/> to signal an error termination;
-    /// <see langword="false"/> for a planned, non-error termination.
+    /// <param name="stopAllTasks">
+    /// If <see langword="true"/>, also terminates all tasks spawned by the <c>task</c> statement.
+    /// If <see langword="false"/>, only terminates the current execution context (main script or individual task).
     /// </param>
-    void Exit(string message, bool isError);
+    void Exit(string message, bool stopAllTasks);
 }

@@ -2,7 +2,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using System.Collections.Generic;
 
-using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
 
@@ -65,7 +64,7 @@ public class AddStatementTests
 
         _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
-            StatementAttribute attr = new StatementAttribute("attr_cmd", SearchMode.StartOfLine, SpaceAround.End);
+            StatementInformation attr = new StatementInformation("attr_cmd", SearchMode.StartOfLine, SpaceAround.End);
             interpreter.AddStatement(attr, _ =>
             {
                 handlerCalled = true;
@@ -282,11 +281,11 @@ public class AddStatementTests
         _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement(
-                new StatementAttribute("priority_cmd", SearchMode.StartOfLine, SpaceAround.End) { Priority = Priority.High },
+                new StatementInformation("priority_cmd", SearchMode.StartOfLine, SpaceAround.End) { Priority = Priority.High },
                 _ => highPriorityOrder = callOrder++);
 
             interpreter.AddStatement(
-                new StatementAttribute("priority_cmd", SearchMode.StartOfLine, SpaceAround.End) { Priority = Priority.Normal },
+                new StatementInformation("priority_cmd", SearchMode.StartOfLine, SpaceAround.End) { Priority = Priority.Normal },
                 _ => normalPriorityOrder = callOrder++);
         });
 
@@ -364,7 +363,7 @@ public class AddStatementTests
 
         string? captured = null;
 
-        YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
+        _ = YesNtAssert.GetLastLineWithSetup(lines, interpreter =>
         {
             interpreter.AddStatement("echo_var", SearchMode.StartOfLine, SpaceAround.End, (args, rt) =>
             {
