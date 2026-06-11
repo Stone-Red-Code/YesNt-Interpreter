@@ -10,12 +10,12 @@ namespace YesNt.Interpreter.Utilities;
 /// <summary>
 /// Provides high-performance template substitution for variables and stack parameters.
 /// </summary>
-internal static class TemplateProcessor
+public static class TemplateProcessor
 {
     /// <summary>
     /// Replaces all occurrences of ${variableName} with their current values.
     /// </summary>
-    public static string ProcessVariables(string input, RuntimeInformation runtimeInfo)
+    internal static string ProcessVariables(string input, RuntimeInformation runtimeInfo)
     {
         if (string.IsNullOrEmpty(input))
         {
@@ -76,7 +76,7 @@ internal static class TemplateProcessor
     /// <summary>
     /// Replaces all occurrences of a placeholder (e.g., %in, %out) with values popped from a stack.
     /// </summary>
-    public static string ProcessStackParameters(string input, string placeholder, Stack<string> stack, RuntimeInformation runtimeInfo, string emptyStackMessage)
+    internal static string ProcessStackParameters(string input, string placeholder, Stack<string> stack, RuntimeInformation runtimeInfo, string emptyStackMessage)
     {
         if (string.IsNullOrEmpty(input))
         {
@@ -153,7 +153,7 @@ internal static class TemplateProcessor
     /// <summary>
     /// Replaces all occurrences of arithmetic expressions with their results.
     /// </summary>
-    public static string ProcessCalculations(string input, RuntimeInformation runtimeInfo, Regex calculationRegex)
+    internal static string ProcessCalculations(string input, RuntimeInformation runtimeInfo, Regex calculationRegex)
     {
         if (string.IsNullOrEmpty(input))
         {
