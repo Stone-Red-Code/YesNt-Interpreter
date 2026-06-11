@@ -133,7 +133,6 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
             .OfType<IPropertySymbol>()
             .Where(p => !p.IsStatic
                      && p.DeclaredAccessibility == Accessibility.Public
-                     && p.SetMethod is not null
                      && !ctorParamNames.Contains(p.Name))
             .ToList();
 
