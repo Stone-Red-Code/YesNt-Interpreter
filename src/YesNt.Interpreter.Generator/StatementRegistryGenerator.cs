@@ -141,16 +141,22 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
 
         // All properties ever assigned by any ctor, deduplicated by name.
         // We need a get-only property for each of them.
-        List<(string PropName, ITypeSymbol PropType)> ctorProps = ctors
+        var ctorProps = ctors
             .SelectMany(c => c.Parameters)
-            .Select(p => (
-                PropName: ResolvePropertyName(attributeSymbol, p),
-                PropType: p.Type))
+            .Select(p => {
+                string propName = ResolvePropertyName(attributeSymbol, p);
+                IPropertySymbol? propSymbol = attributeSymbol
+                    .GetMembers()
+                    .OfType<IPropertySymbol>()
+                    .FirstOrDefault(sym => string.Equals(sym.Name, propName, StringComparison.OrdinalIgnoreCase));
+                return (PropName: propName, PropType: p.Type, PropSymbol: propSymbol);
+            })
             .GroupBy(x => x.PropName, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .ToList();
 
         // ---- class declaration ----
+        _ = sb.Append(GetFormattedComment(attributeSymbol, attributeSymbol, className, $"Information about the {className} class.", ""));
         _ = sb.AppendLine($"public sealed class {className}");
         _ = sb.AppendLine("{");
 
@@ -159,6 +165,7 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         {
             if (ctor.Parameters.Length == 0)
             {
+                _ = sb.Append(GetFormattedComment(ctor, attributeSymbol, className, $"Initializes a new instance of the <see cref=\"{className}\"/> class.", "    "));
                 _ = sb.AppendLine($"    public {className}() {{ }}");
                 _ = sb.AppendLine();
                 continue;
@@ -167,6 +174,7 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
             string ctorParams = string.Join(", ",
                 ctor.Parameters.Select(p => $"{GlobalType(p.Type)} {p.Name}"));
 
+            _ = sb.Append(GetFormattedComment(ctor, attributeSymbol, className, $"Initializes a new instance of the <see cref=\"{className}\"/> class.", "    "));
             _ = sb.AppendLine($"    public {className}({ctorParams})");
             _ = sb.AppendLine("    {");
 
@@ -181,20 +189,90 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         }
 
         // ---- get-only properties sourced from ctor parameters ----
-        foreach ((string propName, ITypeSymbol propType) in ctorProps)
+        foreach (var ctorProp in ctorProps)
         {
-            _ = sb.AppendLine($"    public {GlobalType(propType)} {propName} {{ get; }}");
+            if (ctorProp.PropSymbol is not null)
+            {
+                _ = sb.Append(GetFormattedComment(ctorProp.PropSymbol, attributeSymbol, className, $"Gets the {ctorProp.PropName} property.", "    "));
+            }
+            else
+            {
+                _ = sb.AppendLine("    /// <summary>");
+                _ = sb.AppendLine($"    /// Gets the {ctorProp.PropName} property.");
+                _ = sb.AppendLine("    /// </summary>");
+            }
+            _ = sb.AppendLine($"    public {GlobalType(ctorProp.PropType)} {ctorProp.PropName} {{ get; }}");
         }
 
         // ---- settable properties (named-argument style) ----
         foreach (IPropertySymbol prop in settableProps)
         {
             string defaultClause = GetDefaultClause(prop, compilation);
+            _ = sb.Append(GetFormattedComment(prop, attributeSymbol, className, $"Gets or sets the {prop.Name} property.", "    "));
             _ = sb.AppendLine($"    public {GlobalType(prop.Type)} {prop.Name} {{ get; init; }}{defaultClause}");
         }
 
         _ = sb.AppendLine("}");
         _ = sb.AppendLine();
+    }
+
+    private static string GetFormattedComment(
+        ISymbol symbol,
+        INamedTypeSymbol attributeSymbol,
+        string className,
+        string fallbackSummary,
+        string indent = "    ")
+    {
+        string? xml = symbol.GetDocumentationCommentXml();
+        if (!string.IsNullOrEmpty(xml))
+        {
+            xml = xml!.Replace(attributeSymbol.Name, className);
+        }
+
+        string formatted = FormatXmlComment(xml, indent);
+        if (!string.IsNullOrWhiteSpace(formatted))
+        {
+            return formatted;
+        }
+
+        // Fallback
+        var sb = new StringBuilder();
+        _ = sb.AppendLine($"{indent}/// <summary>");
+        _ = sb.AppendLine($"{indent}/// {fallbackSummary}");
+        _ = sb.AppendLine($"{indent}/// </summary>");
+        return sb.ToString();
+    }
+
+    private static string FormatXmlComment(string? xml, string indent)
+    {
+        if (string.IsNullOrWhiteSpace(xml))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            var element = System.Xml.Linq.XElement.Parse(xml!);
+            var sb = new StringBuilder();
+            foreach (var child in element.Elements())
+            {
+                string nodeXml = child.ToString();
+                string[] lines = nodeXml.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                foreach (string line in lines)
+                {
+                    string trimmedLine = line.Trim();
+                    if (trimmedLine.Length > 0)
+                    {
+                        _ = sb.AppendLine($"{indent}/// {trimmedLine}");
+                    }
+                }
+            }
+            return sb.ToString();
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     // Finds the attribute property that corresponds to a constructor parameter.
