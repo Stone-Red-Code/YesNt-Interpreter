@@ -29,36 +29,17 @@ public class YesNtInterpreter
     public event Action<string> OnDebugOutput;
 
     private readonly RuntimeInformation runtimeInfo = new RuntimeInformation();
-    private Dictionary<StatementAttributeContainer, Action<string>> statements;
+    private Dictionary<StatementInformation, Action<string>> statements;
     private List<StatementHandler> statementHandlers;
     private List<List<StatementHandler>> lineMatchingHandlers = [];
-    private readonly List<KeyValuePair<StaticStatementAttributeContainer, Action>> staticStatements;
-    private readonly Dictionary<string, List<KeyValuePair<StatementAttributeContainer, Action<string>>>> disabledStatements = [];
+    private readonly List<KeyValuePair<StaticStatementInformation, Action>> staticStatements;
+    private readonly Dictionary<string, List<KeyValuePair<StatementInformation, Action<string>>>> disabledStatements = [];
 
     /// <summary>
     /// Gets a read-only snapshot of all currently registered statements.
     /// Useful for building syntax highlighters or documentation tools.
     /// </summary>
-    public ReadOnlyCollection<StatementInformation> StatementInformation
-    {
-        get
-        {
-            List<StatementInformation> information = statements.Select(s =>
-            {
-                return new StatementInformation()
-                {
-                    Name = s.Key.Name,
-                    SearchMode = s.Key.SearchMode,
-                    SpaceAround = s.Key.SpaceAround,
-                    Color = s.Key.Color,
-                    IgnoreSyntaxHighlighting = s.Key.IgnoreSyntaxHighlighting,
-                    Separator = s.Key.Separator
-                };
-            }).ToList();
-
-            return new ReadOnlyCollection<StatementInformation>(information);
-        }
-    }
+    public ReadOnlyCollection<StatementInformation> StatementInformation => statements.Keys.ToList().AsReadOnly();
 
     /// <summary>
     /// <see langword="true"/> from the moment <see cref="Prepare(string, bool)"/> (or any
@@ -96,7 +77,7 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Registers a custom statement using a pre-built <see cref="StatementAttributeContainer"/>.
+    /// Registers a custom statement using a pre-built <see cref="StatementInformation"/>.
     /// If a statement with the same attribute key (identical field values) already exists it will be replaced;
     /// otherwise a new entry is added. Built-in statements use distinct attribute instances, so passing a
     /// newly constructed attribute with the same name will <b>add</b> a second handler rather than replacing
@@ -106,13 +87,13 @@ public class YesNtInterpreter
     /// <param name="attribute">The attribute describing the keyword, search mode, and priority.</param>
     /// <param name="handler">
     /// The delegate invoked when the statement matches. Receives the argument text
-    /// (the part of the line after the keyword, unless <see cref="StatementAttributeContainer.KeepStatementInArgs"/> is set).
+    /// (the part of the line after the keyword, unless <see cref="StatementInformation.KeepStatementInArgs"/> is set).
     /// </param>
-    public void AddStatement(StatementAttributeContainer attribute, Action<string> handler)
+    public void AddStatement(StatementInformation attribute, Action<string> handler)
     {
         statements[attribute] = handler;
 
-        List<KeyValuePair<StatementAttributeContainer, Action<string>>> entries = [.. statements];
+        List<KeyValuePair<StatementInformation, Action<string>>> entries = [.. statements];
         entries.Sort((a, b) =>
         {
             int cmp = a.Key.Priority.CompareTo(b.Key.Priority);
@@ -121,7 +102,7 @@ public class YesNtInterpreter
 
         statements = [];
 
-        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> entry in entries)
+        foreach (KeyValuePair<StatementInformation, Action<string>> entry in entries)
         {
             statements.Add(entry.Key, entry.Value);
         }
@@ -139,7 +120,7 @@ public class YesNtInterpreter
     /// The delegate invoked when the statement matches. Receives the argument text and the current
     /// <see cref="IStatementContext"/> for reading/writing script state.
     /// </param>
-    public void AddStatement(StatementAttributeContainer attribute, Action<string, IStatementContext> handler)
+    public void AddStatement(StatementInformation attribute, Action<string, IStatementContext> handler)
     {
         AddStatement(attribute, args => handler(args, runtimeInfo));
     }
@@ -153,7 +134,7 @@ public class YesNtInterpreter
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string> handler)
     {
-        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround), handler);
+        AddStatement(new StatementInformation(name, searchMode, spaceAround), handler);
     }
 
     /// <summary>
@@ -169,7 +150,7 @@ public class YesNtInterpreter
     /// </param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, Action<string, IStatementContext> handler)
     {
-        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround), handler);
+        AddStatement(new StatementInformation(name, searchMode, spaceAround), handler);
     }
 
     /// <summary>
@@ -182,7 +163,7 @@ public class YesNtInterpreter
     /// <param name="handler">The delegate invoked when the statement matches.</param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string> handler)
     {
-        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround, consoleColor), handler);
+        AddStatement(new StatementInformation(name, searchMode, spaceAround, consoleColor), handler);
     }
 
     /// <summary>
@@ -199,7 +180,7 @@ public class YesNtInterpreter
     /// </param>
     public void AddStatement(string name, SearchMode searchMode, SpaceAround spaceAround, ConsoleColor consoleColor, Action<string, IStatementContext> handler)
     {
-        AddStatement(new StatementAttributeContainer(name, searchMode, spaceAround, consoleColor), handler);
+        AddStatement(new StatementInformation(name, searchMode, spaceAround, consoleColor), handler);
     }
 
     /// <summary>
@@ -208,7 +189,7 @@ public class YesNtInterpreter
     /// <param name="name">The keyword to remove.</param>
     public void RemoveStatement(string name)
     {
-        foreach (StatementAttributeContainer key in statements.Keys.Where(k => k.Name == name).ToList())
+        foreach (StatementInformation key in statements.Keys.Where(k => k.Name == name).ToList())
         {
             _ = statements.Remove(key);
         }
@@ -231,7 +212,7 @@ public class YesNtInterpreter
             return;
         }
 
-        List<KeyValuePair<StatementAttributeContainer, Action<string>>> matching =
+        List<KeyValuePair<StatementInformation, Action<string>>> matching =
             statements.Where(kv => kv.Key.Name == name).ToList();
 
         if (matching.Count == 0)
@@ -241,7 +222,7 @@ public class YesNtInterpreter
 
         disabledStatements[name] = matching;
 
-        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> kv in matching)
+        foreach (KeyValuePair<StatementInformation, Action<string>> kv in matching)
         {
             statements[kv.Key] = _ => { };
         }
@@ -257,12 +238,12 @@ public class YesNtInterpreter
     /// <param name="name">The keyword of the statement(s) to re-enable.</param>
     public void EnableStatement(string name)
     {
-        if (!disabledStatements.TryGetValue(name, out List<KeyValuePair<StatementAttributeContainer, Action<string>>> saved))
+        if (!disabledStatements.TryGetValue(name, out List<KeyValuePair<StatementInformation, Action<string>>> saved))
         {
             return;
         }
 
-        foreach (KeyValuePair<StatementAttributeContainer, Action<string>> kv in saved)
+        foreach (KeyValuePair<StatementInformation, Action<string>> kv in saved)
         {
             statements[kv.Key] = kv.Value;
         }
@@ -479,7 +460,7 @@ public class YesNtInterpreter
                 };
             }
 
-            foreach (KeyValuePair<StaticStatementAttributeContainer, Action> staticStatement in staticStatements)
+            foreach (KeyValuePair<StaticStatementInformation, Action> staticStatement in staticStatements)
             {
                 if (!staticStatement.Key.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
@@ -498,7 +479,7 @@ public class YesNtInterpreter
 
             foreach (StatementHandler handler in handlers)
             {
-                StatementAttributeContainer statementAttribute = handler.Attribute;
+                StatementInformation statementAttribute = handler.Attribute;
 
                 if (!statementAttribute.ExecuteInSearchMode && runtimeInfo.IsSearching)
                 {
@@ -681,7 +662,7 @@ public class YesNtInterpreter
 
     private static bool IsPossibleMatch(string content, StatementHandler handler)
     {
-        StatementAttributeContainer attr = handler.Attribute;
+        StatementInformation attr = handler.Attribute;
         string fullName = handler.FullName;
 
         return attr.SearchMode switch
