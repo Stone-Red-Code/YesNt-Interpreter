@@ -1,4 +1,5 @@
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 using System;
 using System.Collections.Generic;
@@ -30,7 +31,7 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         INamedTypeSymbol? statementAttrSymbol = compilation.GetTypeByMetadataName(StatementAttributeName);
         INamedTypeSymbol? staticStatementAttrSymbol = compilation.GetTypeByMetadataName(StaticStatementAttributeName);
 
-        string infoSource = GenerateInformationClassesSource(statementAttrSymbol, staticStatementAttrSymbol);
+        string infoSource = GenerateInformationClassesSource(statementAttrSymbol, staticStatementAttrSymbol, compilation);
         context.AddSource("GeneratedStatementInformation.g.cs", infoSource);
 
         string registrySource = GenerateRegistrySource(statementMethods, staticStatementMethods);
@@ -89,7 +90,8 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
 
     private static string GenerateInformationClassesSource(
         INamedTypeSymbol? statementAttrSymbol,
-        INamedTypeSymbol? staticStatementAttrSymbol)
+        INamedTypeSymbol? staticStatementAttrSymbol,
+        Compilation compilation)
     {
         StringBuilder sb = new StringBuilder();
 
@@ -101,12 +103,12 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
 
         if (statementAttrSymbol is not null)
         {
-            EmitInformationClass(sb, statementAttrSymbol, "StatementInformation");
+            EmitInformationClass(sb, statementAttrSymbol, "StatementInformation", compilation);
         }
 
         if (staticStatementAttrSymbol is not null)
         {
-            EmitInformationClass(sb, staticStatementAttrSymbol, "StaticStatementInformation");
+            EmitInformationClass(sb, staticStatementAttrSymbol, "StaticStatementInformation", compilation);
         }
 
         return sb.ToString();
@@ -115,7 +117,8 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
     private static void EmitInformationClass(
     StringBuilder sb,
     INamedTypeSymbol attributeSymbol,
-    string className)
+    string className,
+    Compilation compilation)
     {
         List<IMethodSymbol> ctors = attributeSymbol.Constructors
             .Where(c => !c.IsImplicitlyDeclared)
@@ -186,7 +189,7 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         // ---- settable properties (named-argument style) ----
         foreach (IPropertySymbol prop in settableProps)
         {
-            string defaultClause = GetDefaultClause(prop);
+            string defaultClause = GetDefaultClause(prop, compilation);
             _ = sb.AppendLine($"    public {GlobalType(prop.Type)} {prop.Name} {{ get; init; }}{defaultClause}");
         }
 
@@ -244,11 +247,47 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
         return string.IsNullOrEmpty(name) ? name : char.ToUpperInvariant(name[0]) + name.Substring(1);
     }
 
-    private static string GetDefaultClause(IPropertySymbol prop)
+    private static string GetDefaultClause(
+        IPropertySymbol prop,
+        Compilation compilation)
     {
-        // Only emit a default for a handful of well-known "safe" defaults so the
-        // generated code compiles even when the caller omits the named argument.
-        return prop.Type.IsReferenceType || prop.Type.NullableAnnotation == NullableAnnotation.Annotated
+        foreach (SyntaxReference syntaxRef in prop.DeclaringSyntaxReferences)
+        {
+            if (syntaxRef.GetSyntax() is not Microsoft.CodeAnalysis.CSharp.Syntax.PropertyDeclarationSyntax syntax)
+            {
+                continue;
+            }
+
+            if (syntax.Initializer?.Value is null)
+            {
+                continue;
+            }
+
+            SemanticModel model = compilation.GetSemanticModel(syntax.SyntaxTree);
+            ExpressionSyntax expr = syntax.Initializer.Value;
+
+            // 1. Try constant evaluation first (SAFE)
+            Optional<object?> constant = model.GetConstantValue(expr);
+            if (constant.HasValue)
+            {
+                return $" = {ToLiteral(constant.Value!, prop.Type)};";
+            }
+
+            // 2. Try symbol resolution (enum fields etc.)
+            ISymbol? symbolInfo = model.GetSymbolInfo(expr).Symbol;
+
+            if (symbolInfo is IFieldSymbol field)
+            {
+                string typeName = GlobalType(field.ContainingType);
+                return $" = {typeName}.{field.Name};";
+            }
+
+            // 3. fallback: raw expression (last resort)
+            return $" = {expr};";
+        }
+
+        // fallback defaults
+        return prop.Type.IsReferenceType || prop.NullableAnnotation == NullableAnnotation.Annotated
             ? " = null!;"
             : prop.Type.SpecialType switch
             {
@@ -388,6 +427,38 @@ public sealed class StatementRegistryGenerator : IIncrementalGenerator
             SpecialType.System_Single => ((float)constant.Value!).ToString(System.Globalization.CultureInfo.InvariantCulture) + "f",
             SpecialType.System_Double => ((double)constant.Value!).ToString(System.Globalization.CultureInfo.InvariantCulture),
             _ => constant.Value!.ToString() ?? "null!"
+        };
+    }
+
+    private static string ToLiteral(object value, ITypeSymbol type)
+    {
+        if (value is null)
+        {
+            return "null!";
+        }
+
+        if (type.TypeKind == TypeKind.Enum)
+        {
+            string enumType = GlobalType(type);
+
+            // value is already boxed enum OR underlying integral type
+            long underlying = Convert.ToInt64(value);
+
+            // fallback: cast
+            return $"({enumType}){underlying}";
+        }
+
+        return type.SpecialType switch
+        {
+            SpecialType.System_String => $"\"{EscapeString((string)value)}\"",
+            SpecialType.System_Char => $"'{EscapeChar((char)value)}'",
+            SpecialType.System_Boolean => (bool)value ? "true" : "false",
+            SpecialType.System_Int32 => ((int)value).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            SpecialType.System_Int64 => ((long)value).ToString(System.Globalization.CultureInfo.InvariantCulture) + "L",
+            SpecialType.System_Single => ((float)value).ToString(System.Globalization.CultureInfo.InvariantCulture) + "f",
+            SpecialType.System_Double => ((double)value).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            SpecialType.System_Decimal => ((decimal)value).ToString(System.Globalization.CultureInfo.InvariantCulture) + "m",
+            _ => value.ToString() ?? "null!"
         };
     }
 
