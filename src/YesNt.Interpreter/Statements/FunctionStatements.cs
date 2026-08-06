@@ -10,7 +10,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal class FunctionStatements : StatementRuntimeInformation
 {
-    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":")]
+    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":", BlockPair = "end_func")]
     public void FindFunction(string args)
     {
         if (RuntimeInfo.InternalIsInFunction)
@@ -32,7 +32,26 @@ internal class FunctionStatements : StatementRuntimeInformation
             RuntimeInfo.SearchFunction = string.Empty;
         }
 
-        RuntimeInfo.IsInFunction = true;
+        bool isDefinitionScan = RuntimeInfo.FunctionCallStack.Count == 0
+            && string.IsNullOrEmpty(RuntimeInfo.SearchFunction)
+            && string.IsNullOrEmpty(RuntimeInfo.SearchLabel);
+
+        if (isDefinitionScan)
+        {
+            if (RuntimeInfo.BlockBoundaries.TryGetValue(RuntimeInfo.LineNumber, out int endLine) && endLine > RuntimeInfo.LineNumber)
+            {
+                RuntimeInfo.IsInFunction = false;
+                RuntimeInfo.LineNumber = endLine;
+            }
+            else
+            {
+                RuntimeInfo.Exit(ExitMessages.FunctionWithoutEndFunc(key), true);
+            }
+        }
+        else
+        {
+            RuntimeInfo.IsInFunction = true;
+        }
     }
 
     [Statement("push_in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
@@ -126,7 +145,7 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
     }
 
-    [Statement("end_func", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    [Statement("end_func", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, IsBlockEnd = true)]
     public void EndFunction(string _)
     {
         HandleReturn(string.Empty);

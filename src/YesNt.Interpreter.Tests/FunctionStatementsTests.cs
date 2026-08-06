@@ -124,9 +124,13 @@ public class FunctionStatementsTests
     {
         List<string> lines =
         [
+            "goto main",
             "func outer:",
             "func inner:",
-            "return"
+            "return",
+            "end_func",
+            "label main:",
+            "call outer"
         ];
 
         YesNtAssert.ContainsTerminationMessage(lines, "Nested functions are not allowed");
@@ -414,10 +418,64 @@ public class FunctionStatementsTests
             "call add with 3, 4",
             "func add: a, b",
             "return ${a} + ${b} calc",
+            "end_func",
             "var total = %out",
             "${total}"
         ];
 
         YesNtAssert.IsLastLineEqual(lines, "7");
+    }
+
+    // --- Top-down function body skip tests ---
+
+    [TestMethod]
+    public void FunctionDeclaredFirstThenCalledTest()
+    {
+        List<string> lines =
+        [
+            "func add: a, b",
+            "return ${a} + ${b} calc",
+            "end_func",
+            "call add with 3, 7",
+            "var total = %out",
+            "${total}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "10");
+    }
+
+    [TestMethod]
+    public void FunctionBodyWithNestedReturnSkippedTest()
+    {
+        List<string> lines =
+        [
+            "func test: a, b",
+            "if ${a} == ${b}:",
+            "print_line %in",
+            "return 999",
+            "end_if",
+            "return ${a} + ${b} calc",
+            "end_func",
+            "call test with 1, 2, 4",
+            "var value = %out",
+            "${value}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "3");
+    }
+
+    [TestMethod]
+    public void FunctionWithoutEndFuncFailsTest()
+    {
+        List<string> lines =
+        [
+            "func answer:",
+            "return 42",
+            "call answer",
+            "var value = %out",
+            "${value}"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "no matching \"end_func\"");
     }
 }
