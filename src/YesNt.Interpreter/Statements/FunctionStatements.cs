@@ -19,17 +19,9 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        string functionDeclaration = args.Trim();
-        if (!functionDeclaration.EndsWith(':'))
+        if (!TryParseFunctionSignature(args, out string key, out _))
         {
-            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
-            return;
-        }
-
-        string key = NormalizeBlockName(functionDeclaration);
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
+            RuntimeInfo.Exit(args.Trim().Contains(':') ? ExitMessages.InvalidSyntax : ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
@@ -83,6 +75,7 @@ internal class FunctionStatements : StatementRuntimeInformation
 
         RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
         RuntimeInfo.InParametersStack.Clear();
+        BindNamedParameters(key);
         RuntimeInfo.CurrentLine = string.Empty;
 
         if (RuntimeInfo.Functions.TryGetValue(key, out int value))

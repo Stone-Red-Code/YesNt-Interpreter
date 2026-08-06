@@ -279,7 +279,7 @@ internal class TextEditor
             if (!isTerminatingStatement && (
                 (trimmed.StartsWith("if ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
                 || (trimmed.StartsWith("while ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
-                || (trimmed.StartsWith("func ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
+                || (trimmed.StartsWith("func ", StringComparison.Ordinal) && trimmed.Contains(':'))
                 || trimmed == "else:"))
             {
                 if (trimmed.StartsWith("if ", StringComparison.Ordinal))

@@ -597,6 +597,7 @@ public class YesNtInterpreter
     internal void PreScanLines()
     {
         runtimeInfo.BlockBoundaries.Clear();
+        runtimeInfo.FunctionParameters.Clear();
         lineMatchingHandlers = new List<List<StatementHandler>>(runtimeInfo.Lines.Count);
 
         // Dictionary to track open blocks by their expected end statement name
@@ -614,6 +615,12 @@ public class YesNtInterpreter
 #pragma warning restore S3267
                 {
                     matchingHandlers.Add(handler);
+
+                    if (handler.Attribute.Name == "func"
+                        && StatementRuntimeInformation.TryParseFunctionSignature(content["func ".Length..], out string functionName, out List<string> functionParameters))
+                    {
+                        runtimeInfo.FunctionParameters[functionName] = functionParameters;
+                    }
 
                     // Track block starts (skip intermediates — they are handled separately below)
                     string blockPair = handler.Attribute.BlockPair;

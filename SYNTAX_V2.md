@@ -78,7 +78,7 @@ print_line ${value}
 | Code flow | `lbl name` | `label name:` | Label declaration/target. |
 | Code flow | `jmp name` | `goto name` | Unconditional jump. |
 | Code flow | `jif name \| cond` | `if cond goto name` | Conditional jump. |
-| Functions | `fnc name` | `func name:` | Function declaration. |
+| Functions | `fnc name` | `func name:` | Function declaration (optional `, ` separated named parameters). |
 | Functions | `cal name` | `call name` | Function call without args. |
 | Functions | `cal name \| a,b,c` | `call name with a, b, c` | Function call with args. |
 | Functions | `in value` | `push_in value` | Push in-arg onto input stack. |
@@ -116,4 +116,6 @@ print_line ${value}
 - Postfix operations are `calc`, `eval`, and `task`.
 - `return` exits the function early (optionally with a value via `return <value>`);
   `end_func` is the explicit end-of-function marker. Both terminate the current function call.
+- Functions may declare named parameters after the name (e.g. `func add: a, b`); each parameter
+  is bound to a local variable from the call arguments, equivalent to `var a = %in` / `var b = %in`.
 

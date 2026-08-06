@@ -248,6 +248,7 @@ internal class CodeFlowStatements : StatementRuntimeInformation
     {
         RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
         RuntimeInfo.InParametersStack.Clear();
+        BindNamedParameters(key);
 
         if (RuntimeInfo.Functions.TryGetValue(key, out int value))
         {

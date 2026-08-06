@@ -45,9 +45,8 @@ func greet:
     print_line Hello, ${name}!
 end_func
 
-func add:
-    var result = %in + %in calc
-    return ${result}
+func add: a, b
+    return ${a} + ${b} calc
 
 call greet with Alice
 call greet with Bob

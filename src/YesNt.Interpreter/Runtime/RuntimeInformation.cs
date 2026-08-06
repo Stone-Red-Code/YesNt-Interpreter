@@ -27,6 +27,7 @@ internal sealed class RuntimeInformation : IStatementContext
 
     public Dictionary<string, string> GlobalVariables { get; set; } = [];
     public Dictionary<string, int> Functions { get; } = [];
+    public Dictionary<string, List<string>> FunctionParameters { get; } = [];
     public Dictionary<int, int> BlockBoundaries { get; } = [];
     internal Action PreScanLinesAction { get; set; }
     public Stack<FunctionScope> FunctionCallStack { get; } = new();
@@ -176,6 +177,7 @@ internal sealed class RuntimeInformation : IStatementContext
         GlobalVariables.Clear();
         Labels.Clear();
         Functions.Clear();
+        FunctionParameters.Clear();
         BlockBoundaries.Clear();
         FunctionCallStack.Clear();
         InParametersStack.Clear();

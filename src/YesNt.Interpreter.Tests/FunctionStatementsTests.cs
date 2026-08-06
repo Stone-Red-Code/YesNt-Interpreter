@@ -320,4 +320,104 @@ public class FunctionStatementsTests
 
         YesNtAssert.ContainsTerminationMessage(lines, "Statement not allowed outside of function");
     }
+
+    // --- Named parameter tests ---
+
+    [TestMethod]
+    public void FunctionNamedParametersTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func add: a, b",
+            "return ${a} + ${b} calc",
+            "label main:",
+            "call add with 3, 4",
+            "var total = %out",
+            "${total}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "7");
+    }
+
+    [TestMethod]
+    public void FunctionNamedParametersRespectOrderTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func pair: first, second",
+            "push_out ${first}",
+            "push_out ${second}",
+            "end_func",
+            "label main:",
+            "call pair with A, B",
+            "var f = %out",
+            "var s = %out",
+            "${f}-${s}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "A-B");
+    }
+
+    [TestMethod]
+    public void FunctionNamedParametersMissingArgumentFailsTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func add: a, b",
+            "return ${a} calc",
+            "label main:",
+            "call add with 5"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "No in argument in stack");
+    }
+
+    [TestMethod]
+    public void FunctionNamedParameterInvalidSyntaxTest()
+    {
+        List<string> lines =
+        [
+            "func add: a b"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "Invalid syntax");
+    }
+
+    [TestMethod]
+    public void FunctionNamedParametersExtraArgumentsRemainTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func probe: a",
+            "global first = ${a}",
+            "global hasExtra = %has_in",
+            "push_out ${hasExtra}",
+            "end_func",
+            "label main:",
+            "call probe with A, B",
+            "var extra = %out",
+            "${extra}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "True");
+    }
+
+    [TestMethod]
+    public void FunctionNamedParametersSearchEntryTest()
+    {
+        List<string> lines =
+        [
+            "call add with 3, 4",
+            "func add: a, b",
+            "return ${a} + ${b} calc",
+            "var total = %out",
+            "${total}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "7");
+    }
 }

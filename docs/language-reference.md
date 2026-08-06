@@ -370,6 +370,30 @@ func add:
 end_func
 ```
 
+#### Named parameters
+
+```
+func <name>: <param1>, <param2>, …
+    <body>
+end_func
+```
+
+Parameters can be declared after the function name. They are bound to local variables in
+declaration order, consuming the values passed to `call <name> with …` (or pushed with `push_in`).
+`func add: a, b` is equivalent to starting the body with `var a = %in` followed by `var b = %in`.
+
+```ynt
+func add: a, b
+    return ${a} + ${b} calc
+end_func
+
+call add with 3, 7
+var total = %out
+print_line ${total}
+```
+
+If fewer arguments are passed than declared parameters, the script terminates with an error.
+
 ### Calling a function - `call`
 
 ```
