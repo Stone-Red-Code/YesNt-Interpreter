@@ -356,18 +356,18 @@ if ${debug} == True call dump_state
 ```
 func <name>:
     <body>
-return
+end_func
 ```
 
 A function declaration registers the function name and the line it starts on.
-The body runs until `return` is reached.
+The body runs until `end_func` (or an early `return`) is reached.
 **Nested function declarations are not allowed.**
 
 ```ynt
 func add:
     var result = %in + %in calc
-    push_out ${result}
-return
+    return ${result}
+end_func
 ```
 
 ### Calling a function - `call`
@@ -410,7 +410,7 @@ popped from the argument stack.
 func greet:
     var name = %in
     print_line Hello, ${name}!
-return
+end_func
 ```
 
 #### Check if input argument exists - `%has_in`
@@ -421,7 +421,7 @@ Only valid inside a function.
 ```ynt
 func greet:
     if %has_in call do_greet
-return
+end_func
 ```
 
 ### Output values
@@ -462,6 +462,34 @@ clear_call_stack
 
 Discards all frames on the function call stack. Useful for error recovery.
 
+### Return from a function - `end_func` and `return`
+
+```
+end_func
+return
+return <value>
+```
+
+`end_func` and a bare `return` end the current function call and hand control back to the caller.
+`return <value>` does the same but first pushes `<value>` onto the output stack
+(it is equivalent to `push_out <value>` followed by `end_func`), so the caller can read it with `%out`.
+`return` may be used anywhere in the body to exit a function early.
+
+```ynt
+func add:
+    var a = %in
+    var b = %in
+    if ${a} == 0:
+        return 0
+    end_if
+    return ${a} + ${b} calc
+
+call add with 0, 5
+var total = %out
+print_line ${total}
+```
+
+Only valid inside a function; otherwise the script terminates with an error.
 ---
 
 ## Lists
@@ -741,7 +769,7 @@ if ${x} < 0 call validate_fail
 
 func validate_fail:
     throw x must not be negative
-return
+end_func
 ```
 
 ### Non-fatal error - `error`
@@ -778,7 +806,8 @@ Like `throw` but does **not** cancel background tasks.
 | `if … call`        | `if cond call name`            | Conditional function call                                    |
 | `push_in`          | `push_in value`                | Push input argument                                          |
 | `push_out`         | `push_out value`               | Push output value (inside function)                          |
-| `return`           | `return`                       | Return from function                                         |
+| `end_func`         | `end_func`                     | End current function                                         |
+| `return`           | `return value`                 | Return from function (optional value via output stack)       |
 | `clear_call_stack` | `clear_call_stack`             | Clear call stack                                             |
 | `list … new`       | `list name new`                | Create/reset list                                            |
 | `list … add`       | `list name add value`          | Append to list                                               |

@@ -47,6 +47,6 @@ If you pass a file path, it is loaded on startup.
 ## Formatter behavior (quick summary)
 
 - Indents `func`, `if`, `else`, and `while` blocks.
-- Dedents on `return`, `end_if`, and `end_while`.
+- Dedents on `return`, `end_func`, `end_if`, and `end_while`.
 - `exit` / `throw` / `error` close active non-function blocks for following lines.
 - Comment lines (`# ...`) are kept unindented.

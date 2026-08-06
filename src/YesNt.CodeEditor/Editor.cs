@@ -261,7 +261,7 @@ internal class TextEditor
                     }
                 }
             }
-            else if (trimmed == "return")
+            else if (trimmed == "return" || trimmed == "end_func" || trimmed.StartsWith("return ", StringComparison.Ordinal))
             {
                 for (int j = blockStack.Count - 1; j >= 0; j--)
                 {

@@ -26,7 +26,7 @@ var name = world
 func greet:
 print_line "Hello world"
 print_line Hello ${name}
-return
+end_func
 call greet
 ```
 
@@ -87,7 +87,8 @@ print_line ${value}
 | Functions | `put value` | `push_out value` | Push out-arg in function. |
 | Functions | `%out` | `%out` | Keep token name for familiarity. |
 | Functions | `%iso` | `%has_out` | Inline token, bool if out arg exists. |
-| Functions | `ret` | `return` | Return from function. |
+| Functions | `ret` | `end_func` | Return from function. |
+| Functions | `return value` | `return value` | Return from function, optionally pushing a value to the out stack. |
 | Functions | `ccs` | `clear_call_stack` | Clear call stack. |
 | Condition-call | `cif name \| cond` | `if cond call name` | Conditional function call. |
 | Termination | `end` | `exit` | Planned termination. |
@@ -113,4 +114,6 @@ print_line ${value}
 
 - `%out` is intentionally kept as `%out`.
 - Postfix operations are `calc`, `eval`, and `task`.
+- `return` exits the function early (optionally with a value via `return <value>`);
+  `end_func` is the explicit end-of-function marker. Both terminate the current function call.
 

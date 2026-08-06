@@ -38,7 +38,7 @@ print_line Hello, ${name}!
 func greet:
     var msg = Hello, ${name}!
     print_line ${msg}
-return
+end_func
 
 var name = Bob
 call greet

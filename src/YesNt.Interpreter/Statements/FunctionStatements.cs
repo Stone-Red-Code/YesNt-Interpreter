@@ -133,8 +133,25 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
     }
 
+    [Statement("end_func", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    public void EndFunction(string _)
+    {
+        HandleReturn(string.Empty);
+    }
+
     [Statement("return", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
     public void Return(string _)
+    {
+        HandleReturn(string.Empty);
+    }
+
+    [Statement("return", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    public void ReturnWithValue(string args)
+    {
+        HandleReturn(args.Trim());
+    }
+
+    private void HandleReturn(string value)
     {
         if (!RuntimeInfo.IsInFunction)
         {
@@ -153,10 +170,14 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        RuntimeInfo.IsInFunction = false;
-
         if (RuntimeInfo.FunctionCallStack.Count > 0)
         {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                RuntimeInfo.FunctionCallStack.Peek().Results.Push(value);
+            }
+
+            RuntimeInfo.IsInFunction = false;
             FunctionScope functionScope = RuntimeInfo.FunctionCallStack.Pop();
 
             RuntimeInfo.OutParametersStack = new Stack<string>(functionScope.Results);

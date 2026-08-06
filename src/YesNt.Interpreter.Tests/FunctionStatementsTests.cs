@@ -223,4 +223,101 @@ public class FunctionStatementsTests
 
         YesNtAssert.IsLastLineEqual(lines, "outer_val");
     }
+
+    // --- end_func / return value tests ---
+
+    [TestMethod]
+    public void EndFuncReturnsToCallerTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func greet:",
+            "global result = done",
+            "end_func",
+            "label main:",
+            "call greet",
+            "${result}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "done");
+    }
+
+    [TestMethod]
+    public void ReturnWithValueTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func add:",
+            "var a = %in",
+            "var b = %in",
+            "var sum = ${a} + ${b} calc",
+            "return ${sum}",
+            "label main:",
+            "call add with 3, 4",
+            "var total = %out",
+            "${total}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "7");
+    }
+
+    [TestMethod]
+    public void ReturnWithLiteralValueTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func make:",
+            "return out_value",
+            "label main:",
+            "call make",
+            "var value = %out",
+            "${value}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "out_value");
+    }
+
+    [TestMethod]
+    public void ReturnEarlyExitSkipsRestOfFunctionTest()
+    {
+        List<string> lines =
+        [
+            "goto main",
+            "func probe:",
+            "push_out should_not_escape",
+            "return",
+            "push_out should_never_run",
+            "label main:",
+            "call probe",
+            "var value = %out",
+            "${value}"
+        ];
+
+        YesNtAssert.IsLastLineEqual(lines, "should_not_escape");
+    }
+
+    [TestMethod]
+    public void ReturnWithValueOutsideFunctionFailsTest()
+    {
+        List<string> lines =
+        [
+            "return 42"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "Statement not allowed outside of function");
+    }
+
+    [TestMethod]
+    public void EndFuncOutsideFunctionFailsTest()
+    {
+        List<string> lines =
+        [
+            "end_func"
+        ];
+
+        YesNtAssert.ContainsTerminationMessage(lines, "Statement not allowed outside of function");
+    }
 }
