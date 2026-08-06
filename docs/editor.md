@@ -51,3 +51,5 @@ If you pass a file path, it is loaded on startup.
 - `return` / `return <value>` are regular body statements and stay indented with the block they are in.
 - `exit` / `throw` / `error` close active non-function blocks for following lines.
 - Comment lines (`# ...`) are kept unindented.
+- Single empty lines are preserved, runs of empty lines are collapsed to one, and leading/trailing blank lines are removed.
+- A blank line is inserted before each block opener (`func` / `if` / `while`) that is not nested directly under another opener, and after each block closer (`end_func` / `end_if` / `end_while`), separating sibling blocks. `else:` stays attached to its `if` block.
