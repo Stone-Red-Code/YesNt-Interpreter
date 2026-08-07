@@ -17,10 +17,11 @@ Execution proceeds top-to-bottom unless a control-flow statement changes the lin
 8. [Control flow](#control-flow)
 9. [Functions](#functions)
 10. [Lists](#lists)
-11. [Processing](#processing)
-12. [System](#system)
-13. [Predefined tokens](#predefined-tokens)
-14. [Termination](#termination)
+11. [Maps](#maps)
+12. [Processing](#processing)
+13. [System](#system)
+14. [Predefined tokens](#predefined-tokens)
+15. [Termination](#termination)
 
 ---
 
@@ -609,6 +610,99 @@ Removes the list entirely.
 
 ---
 
+## Maps
+
+Maps are key–value stores. Each key is unique; putting a value under an existing key overwrites it. All map operations start with the keyword `map`.
+
+### Create or reset - `map … new`
+
+```
+map <name> new
+```
+
+Creates an empty map. If the map already exists it is cleared.
+
+### Add or update an entry - `map … put`
+
+```
+map <name> put <key>, <value>
+```
+
+Sets `<key>` to `<value>`. If the key already exists its value is replaced. The statement takes exactly two comma-separated parts. Keys may contain spaces unquoted. A key or value that itself contains a comma must be wrapped in quotes.
+
+```ynt
+map settings new
+map settings put name, Alice
+map settings put city, Berlin
+map settings get name
+var who = %out
+print_line ${who}
+```
+
+### Get a value - `map … get`
+
+```
+map <name> get <key>
+```
+
+Pushes the value stored under `<key>` onto the output stack. Access it with `%out`. Terminates with an error if the key does not exist.
+
+### Check a key - `map … has`
+
+```
+map <name> has <key>
+```
+
+Pushes `True` if `<key>` exists, `False` otherwise, onto the output stack.
+
+```ynt
+map settings new
+map settings put name Alice
+map settings has name
+var present = %out
+print_line ${present}
+```
+
+### Remove an entry - `map … remove`
+
+```
+map <name> remove <key>
+```
+
+Removes `<key>` and its value. Removing a key that does not exist is silently ignored.
+
+### Get the size - `map … size`
+
+```
+map <name> size
+```
+
+Pushes the number of entries onto the output stack.
+
+```ynt
+map settings size
+var n = %out
+print_line ${n} entries
+```
+
+### Clear all entries - `map … clear`
+
+```
+map <name> clear
+```
+
+Removes all entries but keeps the map alive.
+
+### Delete a map - `map … delete`
+
+```
+map <name> delete
+```
+
+Removes the map entirely.
+
+---
+
 ## Processing
 
 ### Arithmetic - `calc`
@@ -842,6 +936,14 @@ Like `throw` but does **not** cancel background tasks.
 | `list … length`    | `list name length`             | Get count → `%out`                                           |
 | `list … clear`     | `list name clear`              | Clear all items                                              |
 | `list … delete`    | `list name delete`             | Delete list                                                  |
+| `map … new`        | `map name new`                 | Create/reset map                                             |
+| `map … put`        | `map name put key, value`      | Add or update entry                                          |
+| `map … get`        | `map name get key`             | Get value → `%out`                                           |
+| `map … has`        | `map name has key`             | `True`/`False` if key exists → `%out`                        |
+| `map … remove`     | `map name remove key`          | Remove entry                                                 |
+| `map … size`       | `map name size`                | Get entry count → `%out`                                     |
+| `map … clear`      | `map name clear`               | Clear all entries                                            |
+| `map … delete`     | `map name delete`              | Delete map                                                   |
 | `calc`             | `expr calc`                    | Evaluate arithmetic                                          |
 | `eval`             | `expr eval`                    | Decode string encoding                                       |
 | `task`             | `line task`                    | Run current line (without `task`) and continue in background |

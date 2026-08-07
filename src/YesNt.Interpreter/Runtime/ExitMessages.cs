@@ -51,6 +51,16 @@ internal static class ExitMessages
         return $"List \"{list}\" not found";
     }
 
+    internal static string MapNotFound(string map)
+    {
+        return $"Map \"{map}\" not found";
+    }
+
+    internal static string KeyNotFound(string key)
+    {
+        return $"Key \"{key}\" not found";
+    }
+
     internal static string InvalidIndex(string rawIndex)
     {
         return $"\"{rawIndex}\" is not a valid index";

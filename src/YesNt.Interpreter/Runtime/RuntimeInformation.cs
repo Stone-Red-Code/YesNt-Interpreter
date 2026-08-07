@@ -24,6 +24,7 @@ internal sealed class RuntimeInformation : IStatementContext
     private static int internalTaskId = 0;
     private readonly Dictionary<string, string> topVariables = [];
     private readonly Dictionary<string, List<string>> topLists = [];
+    private readonly Dictionary<string, Dictionary<string, string>> topMaps = [];
 
     public Dictionary<string, string> GlobalVariables { get; set; } = [];
     public Dictionary<string, int> Functions { get; } = [];
@@ -54,6 +55,7 @@ internal sealed class RuntimeInformation : IStatementContext
 
     public Dictionary<string, string> Variables => FunctionCallStack.Count == 0 ? topVariables : FunctionCallStack.Peek().Variables;
     public Dictionary<string, List<string>> Lists => FunctionCallStack.Count == 0 ? topLists : FunctionCallStack.Peek().Lists;
+    public Dictionary<string, Dictionary<string, string>> Maps => FunctionCallStack.Count == 0 ? topMaps : FunctionCallStack.Peek().Maps;
 
     public Dictionary<string, int> Labels { get => FunctionCallStack.Count == 0 ? field : FunctionCallStack.Peek().Labels; } = [];
 
@@ -173,6 +175,7 @@ internal sealed class RuntimeInformation : IStatementContext
     {
         topVariables.Clear();
         topLists.Clear();
+        topMaps.Clear();
         Lines.Clear();
         GlobalVariables.Clear();
         Labels.Clear();
