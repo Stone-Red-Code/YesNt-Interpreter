@@ -99,10 +99,10 @@ public class HostApiTests
         }
     }
 
-    private static (YesNtInterpreter Interpreter, TestHost Host) Create()
+    private static (YesNtInterpreter Interpreter, TestHost Host) Create(TaskMode taskMode = TaskMode.Thread)
     {
         TestHost host = new();
-        YesNtInterpreter interpreter = new() { Host = host };
+        YesNtInterpreter interpreter = new() { Host = host, TaskMode = taskMode };
         return (interpreter, host);
     }
 
@@ -455,5 +455,84 @@ public class HostApiTests
 
         string text = WaitForText(host, "in worker");
         Assert.IsFalse(text.Contains("not found"), text);
+    }
+
+    // --- Cooperative tasks ---
+
+    [TestMethod]
+    public void CooperativeTasksRunOnTheSteppingThreadTest()
+    {
+        (YesNtInterpreter interpreter, _) = Create(TaskMode.Cooperative);
+        List<int> threads = [];
+        interpreter.AddStatement("note_thread", SearchMode.Exact, SpaceAround.None, _ => threads.Add(Environment.CurrentManagedThreadId));
+        interpreter.Prepare(["call worker task", "note_thread", "exit", "func worker:", "note_thread", "exit", "end_func"]);
+
+        StepToEnd(interpreter);
+
+        CollectionAssert.AreEqual(new[] { Environment.CurrentManagedThreadId, Environment.CurrentManagedThreadId }, threads);
+    }
+
+    [TestMethod]
+    public void CooperativeTasksRunWhileTheScriptSleepsTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create(TaskMode.Cooperative);
+        interpreter.Prepare(["call worker task", "sleep 100", "print_line script", "exit", "func worker:", "print_line worker", "exit", "end_func"]);
+
+        StepToEnd(interpreter);
+
+        string text = host.Text;
+        StringAssert.StartsWith(text, "worker" + Environment.NewLine);
+        StringAssert.Contains(text, "script" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void CooperativeTaskSleepDoesNotHoldUpTheScriptTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create(TaskMode.Cooperative);
+        interpreter.Prepare(["call worker task", "print_line script", "exit", "func worker:", "sleep 100", "print_line worker", "exit", "end_func"]);
+
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "script" + Environment.NewLine);
+        StringAssert.Contains(host.Text, "worker" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void CooperativeInterpreterRunsUntilItsTasksEndTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create(TaskMode.Cooperative);
+        interpreter.Prepare(["call worker task", "exit", "func worker:", "sleep 50", "print_line worker done", "exit", "end_func"]);
+
+        _ = interpreter.Step(10);
+        Assert.IsTrue(interpreter.IsRunning);
+        StepToEnd(interpreter);
+
+        StringAssert.Contains(host.Text, "worker done");
+    }
+
+    [TestMethod]
+    public void AbortAllStopsCooperativeTasksTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create(TaskMode.Cooperative);
+        interpreter.Prepare(["call worker task", "sleep 20", "abort_all", "func worker:", "sleep 100000", "print_line never", "exit", "end_func"]);
+
+        StepToEnd(interpreter);
+
+        Assert.IsFalse(host.Text.Contains("never"));
+    }
+
+    [TestMethod]
+    public void CooperativeTaskHasCustomStatementsTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create(TaskMode.Cooperative);
+        interpreter.RemoveStatement("length");
+        interpreter.AddStatement("mark", SearchMode.Exact, SpaceAround.None, (_, context) => context.SetOut("marked"));
+        interpreter.Prepare(["call worker task", "sleep 50", "exit", "func worker:", "mark", "print_line %out", "length abc", "print_line escaped", "exit", "end_func"]);
+
+        StepToEnd(interpreter);
+
+        StringAssert.Contains(host.Text, "marked");
+        StringAssert.Contains(host.Text, "Invalid statement");
+        Assert.IsFalse(host.Text.Contains("escaped"));
     }
 }

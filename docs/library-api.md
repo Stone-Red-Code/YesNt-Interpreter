@@ -480,15 +480,41 @@ interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =
 
 ## Tasks
 
-A line ending in `task` runs in a task alongside the script (see the language reference), on a
-thread of its own. A task's interpreter gets these from the script's:
+A line ending in `task` runs in a task alongside the script (see the language reference). A
+task's interpreter gets these from the script's:
 
 - its statements: the built-in ones as the host left them, and the custom ones, whose
   `IStatementContext` is the task's own;
-- its host;
+- its host and task mode;
 - the functions the script has already passed, so a task can call a function defined above it.
 
-It also shares the script's global variables. A task goes on after the script ends.
+It also shares the script's global variables.
+
+`TaskMode` says how tasks run:
+
+| Value         | Tasks run…                                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Thread`      | Each on a thread of its own, at the same time as the script (the default). A task goes on after the script ends. |
+| `Cooperative` | On the thread that steps the script, taking turns with it. For single-threaded hosts.                            |
+
+With `Cooperative`:
+
+- Each step runs a line of the script and a line of each task.
+- `IsRunning` stays `true` until the script and all its tasks end.
+- Custom statements run on the stepping thread, even in tasks, so they may touch state that
+  belongs to it (a window, a game object) without locks.
+- A task that waits (`sleep`, input) does not hold up the script or the other tasks.
+
+```csharp
+var interpreter = new YesNtInterpreter { TaskMode = TaskMode.Cooperative };
+interpreter.Prepare("game.ynt");
+
+void OnFrame()   // the game's loop, on its one thread
+{
+    if (interpreter.IsRunning)
+        _ = interpreter.RunFor(TimeSpan.FromMilliseconds(2));
+}
+```
 
 ---
 
@@ -619,11 +645,14 @@ public void Stop();
 // Read-only snapshot of all registered statements
 public ReadOnlyCollection<StatementInformation> StatementInformation { get; }
 
-// Whether a prepared script is currently active/running
+// Whether a prepared script (or, with TaskMode.Cooperative, one of its tasks) is still running
 public bool IsRunning { get; }
 
 // The script's console and files (default: ConsoleHost); set before the script starts
 public IYesNtHost Host { get; set; }
+
+// How task lines run (default: TaskMode.Thread); set before the script starts
+public TaskMode TaskMode { get; set; }
 ```
 
 ---
@@ -690,3 +719,10 @@ is pressed, so the script waits without blocking the thread that steps it.
 | `Ready`   | The input is there.                                    |
 | `Pending` | Not yet: the script waits and asks again when stepped. |
 | `Closed`  | There will be no more input: the script ends.          |
+
+### `TaskMode`
+
+| Value         | Description                                                   |
+| ------------- | ------------------------------------------------------------- |
+| `Thread`      | Each task runs on a thread of its own (the default).          |
+| `Cooperative` | Tasks take turns with the script on the thread that steps it. |

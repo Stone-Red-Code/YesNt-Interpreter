@@ -41,6 +41,10 @@ public class YesNtInterpreter
     // same ones. A step that disables a statement names it, so enabling it again drops the step.
     private readonly List<ConfigurationStep> configuration = [];
 
+    // Tasks run in turns with the script (TaskMode.Cooperative).
+    private readonly List<YesNtInterpreter> tasks = [];
+
+    // While the script itself runs (its tasks may outlast it).
     private bool scriptRunning;
 
     private sealed record ConfigurationStep(string DisabledName, Action<YesNtInterpreter> Apply);
@@ -59,10 +63,11 @@ public class YesNtInterpreter
 
     /// <summary>
     /// <see langword="true"/> from the moment <see cref="Prepare(string, bool)"/> (or any
-    /// <c>Execute</c> overload) is called until the script finishes or is stopped.
+    /// <c>Execute</c> overload) is called until the script finishes or is stopped, and with
+    /// <see cref="TaskMode.Cooperative"/> until its tasks have ended too.
     /// Use this to drive step/run loops: <c>while (interpreter.IsRunning) interpreter.Step(10);</c>
     /// </summary>
-    public bool IsRunning => scriptRunning;
+    public bool IsRunning => scriptRunning || tasks.Count > 0;
 
     /// <summary>
     /// Gets or sets the script's console and files: where output goes outside debug mode, where
@@ -74,6 +79,13 @@ public class YesNtInterpreter
         get => runtimeInfo.Host;
         set => runtimeInfo.Host = value ?? throw new ArgumentNullException(nameof(value));
     }
+
+    /// <summary>
+    /// Gets or sets how the script's <c>task</c> lines run: each on a thread of its own (the
+    /// default) or taking turns with the script on the thread that steps it. Set it before the
+    /// script starts; its tasks use the same mode.
+    /// </summary>
+    public TaskMode TaskMode { get; set; } = TaskMode.Thread;
 
     /// <summary>
     /// Initializes a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
@@ -369,6 +381,7 @@ public class YesNtInterpreter
         runtimeInfo.Reset();
         runtimeInfo.IsDebugMode = isDebugMode;
         scriptRunning = false;
+        tasks.Clear();
     }
 
     /// <summary>
@@ -400,10 +413,10 @@ public class YesNtInterpreter
     }
 
     // Starts a task: the script's lines from the task's line on, run by an interpreter with
-    // the same statements and host, sharing the script's global variables, on a thread of its own.
+    // the same statements, host and task mode, sharing the script's global variables.
     private void StartTask(List<Line> lines, int startLine)
     {
-        YesNtInterpreter task = new YesNtInterpreter();
+        YesNtInterpreter task = new YesNtInterpreter { TaskMode = TaskMode };
         task.runtimeInfo.Host = runtimeInfo.Host;
 
         foreach (ConfigurationStep step in configuration)
@@ -413,7 +426,15 @@ public class YesNtInterpreter
         }
 
         task.PrepareTask(lines, runtimeInfo.GlobalVariables, startLine, runtimeInfo);
-        _ = Task.Run(task.RunToCompletion);
+
+        if (TaskMode == TaskMode.Cooperative)
+        {
+            tasks.Add(task);
+        }
+        else
+        {
+            _ = Task.Run(task.RunToCompletion);
+        }
     }
 
     private void PrepareTask(List<Line> lines, Dictionary<string, string> globalVariables, int startLine, RuntimeInformation parentRuntimeInformation)
@@ -445,6 +466,8 @@ public class YesNtInterpreter
     /// Executes up to <paramref name="lines"/> script lines then pauses, leaving
     /// <see cref="IsRunning"/> <see langword="true"/> so execution can be resumed later.
     /// Blank lines and comments are skipped transparently and do not consume the budget.
+    /// With <see cref="TaskMode.Cooperative"/>, each line of the script also runs a line of
+    /// each of its tasks.
     /// </summary>
     /// <param name="lines">Maximum number of executable lines to run. Defaults to 1.</param>
     /// <returns>
@@ -514,13 +537,34 @@ public class YesNtInterpreter
         }
     }
 
+    // A line of the script, then one of each task taking turns with it.
     private StepResult StepOnce()
     {
-        if (!scriptRunning)
+        StepResult result = scriptRunning ? StepScript() : StepResult.Finished;
+
+        if (tasks.Count == 0)
         {
-            return StepResult.Finished;
+            return result;
         }
 
+        bool taskRan = false;
+        foreach (YesNtInterpreter task in tasks)
+        {
+            taskRan |= task.StepOnce() == StepResult.Continue;
+        }
+
+        _ = tasks.RemoveAll(task => !task.IsRunning);
+
+        return result switch
+        {
+            StepResult.Finished when tasks.Count == 0 => StepResult.Finished,
+            StepResult.Continue => StepResult.Continue,
+            _ => taskRan ? StepResult.Continue : StepResult.Waiting,
+        };
+    }
+
+    private StepResult StepScript()
+    {
         if (!runtimeInfo.TryEndWait())
         {
             return StepResult.Waiting;
