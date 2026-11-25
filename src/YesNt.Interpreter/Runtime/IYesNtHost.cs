@@ -6,6 +6,7 @@ namespace YesNt.Interpreter.Runtime;
 /// script itself and each <c>import</c>). The default, <see cref="ConsoleHost"/>, uses the
 /// process's console and file system; an application embedding YesNt gives its own, for
 /// example to show output in a window or to check a script may read a file before it does.
+/// Tasks started by the script share their parent's host.
 /// </summary>
 public interface IYesNtHost
 {

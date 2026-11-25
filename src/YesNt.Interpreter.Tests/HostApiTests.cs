@@ -370,4 +370,90 @@ public class HostApiTests
 
         Assert.AreEqual(StepResult.Finished, interpreter.Step(10));
     }
+
+    // --- Tasks inherit the script's setup ---
+
+    // Waits for a task on its own thread to write the text (never more than a few seconds).
+    private static string WaitForText(TestHost host, string text)
+    {
+        DateTime giveUp = DateTime.UtcNow.AddSeconds(5);
+        while (!host.Text.Contains(text) && DateTime.UtcNow < giveUp)
+        {
+            Thread.Sleep(5);
+        }
+
+        StringAssert.Contains(host.Text, text);
+        return host.Text;
+    }
+
+    [TestMethod]
+    public void TaskHasCustomStatementsTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        using ManualResetEventSlim taskRan = new();
+        interpreter.AddStatement("mark", SearchMode.Exact, SpaceAround.None, _ => taskRan.Set());
+
+        interpreter.Execute(["call worker task", "exit", "func worker:", "mark", "exit", "end_func"]);
+
+        Assert.IsTrue(taskRan.Wait(TimeSpan.FromSeconds(3)), host.Text);
+    }
+
+    [TestMethod]
+    public void TaskGetsItsOwnContextTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.AddStatement("where", SearchMode.Exact, SpaceAround.None, (_, context) => context.SetOut(context.Variables.ContainsKey("inside") ? "task" : "script"));
+
+        interpreter.Execute(["call worker task", "where", "print_line script sees %out", "exit", "func worker:", "var inside = 1", "where", "print_line task sees %out", "exit", "end_func"]);
+
+        _ = WaitForText(host, "task sees task");
+        StringAssert.Contains(host.Text, "script sees script");
+    }
+
+    [TestMethod]
+    public void TaskCannotUseARemovedStatementTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.RemoveStatement("length");
+
+        interpreter.Execute(["call worker task", "exit", "func worker:", "length abc", "print_line escaped", "exit", "end_func"]);
+
+        string text = WaitForText(host, "Invalid statement");
+        Assert.IsFalse(text.Contains("escaped"));
+    }
+
+    [TestMethod]
+    public void TaskKeepsADisabledStatementDisabledTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.DisableStatement("print_line");
+
+        interpreter.Execute(["call worker task", "exit", "func worker:", "print_line from worker", "exit", "end_func"]);
+
+        string text = WaitForText(host, "Task ");
+        Assert.IsFalse(text.Contains("from worker"));
+    }
+
+    [TestMethod]
+    public void TaskHasAStatementEnabledAgainTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.DisableStatement("print_line");
+        interpreter.EnableStatement("print_line");
+
+        interpreter.Execute(["call worker task", "exit", "func worker:", "print_line from worker", "exit", "end_func"]);
+
+        _ = WaitForText(host, "from worker");
+    }
+
+    [TestMethod]
+    public void TaskCallsAFunctionDefinedAboveItTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+
+        interpreter.Execute(["func worker:", "print_line in worker", "end_func", "call worker task"]);
+
+        string text = WaitForText(host, "in worker");
+        Assert.IsFalse(text.Contains("not found"), text);
+    }
 }

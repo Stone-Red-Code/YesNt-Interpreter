@@ -15,9 +15,10 @@ to embed the YesNt interpreter and run scripts programmatically.
 6. [Giving the script a console and files](#giving-the-script-a-console-and-files)
 7. [Adding custom statements](#adding-custom-statements)
 8. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
-9. [Stopping a script](#stopping-a-script)
-10. [Reading registered statements](#reading-registered-statements)
-11. [API reference](#api-reference)
+9. [Tasks](#tasks)
+10. [Stopping a script](#stopping-a-script)
+11. [Reading registered statements](#reading-registered-statements)
+12. [API reference](#api-reference)
 
 ---
 
@@ -205,7 +206,7 @@ decides:
 - how script files are read: the script given to `Execute`/`Prepare`, and every file it `import`s.
 
 The default, `ConsoleHost`, uses the process's console and file system. Set `Host` before the
-script starts.
+script starts; tasks the script starts share it.
 
 Derive from `ConsoleHost` to change part of it, for example to check that a script may read a
 file before it does:
@@ -448,6 +449,9 @@ interpreter.Execute(new List<string>
 Restores the original handlers saved when `DisableStatement` was called.
 Has no effect if the statement is not currently disabled.
 
+Tasks the script starts (`task`) get every statement added, removed, disabled and enabled
+again, so removing `exec` keeps it out of tasks too.
+
 ```csharp
 interpreter.DisableStatement("sleep");
 // ... configure other things ...
@@ -471,6 +475,20 @@ interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =
     System.Diagnostics.Process.Start("cmd", "/c echo (sandboxed)");
 });
 ```
+
+---
+
+## Tasks
+
+A line ending in `task` runs in a task alongside the script (see the language reference), on a
+thread of its own. A task's interpreter gets these from the script's:
+
+- its statements: the built-in ones as the host left them, and the custom ones, whose
+  `IStatementContext` is the task's own;
+- its host;
+- the functions the script has already passed, so a task can call a function defined above it.
+
+It also shares the script's global variables. A task goes on after the script ends.
 
 ---
 

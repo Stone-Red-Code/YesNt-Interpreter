@@ -79,6 +79,12 @@ internal sealed class RuntimeInformation : IStatementContext
     public IYesNtHost Host { get; set; } = new ConsoleHost();
 
     /// <summary>
+    /// Gets or sets how the interpreter starts a task from the given lines at the given line
+    /// (set by the interpreter, which knows its statements, host and task mode).
+    /// </summary>
+    internal Action<List<Line>, int> StartTaskAction { get; set; }
+
+    /// <summary>
     /// Gets what the script waits for before it goes on (<see cref="WaitUntil"/>,
     /// <see cref="RetryLine"/>); <see langword="null"/> when it does not wait.
     /// </summary>

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -35,11 +34,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         Line oldLine = lines[lineNumber];
 
         lines[lineNumber] = new Line(line, oldLine.FileName, oldLine.LineNumber);
-        _ = Task.Run(() =>
-        {
-            YesNtInterpreter interpreter = new YesNtInterpreter();
-            interpreter.Execute(lines, RuntimeInfo.GlobalVariables, lineNumber, RuntimeInfo);
-        });
+        RuntimeInfo.StartTaskAction(lines, lineNumber);
 
         RuntimeInfo.CurrentLine = string.Empty;
     }
