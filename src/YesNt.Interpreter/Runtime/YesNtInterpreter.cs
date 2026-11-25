@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -34,6 +35,12 @@ public class YesNtInterpreter
     private List<List<StatementHandler>> lineMatchingHandlers = [];
     private readonly List<KeyValuePair<StaticStatementInformation, Action>> staticStatements;
     private readonly Dictionary<string, List<KeyValuePair<StatementInformation, Action<string>>>> disabledStatements = [];
+
+    /// <summary>
+    /// How long <see cref="RunToCompletion"/> (and so <c>Execute</c>) sleeps between looks
+    /// while the script waits.
+    /// </summary>
+    private const int WaitPollMilliseconds = 10;
 
     /// <summary>
     /// Gets a read-only snapshot of all currently registered statements.
@@ -377,6 +384,7 @@ public class YesNtInterpreter
     /// <param name="lines">Maximum number of executable lines to run. Defaults to 1.</param>
     /// <returns>
     /// <see cref="StepResult.Paused"/> if the budget was exhausted but the script is not finished;
+    /// <see cref="StepResult.Waiting"/> if the script waits (step again later, not at once);
     /// <see cref="StepResult.Finished"/> if the script ended within the budget.
     /// </returns>
     public StepResult Step(int lines = 1)
@@ -400,6 +408,7 @@ public class YesNtInterpreter
     /// <param name="budget">How long to run before pausing.</param>
     /// <returns>
     /// <see cref="StepResult.Paused"/> if the budget expired but the script is not finished;
+    /// <see cref="StepResult.Waiting"/> if the script waits (step again later, not at once);
     /// <see cref="StepResult.Finished"/> if the script ended within the budget.
     /// </returns>
     public StepResult RunFor(TimeSpan budget)
@@ -424,7 +433,8 @@ public class YesNtInterpreter
     }
 
     /// <summary>
-    /// Runs the script to completion from the current position.
+    /// Runs the script to completion from the current position, sleeping on the calling thread
+    /// while it waits.
     /// If the script has not been started yet (i.e. <see cref="IsRunning"/> is <see langword="false"/>)
     /// this method returns immediately.
     /// </summary>
@@ -432,7 +442,10 @@ public class YesNtInterpreter
     {
         while (IsRunning)
         {
-            _ = StepOnce();
+            if (StepOnce() == StepResult.Waiting)
+            {
+                Thread.Sleep(WaitPollMilliseconds);
+            }
         }
     }
 
@@ -441,6 +454,11 @@ public class YesNtInterpreter
         if (!IsRunning)
         {
             return StepResult.Finished;
+        }
+
+        if (!runtimeInfo.TryEndWait())
+        {
+            return StepResult.Waiting;
         }
 
         // Skip blank lines and comments without consuming the step budget.
@@ -452,7 +470,7 @@ public class YesNtInterpreter
             }
 
             Line lineObj = runtimeInfo.Lines[runtimeInfo.LineNumber];
-            runtimeInfo.CurrentLine = lineObj.Content;
+            runtimeInfo.CurrentLine = runtimeInfo.TakeRetryText() ?? lineObj.Content;
 
             if (string.IsNullOrWhiteSpace(runtimeInfo.CurrentLine) || runtimeInfo.CurrentLine.StartsWith('#'))
             {
@@ -500,7 +518,7 @@ public class YesNtInterpreter
                     continue;
                 }
 
-                if (runtimeInfo.Stop)
+                if (runtimeInfo.Stop || runtimeInfo.IsRetryingLine)
                 {
                     break;
                 }
@@ -533,6 +551,12 @@ public class YesNtInterpreter
                         statementFound = true;
                     }
                 }
+            }
+
+            // The line runs again once what it waits for is there.
+            if (runtimeInfo.TakeRetry())
+            {
+                return runtimeInfo.Stop ? FinishExecution() : StepResult.Waiting;
             }
 
             if (!statementFound)

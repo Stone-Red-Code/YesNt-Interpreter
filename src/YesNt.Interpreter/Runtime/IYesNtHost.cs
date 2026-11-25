@@ -18,8 +18,9 @@ public interface IYesNtHost
 
     /// <summary>
     /// Takes a line the user entered, for <c>%read_line</c>. Return
-    /// <see cref="InputStatus.Pending"/> while there is none yet: the interpreter asks again
-    /// shortly. A host whose input is a blocking console may simply wait for the line instead.
+    /// <see cref="InputStatus.Pending"/> while there is none yet: the script waits without
+    /// blocking and asks again when it is next stepped. A host whose input is a blocking console
+    /// may simply wait for the line instead.
     /// </summary>
     /// <param name="line">The line, without its end, when the result is <see cref="InputStatus.Ready"/>.</param>
     /// <returns>Whether there is a line, none yet, or no more input (which ends the script).</returns>

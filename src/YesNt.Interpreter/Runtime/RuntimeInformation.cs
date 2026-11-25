@@ -78,6 +78,22 @@ internal sealed class RuntimeInformation : IStatementContext
     /// </summary>
     public IYesNtHost Host { get; set; } = new ConsoleHost();
 
+    /// <summary>
+    /// Gets what the script waits for before it goes on (<see cref="WaitUntil"/>,
+    /// <see cref="RetryLine"/>); <see langword="null"/> when it does not wait.
+    /// </summary>
+    public Func<bool> WaitCondition { get; private set; }
+
+    /// <summary>
+    /// Gets whether the script waits to run the current line again (<see cref="RetryLine"/>).
+    /// </summary>
+    public bool IsRetryingLine { get; private set; }
+
+    /// <summary>
+    /// Gets the text the current line runs again from, set by <see cref="RetryLine"/>.
+    /// </summary>
+    public string RetryText { get; private set; }
+
     public void SetOut(params string[] values)
     {
         OutParametersStack.Clear();
@@ -86,6 +102,56 @@ internal sealed class RuntimeInformation : IStatementContext
         {
             OutParametersStack.Push((value ?? string.Empty).ToSafeString());
         }
+    }
+
+    public void WaitUntil(Func<bool> ready)
+    {
+        ArgumentNullException.ThrowIfNull(ready);
+        WaitCondition = ready;
+    }
+
+    public void RetryLine(Func<bool> ready = null)
+    {
+        WaitCondition = ready ?? (() => true);
+        IsRetryingLine = true;
+        RetryText = CurrentLine;
+        CurrentLine = string.Empty;
+    }
+
+    /// <summary>
+    /// Says whether the script may go on: no wait, or one that is over (which ends it). A stopped
+    /// script never waits.
+    /// </summary>
+    public bool TryEndWait()
+    {
+        if (WaitCondition is null || Stop || WaitCondition())
+        {
+            WaitCondition = null;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Takes the text the line runs again from, after <see cref="RetryLine"/>; <see langword="null"/>
+    /// if the line is not run again.
+    /// </summary>
+    public string TakeRetryText()
+    {
+        string text = RetryText;
+        RetryText = null;
+        return text;
+    }
+
+    /// <summary>
+    /// Ends a retry once the line was left as it is, to run again (<see cref="RetryLine"/>).
+    /// </summary>
+    public bool TakeRetry()
+    {
+        bool retrying = IsRetryingLine;
+        IsRetryingLine = false;
+        return retrying;
     }
 
     public void WriteLine(string output, bool forceWrite = false)
@@ -212,6 +278,9 @@ internal sealed class RuntimeInformation : IStatementContext
         IsInFunction = false;
         IsLocalSearch = false;
         LineNumber = 0;
+        WaitCondition = null;
+        IsRetryingLine = false;
+        RetryText = null;
 #pragma warning disable S2696 // internalTaskId is a shared counter intentionally incremented by each Reset call
         TaskId = Interlocked.Increment(ref internalTaskId);
 #pragma warning restore S2696

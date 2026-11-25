@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -53,7 +52,8 @@ internal class ConsoleStatements : StatementRuntimeInformation
 
     private delegate InputStatus InputReader(IYesNtHost host, out string input);
 
-    // Puts input in place of each token, in order, asking the host again until it has some.
+    // Puts input in place of each token, in order. Without input yet, the line runs again at
+    // the next step, keeping what was already read in it.
     private void SubstituteInput(string args, string token, InputReader read)
     {
         args += " ";
@@ -66,12 +66,9 @@ internal class ConsoleStatements : StatementRuntimeInformation
                     break;
 
                 case InputStatus.Pending:
-                    if (RuntimeInfo.Stop)
-                    {
-                        return;
-                    }
-                    Thread.Sleep(10);
-                    break;
+                    RuntimeInfo.CurrentLine = args.TrimEnd();
+                    RuntimeInfo.RetryLine();
+                    return;
 
                 default:
                     RuntimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);

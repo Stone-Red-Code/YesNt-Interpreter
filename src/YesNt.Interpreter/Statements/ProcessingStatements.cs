@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -48,7 +49,8 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     {
         if (int.TryParse(args, out int millisecondsTimeout))
         {
-            ConsoleExtensions.Sleep(millisecondsTimeout, RuntimeInfo);
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            RuntimeInfo.WaitUntil(() => stopwatch.ElapsedMilliseconds >= millisecondsTimeout);
         }
         else
         {

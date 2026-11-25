@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
@@ -103,6 +104,21 @@ public class HostApiTests
         TestHost host = new();
         YesNtInterpreter interpreter = new() { Host = host };
         return (interpreter, host);
+    }
+
+    // Steps until the script ends, as a host's loop would (never more than a few seconds).
+    private static void StepToEnd(YesNtInterpreter interpreter)
+    {
+        DateTime giveUp = DateTime.UtcNow.AddSeconds(5);
+        while (interpreter.IsRunning && DateTime.UtcNow < giveUp)
+        {
+            if (interpreter.Step(10) == StepResult.Waiting)
+            {
+                Thread.Sleep(1);
+            }
+        }
+
+        Assert.IsFalse(interpreter.IsRunning, "The script did not end.");
     }
 
     // --- SetOut ---
@@ -237,5 +253,121 @@ public class HostApiTests
 
         Assert.IsFalse(host.Text.Contains("not reached"));
         StringAssert.Contains(host.Text, "Terminated by external process");
+    }
+
+    // --- Waiting ---
+
+    [TestMethod]
+    public void ReadLineWaitsForInputWithoutBlockingTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        host.Lines.Enqueue(null);
+        host.Lines.Enqueue("Ada");
+        interpreter.Prepare(["var name = %read_line", "print_line Hello ${name}"]);
+
+        Assert.AreEqual(StepResult.Waiting, interpreter.Step(10));
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "Hello Ada" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void InputAlreadyReadIsKeptWhileWaitingForMoreTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        host.Lines.Enqueue("first");
+        host.Lines.Enqueue(null);
+        host.Lines.Enqueue("second");
+        interpreter.Prepare(["print_line %read_line and %read_line"]);
+
+        Assert.AreEqual(StepResult.Waiting, interpreter.Step(10));
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "first and second" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void WaitingLineDoesNotTakeOutputTwiceTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        host.Lines.Enqueue(null);
+        host.Lines.Enqueue("typed");
+        interpreter.Prepare(["push_in unused", "length abc", "print_line %out %read_line"]);
+
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "3 typed" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void ReadKeyWaitsForAKeyTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        host.Keys.Enqueue(null);
+        host.Keys.Enqueue('y');
+        interpreter.Prepare(["print_line %read_key"]);
+
+        Assert.AreEqual(StepResult.Waiting, interpreter.Step(10));
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "y" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void SleepWaitsWithoutBlockingTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.Prepare(["sleep 100", "print_line awake"]);
+
+        DateTime start = DateTime.UtcNow;
+        _ = interpreter.Step(1);
+        Assert.AreEqual(StepResult.Waiting, interpreter.Step(10));
+        Assert.IsTrue(DateTime.UtcNow - start < TimeSpan.FromMilliseconds(90), "Step blocked during the sleep.");
+
+        StepToEnd(interpreter);
+
+        Assert.IsTrue(DateTime.UtcNow - start >= TimeSpan.FromMilliseconds(100));
+        StringAssert.StartsWith(host.Text, "awake" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void SleepStillWaitsInExecuteTest()
+    {
+        (YesNtInterpreter interpreter, _) = Create();
+
+        DateTime start = DateTime.UtcNow;
+        interpreter.Execute(["sleep 50"]);
+
+        Assert.IsTrue(DateTime.UtcNow - start >= TimeSpan.FromMilliseconds(50));
+    }
+
+    [TestMethod]
+    public void CustomStatementWaitsUntilReadyTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        bool ready = false;
+        interpreter.AddStatement("wait_for_host", SearchMode.Exact, SpaceAround.None, (_, context) => context.WaitUntil(() => ready));
+        interpreter.Prepare(["wait_for_host", "print_line done"]);
+
+        _ = interpreter.Step(10);
+        Assert.AreEqual(StepResult.Waiting, interpreter.Step(10));
+        Assert.AreEqual(string.Empty, host.Text);
+
+        ready = true;
+        StepToEnd(interpreter);
+
+        StringAssert.StartsWith(host.Text, "done" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void StoppingEndsAWaitTest()
+    {
+        (YesNtInterpreter interpreter, _) = Create();
+        interpreter.Prepare(["sleep 100000"]);
+        _ = interpreter.Step(10);
+
+        interpreter.Stop();
+
+        Assert.AreEqual(StepResult.Finished, interpreter.Step(10));
     }
 }

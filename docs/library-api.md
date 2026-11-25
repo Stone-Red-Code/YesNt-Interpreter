@@ -129,6 +129,27 @@ You can also run the remaining script to completion:
 interpreter.RunToCompletion();
 ```
 
+### Waiting
+
+A script that waits does not block `Step` or `RunFor`: a `sleep`, a `%read_line` or `%read_key`
+before the input is there, or a custom statement that calls `WaitUntil`. They return
+`StepResult.Waiting` at once, and the script goes on when it is stepped after the wait is over.
+Step it again later (at the next frame, or after a short sleep) rather than at once in a tight
+loop:
+
+```csharp
+while (interpreter.IsRunning)
+{
+    if (interpreter.RunFor(TimeSpan.FromMilliseconds(5)) == StepResult.Waiting)
+    {
+        // Nothing to run yet: do other work, or wait for the next frame.
+    }
+}
+```
+
+`RunToCompletion` and `Execute` sleep on the calling thread while the script waits, so a
+`sleep` in a script run with `Execute` behaves as it always did.
+
 ---
 
 ## Capturing output (debug mode)
@@ -204,9 +225,9 @@ sealed class SandboxedHost(string root) : ConsoleHost
 var interpreter = new YesNtInterpreter { Host = new SandboxedHost(@"C:\scripts\") };
 ```
 
-Or implement `IYesNtHost` to put the script in a window. Input need not be there yet: return
-`InputStatus.Pending` and the interpreter asks again shortly. `InputStatus.Closed` ends the
-script.
+Or implement `IYesNtHost` to put the script in a window. Input need not be there yet. Return
+`InputStatus.Pending` and the script waits without blocking (see [Waiting](#waiting)), then asks
+again when it is next stepped. `InputStatus.Closed` ends the script.
 
 ```csharp
 sealed class WindowHost(TextBox output, ConcurrentQueue<string> typedLines) : IYesNtHost
@@ -266,7 +287,7 @@ interpreter.Execute(new List<string> { "log Hello from custom statement" });
 
 Pass an `Action<string, IStatementContext>` instead of `Action<string>` to receive the current
 script state. `IStatementContext` exposes the variable tables, the current line, the line number,
-the output stack, and the ability to terminate execution.
+the output stack, waiting, and the ability to terminate execution.
 
 ```csharp
 using YesNt.Interpreter.Runtime;
@@ -292,6 +313,8 @@ interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End,
 | `CurrentLine`                 | `string`                    | The line text being processed; write here for inline-substitution handlers |
 | `LineNumber`                  | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
 | `SetOut(params values)`       | `void`                      | Replace the output stack with `values`, the last on top, for `%out`        |
+| `WaitUntil(ready)`            | `void`                      | Hold the script before its next line until `ready()` is true               |
+| `RetryLine(ready = null)`     | `void`                      | Run the current line again once `ready()` is true (or at the next step)    |
 | `Exit(message, stopAllTasks)` | `void`                      | Terminate execution; `stopAllTasks: true` also ends all tasks              |
 
 ### Returning a value
@@ -311,6 +334,31 @@ user_name
 var name = %out
 print_line Hello ${name}
 ```
+
+### Waiting without blocking
+
+A statement that takes time should not block, since the host may be stepping the script from a
+game loop. `WaitUntil` holds the script before its next line until a condition is met.
+Meanwhile `Step` and `RunFor` return `StepResult.Waiting`. The condition is asked each time the
+script is stepped, on the stepping thread.
+
+```csharp
+interpreter.AddStatement("wait_for_click", SearchMode.Exact, SpaceAround.None,
+    (_, ctx) =>
+    {
+        int clicksBefore = button.Clicks;
+        ctx.WaitUntil(() => button.Clicks != clicksBefore);
+    });
+```
+
+Sometimes a line needs something that is not there yet, such as input. `RetryLine` runs the line
+again once the condition is met (or at the next step, if there is no condition), starting from
+`CurrentLine` as it is now:
+
+- Put what is already known into `CurrentLine` first.
+- Other statements do not run on the line until it is complete.
+
+This is how `%read_line` waits when a host returns `InputStatus.Pending`.
 
 ### With a syntax-highlight colour
 
@@ -429,7 +477,9 @@ interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =
 ## Stopping a script
 
 Call `Stop()` from any thread to request graceful termination. The script stops at the next line
-boundary (or immediately if it is currently blocked waiting for console input).
+boundary. A script that waits (a `sleep`, or input a host has not got yet) stops at once.
+`ConsoleHost` reads a line by waiting for it, so a script reading from the console stops once
+the line is entered.
 
 ```csharp
 var interpreter = new YesNtInterpreter();
@@ -592,6 +642,7 @@ Returned by `Step` and `RunFor` to indicate the outcome of the incremental execu
 | ---------- | -------------------------------------------------------------- |
 | `Continue` | A line was executed and more lines remain.                     |
 | `Paused`   | The step or time budget was exhausted before the script ended. |
+| `Waiting`  | The script waits; step it again later, not at once.            |
 | `Finished` | The script ran to completion (or terminated/exited).           |
 
 ---
@@ -612,12 +663,12 @@ public class ConsoleHost : IYesNtHost          // the default; every member is v
 ```
 
 `ConsoleHost.TryReadLine` waits for a console line. `TryReadKey` returns `Pending` until a key
-is pressed.
+is pressed, so the script waits without blocking the thread that steps it.
 
 ### `InputStatus`
 
-| Value     | Description                                       |
-| --------- | ------------------------------------------------- |
-| `Ready`   | The input is there.                               |
-| `Pending` | Not yet: the interpreter asks again.              |
-| `Closed`  | There will be no more input: the script ends.     |
+| Value     | Description                                            |
+| --------- | ------------------------------------------------------ |
+| `Ready`   | The input is there.                                    |
+| `Pending` | Not yet: the script waits and asks again when stepped. |
+| `Closed`  | There will be no more input: the script ends.          |

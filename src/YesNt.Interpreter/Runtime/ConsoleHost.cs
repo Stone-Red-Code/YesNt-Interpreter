@@ -26,7 +26,8 @@ public class ConsoleHost : IYesNtHost
     }
 
     /// <summary>
-    /// Takes a key if one was pressed, without waiting.
+    /// Takes a key if one was pressed, without waiting, so the script waits for the key without
+    /// blocking the thread that steps it.
     /// </summary>
     /// <inheritdoc/>
     public virtual InputStatus TryReadKey(out char key)
