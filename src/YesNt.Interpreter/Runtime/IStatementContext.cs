@@ -22,6 +22,16 @@ public interface IStatementContext
     /// Set this to implement control-flow jumps inside a custom statement.</summary>
     int LineNumber { get; set; }
 
+    /// <summary>
+    /// Gives the script a statement's result the way built-in statements such as <c>length</c>
+    /// and <c>list get</c> do: the output stack is emptied, then <paramref name="values"/> are
+    /// pushed in order, so the last is on top and the script's first <c>%out</c> reads it.
+    /// Values are plain text: spaces and keywords in them stay part of the value when it is
+    /// put into a line.
+    /// </summary>
+    /// <param name="values">The results, the last one on top.</param>
+    void SetOut(params string[] values);
+
     /// <summary>Terminates execution with the given message.</summary>
     /// <param name="message">The message written to debug output.</param>
     /// <param name="stopAllTasks">

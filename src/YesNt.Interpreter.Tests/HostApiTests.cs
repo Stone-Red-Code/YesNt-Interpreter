@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using YesNt.Interpreter.Enums;
 using YesNt.Interpreter.Runtime;
 
 namespace YesNt.Interpreter.Tests;
@@ -102,6 +103,41 @@ public class HostApiTests
         TestHost host = new();
         YesNtInterpreter interpreter = new() { Host = host };
         return (interpreter, host);
+    }
+
+    // --- SetOut ---
+
+    [TestMethod]
+    public void SetOutGivesTheLastValueFirstTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.AddStatement("two_values", SearchMode.Exact, SpaceAround.None, (_, context) => context.SetOut("first", "second"));
+
+        interpreter.Execute(["two_values", "print_line %out", "print_line %out"]);
+
+        StringAssert.StartsWith(host.Text, "second" + Environment.NewLine + "first" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void SetOutReplacesWhatWasOnTheStackTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.AddStatement("one_value", SearchMode.Exact, SpaceAround.None, (_, context) => context.SetOut("new"));
+
+        interpreter.Execute(["length abc", "one_value", "print_line %out", "print_line %has_out"]);
+
+        StringAssert.StartsWith(host.Text, "new" + Environment.NewLine + "False" + Environment.NewLine);
+    }
+
+    [TestMethod]
+    public void SetOutKeepsSpacesAndKeywordsInTheValueTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+        interpreter.AddStatement("text_value", SearchMode.Exact, SpaceAround.None, (_, context) => context.SetOut("a, b goto calc"));
+
+        interpreter.Execute(["text_value", "var text = %out", "print_line ${text}"]);
+
+        StringAssert.StartsWith(host.Text, "a, b goto calc" + Environment.NewLine);
     }
 
     // --- Host ---

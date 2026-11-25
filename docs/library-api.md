@@ -266,7 +266,7 @@ interpreter.Execute(new List<string> { "log Hello from custom statement" });
 
 Pass an `Action<string, IStatementContext>` instead of `Action<string>` to receive the current
 script state. `IStatementContext` exposes the variable tables, the current line, the line number,
-and the ability to terminate execution.
+the output stack, and the ability to terminate execution.
 
 ```csharp
 using YesNt.Interpreter.Runtime;
@@ -291,7 +291,26 @@ interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End,
 | `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
 | `CurrentLine`                 | `string`                    | The line text being processed; write here for inline-substitution handlers |
 | `LineNumber`                  | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
+| `SetOut(params values)`       | `void`                      | Replace the output stack with `values`, the last on top, for `%out`        |
 | `Exit(message, stopAllTasks)` | `void`                      | Terminate execution; `stopAllTasks: true` also ends all tasks              |
+
+### Returning a value
+
+A statement that produces a value gives it to the script the way the built-in `length` and
+`list get` do: through the output stack, which the script reads with `%out`. `SetOut` empties
+the stack, then pushes the values in order, so the last is read first. Values are plain text:
+spaces and keywords in them stay part of the value.
+
+```csharp
+interpreter.AddStatement("user_name", SearchMode.Exact, SpaceAround.None,
+    (_, ctx) => ctx.SetOut(Environment.UserName));
+```
+
+```ynt
+user_name
+var name = %out
+print_line Hello ${name}
+```
 
 ### With a syntax-highlight colour
 
@@ -556,6 +575,7 @@ Provides access to the script state that a built-in statement handler would have
 | `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                               |
 | `CurrentLine`                 | `string`                    | The line being processed; write here for inline-substitution handlers        |
 | `LineNumber`                  | `int`                       | Zero-based index of the next line to execute; set this to implement jumps    |
+| `SetOut(params values)`       | `void`                      | Replace the output stack with `values`, the last on top, for `%out`          |
 | `Exit(message, stopAllTasks)` | `void`                      | Terminate execution with a message; `stopAllTasks: true` also ends all tasks |
 
 ---

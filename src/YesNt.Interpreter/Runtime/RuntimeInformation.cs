@@ -78,6 +78,16 @@ internal sealed class RuntimeInformation : IStatementContext
     /// </summary>
     public IYesNtHost Host { get; set; } = new ConsoleHost();
 
+    public void SetOut(params string[] values)
+    {
+        OutParametersStack.Clear();
+
+        foreach (string value in values)
+        {
+            OutParametersStack.Push((value ?? string.Empty).ToSafeString());
+        }
+    }
+
     public void WriteLine(string output, bool forceWrite = false)
     {
         if ((Stop && !forceWrite) || (ParentRuntimeInformation?.StopAllTasks == true && !forceWrite))
