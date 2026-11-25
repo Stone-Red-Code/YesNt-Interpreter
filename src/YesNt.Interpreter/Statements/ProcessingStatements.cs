@@ -76,29 +76,30 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
             path = Path.ChangeExtension(path, "ynt");
         }
 
-        if (File.Exists(path))
+        string[] lines;
+        try
         {
-            try
-            {
-                RuntimeInfo.Lines.RemoveAt(RuntimeInfo.LineNumber);
-                string[] lines = File.ReadAllLines(path);
-
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    RuntimeInfo.Lines.Insert(RuntimeInfo.LineNumber + i, new Line(lines[i], Path.GetFileName(path), i));
-                }
-                RuntimeInfo.PreScanLinesAction?.Invoke();
-                RuntimeInfo.LineNumber--;
-            }
-            catch
-            {
-                RuntimeInfo.Exit(ExitMessages.CouldNotLoadFile(path), true);
-            }
+            lines = RuntimeInfo.Host.ReadScript(path);
         }
-        else
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             RuntimeInfo.Exit(ExitMessages.CouldNotFindFile(path), true);
+            return;
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            RuntimeInfo.Exit(ExitMessages.CouldNotLoadFile(path), true);
+            return;
+        }
+
+        RuntimeInfo.Lines.RemoveAt(RuntimeInfo.LineNumber);
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            RuntimeInfo.Lines.Insert(RuntimeInfo.LineNumber + i, new Line(lines[i], Path.GetFileName(path), i));
+        }
+        RuntimeInfo.PreScanLinesAction?.Invoke();
+        RuntimeInfo.LineNumber--;
     }
 
     [GeneratedRegex("[0-9*+().,^%/-]+[0-9*+ ().,^%/-]+[0-9*+().,^%/-]+")]

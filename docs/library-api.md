@@ -12,11 +12,12 @@ to embed the YesNt interpreter and run scripts programmatically.
 3. [Running an in-memory script](#running-an-in-memory-script)
 4. [Stepwise and time-budgeted execution](#stepwise-and-time-budgeted-execution)
 5. [Capturing output (debug mode)](#capturing-output-debug-mode)
-6. [Adding custom statements](#adding-custom-statements)
-7. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
-8. [Stopping a script](#stopping-a-script)
-9. [Reading registered statements](#reading-registered-statements)
-10. [API reference](#api-reference)
+6. [Giving the script a console and files](#giving-the-script-a-console-and-files)
+7. [Adding custom statements](#adding-custom-statements)
+8. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
+9. [Stopping a script](#stopping-a-script)
+10. [Reading registered statements](#reading-registered-statements)
+11. [API reference](#api-reference)
 
 ---
 
@@ -167,6 +168,78 @@ Console.Write(output);
 
 `OnLineExecuted` is invoked with `null` only when execution reaches end-of-file (EOF).
 If execution stops via `exit`, `throw`, `error`, or `Stop()`, no terminal `null` event is emitted.
+
+To show output somewhere else without debug mode, give the interpreter a host instead (next section).
+
+---
+
+## Giving the script a console and files
+
+Outside debug mode a script's console and files are its **host**, an `IYesNtHost`. The host
+decides:
+
+- where `print` and `print_line` write;
+- where `%read_line` and `%read_key` read from;
+- what `clear` clears;
+- how script files are read: the script given to `Execute`/`Prepare`, and every file it `import`s.
+
+The default, `ConsoleHost`, uses the process's console and file system. Set `Host` before the
+script starts.
+
+Derive from `ConsoleHost` to change part of it, for example to check that a script may read a
+file before it does:
+
+```csharp
+sealed class SandboxedHost(string root) : ConsoleHost
+{
+    public override string[] ReadScript(string path)
+    {
+        if (!Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new UnauthorizedAccessException(path);   // import ends with "Could not load file"
+
+        return base.ReadScript(path);
+    }
+}
+
+var interpreter = new YesNtInterpreter { Host = new SandboxedHost(@"C:\scripts\") };
+```
+
+Or implement `IYesNtHost` to put the script in a window. Input need not be there yet: return
+`InputStatus.Pending` and the interpreter asks again shortly. `InputStatus.Closed` ends the
+script.
+
+```csharp
+sealed class WindowHost(TextBox output, ConcurrentQueue<string> typedLines) : IYesNtHost
+{
+    public void Write(string text) => output.AppendText(text);
+
+    public InputStatus TryReadLine(out string line)
+    {
+        return typedLines.TryDequeue(out line) ? InputStatus.Ready : InputStatus.Pending;
+    }
+
+    public InputStatus TryReadKey(out char key)
+    {
+        key = default;
+        if (!typedLines.TryDequeue(out string line))
+            return InputStatus.Pending;
+
+        key = line.Length > 0 ? line[0] : ' ';
+        return InputStatus.Ready;
+    }
+
+    public void Clear() => output.Clear();
+
+    public string[] ReadScript(string path) => File.ReadAllLines(path);
+}
+```
+
+`ReadScript` throws:
+
+- `FileNotFoundException` for a file that is not there. A missing script does not start; a
+  missing import ends the script with "Could not find file".
+- any other `IOException`, or `UnauthorizedAccessException`, for a file that cannot be read.
+  The script ends with "Could not load file".
 
 ---
 
@@ -461,6 +534,9 @@ public ReadOnlyCollection<StatementInformation> StatementInformation { get; }
 
 // Whether a prepared script is currently active/running
 public bool IsRunning { get; }
+
+// The script's console and files (default: ConsoleHost); set before the script starts
+public IYesNtHost Host { get; set; }
 ```
 
 ---
@@ -497,3 +573,31 @@ Returned by `Step` and `RunFor` to indicate the outcome of the incremental execu
 | `Continue` | A line was executed and more lines remain.                     |
 | `Paused`   | The step or time budget was exhausted before the script ended. |
 | `Finished` | The script ran to completion (or terminated/exited).           |
+
+---
+
+### `IYesNtHost` and `ConsoleHost`
+
+```csharp
+public interface IYesNtHost  // YesNt.Interpreter.Runtime
+{
+    void Write(string text);                    // output outside debug mode, line ends included
+    InputStatus TryReadLine(out string line);   // %read_line
+    InputStatus TryReadKey(out char key);       // %read_key
+    void Clear();                               // clear
+    string[] ReadScript(string path);           // the script and its imports
+}
+
+public class ConsoleHost : IYesNtHost          // the default; every member is virtual
+```
+
+`ConsoleHost.TryReadLine` waits for a console line. `TryReadKey` returns `Pending` until a key
+is pressed.
+
+### `InputStatus`
+
+| Value     | Description                                       |
+| --------- | ------------------------------------------------- |
+| `Ready`   | The input is there.                               |
+| `Pending` | Not yet: the interpreter asks again.              |
+| `Closed`  | There will be no more input: the script ends.     |

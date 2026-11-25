@@ -49,6 +49,17 @@ public class YesNtInterpreter
     public bool IsRunning { get; private set; }
 
     /// <summary>
+    /// Gets or sets the script's console and files: where output goes outside debug mode, where
+    /// input comes from, what <c>clear</c> clears and how script files are read. Defaults to
+    /// a <see cref="ConsoleHost"/>. Set it before the script starts.
+    /// </summary>
+    public IYesNtHost Host
+    {
+        get => runtimeInfo.Host;
+        set => runtimeInfo.Host = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>
     /// Initializes a new <see cref="YesNtInterpreter"/> and registers all built-in statements.
     /// </summary>
     public YesNtInterpreter()
@@ -272,6 +283,8 @@ public class YesNtInterpreter
     /// When <see langword="true"/>, output is routed through <see cref="OnDebugOutput"/> instead of
     /// <see cref="Console"/> and line-execution events are raised via <see cref="OnLineExecuted"/>.
     /// </param>
+    /// <exception cref="IOException">The script could not be read (<see cref="IYesNtHost.ReadScript"/>).</exception>
+    /// <exception cref="UnauthorizedAccessException">The script may not be read.</exception>
     public void Prepare(string path, bool isDebugMode = false)
     {
         runtimeInfo.Reset();
@@ -575,12 +588,15 @@ public class YesNtInterpreter
     {
         path = Path.GetFullPath(path);
 
-        if (!File.Exists(path))
+        string[] lines;
+        try
+        {
+            lines = runtimeInfo.Host.ReadScript(path);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             return false;
         }
-
-        string[] lines = File.ReadAllLines(path);
 
         runtimeInfo.WorkingDirectory = Path.GetDirectoryName(path);
 

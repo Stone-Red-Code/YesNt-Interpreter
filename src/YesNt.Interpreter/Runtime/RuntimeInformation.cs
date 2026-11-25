@@ -72,6 +72,12 @@ internal sealed class RuntimeInformation : IStatementContext
     public bool IsSearching => !string.IsNullOrWhiteSpace(SearchLabel + SearchFunction) || (IsInFunction && FunctionCallStack.Count == 0);
     public bool IsLocalSearch { get; set; }
 
+    /// <summary>
+    /// Gets or sets the script's console and files. Kept by <see cref="Reset"/>: it belongs to
+    /// the interpreter, not to one run.
+    /// </summary>
+    public IYesNtHost Host { get; set; } = new ConsoleHost();
+
     public void WriteLine(string output, bool forceWrite = false)
     {
         if ((Stop && !forceWrite) || (ParentRuntimeInformation?.StopAllTasks == true && !forceWrite))
@@ -92,7 +98,7 @@ internal sealed class RuntimeInformation : IStatementContext
         }
         else
         {
-            Console.WriteLine(output.FromSafeString());
+            Host.Write(output.FromSafeString() + Environment.NewLine);
         }
     }
 
@@ -116,7 +122,7 @@ internal sealed class RuntimeInformation : IStatementContext
         }
         else
         {
-            Console.Write(output.FromSafeString());
+            Host.Write(output.FromSafeString());
         }
     }
 

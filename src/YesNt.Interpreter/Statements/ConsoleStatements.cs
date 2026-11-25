@@ -1,6 +1,5 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
-using System.IO;
+using System.Threading;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -32,43 +31,53 @@ internal class ConsoleStatements : StatementRuntimeInformation
     [Statement("%read_line", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void ReadLine(string args)
     {
-        args += " ";
-        while (args.Contains("%read_line"))
-        {
-            string input = Console.ReadLine();
-            if (input is null)
-            {
-                RuntimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
-                return;
-            }
-            args = args.ReplaceFirstOccurrence("%read_line", input.ToSafeString());
-        }
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+        SubstituteInput(args, "%read_line", (IYesNtHost host, out string input) => host.TryReadLine(out input));
     }
 
     [Statement("%read_key", SearchMode.Contains, SpaceAround.None, ConsoleColor.DarkGreen, KeepStatementInArgs = true, Priority = Priority.Highest)]
     public void ReadKey(string args)
     {
-        args += " ";
-        while (args.Contains("%read_key"))
+        SubstituteInput(args, "%read_key", (IYesNtHost host, out string input) =>
         {
-            string input = ConsoleExtensions.ReadKey(RuntimeInfo).ToString();
-            args = args.ReplaceFirstOccurrence("%read_key", input.ToSafeString());
-        }
-        RuntimeInfo.CurrentLine = args.TrimEnd();
+            InputStatus status = host.TryReadKey(out char key);
+            input = key.ToString();
+            return status;
+        });
     }
 
     [Statement("clear", SearchMode.Exact, SpaceAround.None, ConsoleColor.Magenta)]
-    [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Won't work if static")]
     public void Clear(string _)
     {
-        try
+        RuntimeInfo.Host.Clear();
+    }
+
+    private delegate InputStatus InputReader(IYesNtHost host, out string input);
+
+    // Puts input in place of each token, in order, asking the host again until it has some.
+    private void SubstituteInput(string args, string token, InputReader read)
+    {
+        args += " ";
+        while (args.Contains(token))
         {
-            Console.Clear();
+            switch (read(RuntimeInfo.Host, out string input))
+            {
+                case InputStatus.Ready:
+                    args = args.ReplaceFirstOccurrence(token, input.ToSafeString());
+                    break;
+
+                case InputStatus.Pending:
+                    if (RuntimeInfo.Stop)
+                    {
+                        return;
+                    }
+                    Thread.Sleep(10);
+                    break;
+
+                default:
+                    RuntimeInfo.Exit(ExitMessages.TerminatedByExternalProcess, true);
+                    return;
+            }
         }
-        catch (IOException)
-        {
-            // Silently fail if the console is not interactive
-        }
+        RuntimeInfo.CurrentLine = args.TrimEnd();
     }
 }
