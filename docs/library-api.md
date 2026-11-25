@@ -10,12 +10,13 @@ to embed the YesNt interpreter and run scripts programmatically.
 1. [Adding the reference](#adding-the-reference)
 2. [Running a script file](#running-a-script-file)
 3. [Running an in-memory script](#running-an-in-memory-script)
-4. [Capturing output (debug mode)](#capturing-output-debug-mode)
-5. [Adding custom statements](#adding-custom-statements)
-6. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
-7. [Stopping a script](#stopping-a-script)
-8. [Reading registered statements](#reading-registered-statements)
-9. [API reference](#api-reference)
+4. [Stepwise and time-budgeted execution](#stepwise-and-time-budgeted-execution)
+5. [Capturing output (debug mode)](#capturing-output-debug-mode)
+6. [Adding custom statements](#adding-custom-statements)
+7. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
+8. [Stopping a script](#stopping-a-script)
+9. [Reading registered statements](#reading-registered-statements)
+10. [API reference](#api-reference)
 
 ---
 
@@ -205,19 +206,19 @@ interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End,
         if (parts.Length == 2)
             ctx.Variables[parts[0]] = parts[1];
         else
-            ctx.Exit("set_var requires: <name> <value>", isError: true);
+            ctx.Exit("set_var requires: <name> <value>", stopAllTasks: true);
     });
 ```
 
 `IStatementContext` provides:
 
-| Property                 | Type                        | Description                                                                |
-| ------------------------ | --------------------------- | -------------------------------------------------------------------------- |
-| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                 |
-| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
-| `CurrentLine`            | `string`                    | The line text being processed; write here for inline-substitution handlers |
-| `LineNumber`             | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
-| `Exit(message, isError)` | `void`                      | Terminate execution; `isError: true` signals an error condition            |
+| Property                      | Type                        | Description                                                                |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------- |
+| `Variables`                   | `Dictionary<string,string>` | Local variable table for the current scope                                 |
+| `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
+| `CurrentLine`                 | `string`                    | The line text being processed; write here for inline-substitution handlers |
+| `LineNumber`                  | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
+| `Exit(message, stopAllTasks)` | `void`                      | Terminate execution; `stopAllTasks: true` also ends all tasks              |
 
 ### With a syntax-highlight colour
 
@@ -400,13 +401,10 @@ Creates a new interpreter instance and registers all built-in statements.
 ```csharp
 public event Action<string>         OnDebugOutput;
 public event Action<DebugEventArgs> OnLineExecuted;
-public event Action                 OnWaitingForInput;
 ```
 
 `OnDebugOutput` and `OnLineExecuted` are only raised in debug mode (`isDebugMode: true`).
 `OnLineExecuted` receives `null` only on EOF completion.
-`OnWaitingForInput` is raised (in any mode) immediately before the interpreter blocks on
-`%read_key`. Use it to call `Stop()` deterministically without relying on `Thread.Sleep`.
 
 #### Methods
 
@@ -476,13 +474,13 @@ public interface IStatementContext  // YesNt.Interpreter.Runtime
 Passed to `Action<string, IStatementContext>` handlers registered via `AddStatement`.
 Provides access to the script state that a built-in statement handler would have.
 
-| Member                   | Type                        | Description                                                               |
-| ------------------------ | --------------------------- | ------------------------------------------------------------------------- |
-| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                |
-| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                            |
-| `CurrentLine`            | `string`                    | The line being processed; write here for inline-substitution handlers     |
-| `LineNumber`             | `int`                       | Zero-based index of the next line to execute; set this to implement jumps |
-| `Exit(message, isError)` | `void`                      | Terminate execution with a message; `isError: true` signals an error      |
+| Member                        | Type                        | Description                                                                  |
+| ----------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
+| `Variables`                   | `Dictionary<string,string>` | Local variable table for the current scope                                   |
+| `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                               |
+| `CurrentLine`                 | `string`                    | The line being processed; write here for inline-substitution handlers        |
+| `LineNumber`                  | `int`                       | Zero-based index of the next line to execute; set this to implement jumps    |
+| `Exit(message, stopAllTasks)` | `void`                      | Terminate execution with a message; `stopAllTasks: true` also ends all tasks |
 
 ---
 
