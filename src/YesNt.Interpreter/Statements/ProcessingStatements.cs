@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using YesNt.Interpreter.Attributes;
 using YesNt.Interpreter.Enums;
@@ -34,11 +34,7 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
         Line oldLine = lines[lineNumber];
 
         lines[lineNumber] = new Line(line, oldLine.FileName, oldLine.LineNumber);
-        _ = Task.Run(() =>
-        {
-            YesNtInterpreter interpreter = new YesNtInterpreter();
-            interpreter.Execute(lines, RuntimeInfo.GlobalVariables, lineNumber, RuntimeInfo);
-        });
+        RuntimeInfo.StartTaskAction(lines, lineNumber);
 
         RuntimeInfo.CurrentLine = string.Empty;
     }
@@ -48,7 +44,8 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     {
         if (int.TryParse(args, out int millisecondsTimeout))
         {
-            ConsoleExtensions.Sleep(millisecondsTimeout, RuntimeInfo);
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            RuntimeInfo.WaitUntil(() => stopwatch.ElapsedMilliseconds >= millisecondsTimeout);
         }
         else
         {
@@ -59,10 +56,8 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("length", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Length(string args)
     {
-        RuntimeInfo.InParametersStack.Clear();
-        RuntimeInfo.OutParametersStack.Clear();
-
-        RuntimeInfo.OutParametersStack.Push(args.FromSafeString().Length.ToString());
+        // Its argument is on the line: values pushed for a later call stay where they are.
+        RuntimeInfo.SetOut(args.FromSafeString().Length.ToString());
     }
 
     [Statement("import", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
@@ -76,29 +71,30 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
             path = Path.ChangeExtension(path, "ynt");
         }
 
-        if (File.Exists(path))
+        string[] lines;
+        try
         {
-            try
-            {
-                RuntimeInfo.Lines.RemoveAt(RuntimeInfo.LineNumber);
-                string[] lines = File.ReadAllLines(path);
-
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    RuntimeInfo.Lines.Insert(RuntimeInfo.LineNumber + i, new Line(lines[i], Path.GetFileName(path), i));
-                }
-                RuntimeInfo.PreScanLinesAction?.Invoke();
-                RuntimeInfo.LineNumber--;
-            }
-            catch
-            {
-                RuntimeInfo.Exit(ExitMessages.CouldNotLoadFile(path), true);
-            }
+            lines = RuntimeInfo.Host.ReadScript(path);
         }
-        else
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
             RuntimeInfo.Exit(ExitMessages.CouldNotFindFile(path), true);
+            return;
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            RuntimeInfo.Exit(ExitMessages.CouldNotLoadFile(path), true);
+            return;
+        }
+
+        RuntimeInfo.Lines.RemoveAt(RuntimeInfo.LineNumber);
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            RuntimeInfo.Lines.Insert(RuntimeInfo.LineNumber + i, new Line(lines[i], Path.GetFileName(path), i));
+        }
+        RuntimeInfo.PreScanLinesAction?.Invoke();
+        RuntimeInfo.LineNumber--;
     }
 
     [GeneratedRegex("[0-9*+().,^%/-]+[0-9*+ ().,^%/-]+[0-9*+().,^%/-]+")]

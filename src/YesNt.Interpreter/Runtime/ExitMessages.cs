@@ -36,6 +36,11 @@ internal static class ExitMessages
         return $"Function \"{function}\" not found";
     }
 
+    internal static string FunctionWithoutEndFunc(string function)
+    {
+        return $"Function \"{function}\" has no matching \"end_func\"";
+    }
+
     internal static string VariableNotFound(string variable)
     {
         return $"Variable \"{variable}\" not found";
@@ -44,6 +49,16 @@ internal static class ExitMessages
     internal static string ListNotFound(string list)
     {
         return $"List \"{list}\" not found";
+    }
+
+    internal static string MapNotFound(string map)
+    {
+        return $"Map \"{map}\" not found";
+    }
+
+    internal static string KeyNotFound(string key)
+    {
+        return $"Key \"{key}\" not found";
     }
 
     internal static string InvalidIndex(string rawIndex)

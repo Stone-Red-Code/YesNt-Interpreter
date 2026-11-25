@@ -17,10 +17,11 @@ Execution proceeds top-to-bottom unless a control-flow statement changes the lin
 8. [Control flow](#control-flow)
 9. [Functions](#functions)
 10. [Lists](#lists)
-11. [Processing](#processing)
-12. [System](#system)
-13. [Predefined tokens](#predefined-tokens)
-14. [Termination](#termination)
+11. [Maps](#maps)
+12. [Processing](#processing)
+13. [System](#system)
+14. [Predefined tokens](#predefined-tokens)
+15. [Termination](#termination)
 
 ---
 
@@ -356,19 +357,43 @@ if ${debug} == True call dump_state
 ```
 func <name>:
     <body>
-return
+end_func
 ```
 
 A function declaration registers the function name and the line it starts on.
-The body runs until `return` is reached.
+The body runs until `end_func` (or an early `return`) is reached.
 **Nested function declarations are not allowed.**
 
 ```ynt
 func add:
     var result = %in + %in calc
-    push_out ${result}
-return
+    return ${result}
+end_func
 ```
+
+#### Named parameters
+
+```
+func <name>: <param1>, <param2>, …
+    <body>
+end_func
+```
+
+Parameters can be declared after the function name. They are bound to local variables in
+declaration order, consuming the values passed to `call <name> with …` (or pushed with `push_in`).
+`func add: a, b` is equivalent to starting the body with `var a = %in` followed by `var b = %in`.
+
+```ynt
+func add: a, b
+    return ${a} + ${b} calc
+end_func
+
+call add with 3, 7
+var total = %out
+print_line ${total}
+```
+
+If fewer arguments are passed than declared parameters, the script terminates with an error.
 
 ### Calling a function - `call`
 
@@ -383,6 +408,30 @@ call <name> with <arg1>, <arg2>, …
 ```ynt
 call greet
 call add with 3, 7
+```
+
+### Arguments and results: `%in` and `%out`
+
+Values travel through two stacks, which do different jobs:
+
+- **The input stack (`%in`) holds arguments for something you call:** a function, or a
+  program run with `exec`. Their code is not on the calling line, so the arguments are pushed
+  first (`push_in`, or `with a, b`) and taken by what is called.
+- **The output stack (`%out`) holds the last result.** YesNt has no expressions, so a result
+  cannot appear in the line that asked for it. It waits on the output stack for a later line
+  to read with `%out`. Functions put results there with `push_out`. Statements that produce a
+  value (`length`, `list … get`, `list … length`, `exec`) replace whatever was there with their
+  result.
+
+Other statements take their arguments on their own line (`length Hello`, `list items get 1`), so
+they leave the input stack alone. Values pushed for a later `call` are still there after them.
+Here `length` leaves `Alice` for `greet`, which takes it with `%in`:
+
+```ynt
+push_in Alice
+length abc
+var size = %out
+call greet
 ```
 
 ### Input arguments
@@ -410,7 +459,7 @@ popped from the argument stack.
 func greet:
     var name = %in
     print_line Hello, ${name}!
-return
+end_func
 ```
 
 #### Check if input argument exists - `%has_in`
@@ -421,7 +470,7 @@ Only valid inside a function.
 ```ynt
 func greet:
     if %has_in call do_greet
-return
+end_func
 ```
 
 ### Output values
@@ -436,8 +485,8 @@ Only valid inside a function. Pushes a return value onto the output stack.
 
 #### Consume an output value - `%out`
 
-`%out` is an inline token that pops and inserts the top value from the output stack.
-Valid anywhere after a function call or list/processing statement that pushes to the output stack.
+`%out` is an inline token that pops and inserts the top value from the output stack: the last
+result of a function or a statement that produces a value. Each value is read once.
 
 ```ynt
 call add with 3, 7
@@ -462,6 +511,34 @@ clear_call_stack
 
 Discards all frames on the function call stack. Useful for error recovery.
 
+### Return from a function - `end_func` and `return`
+
+```
+end_func
+return
+return <value>
+```
+
+`end_func` and a bare `return` end the current function call and hand control back to the caller.
+`return <value>` does the same but first pushes `<value>` onto the output stack
+(it is equivalent to `push_out <value>` followed by `end_func`), so the caller can read it with `%out`.
+`return` may be used anywhere in the body to exit a function early.
+
+```ynt
+func add:
+    var a = %in
+    var b = %in
+    if ${a} == 0:
+        return 0
+    end_if
+    return ${a} + ${b} calc
+
+call add with 0, 5
+var total = %out
+print_line ${total}
+```
+
+Only valid inside a function; otherwise the script terminates with an error.
 ---
 
 ## Lists
@@ -557,6 +634,99 @@ Removes the list entirely.
 
 ---
 
+## Maps
+
+Maps are key–value stores. Each key is unique; putting a value under an existing key overwrites it. All map operations start with the keyword `map`.
+
+### Create or reset - `map … new`
+
+```
+map <name> new
+```
+
+Creates an empty map. If the map already exists it is cleared.
+
+### Add or update an entry - `map … put`
+
+```
+map <name> put <key>, <value>
+```
+
+Sets `<key>` to `<value>`. If the key already exists its value is replaced. The statement takes exactly two comma-separated parts. Keys may contain spaces unquoted. A key or value that itself contains a comma must be wrapped in quotes.
+
+```ynt
+map settings new
+map settings put name, Alice
+map settings put city, Berlin
+map settings get name
+var who = %out
+print_line ${who}
+```
+
+### Get a value - `map … get`
+
+```
+map <name> get <key>
+```
+
+Pushes the value stored under `<key>` onto the output stack. Access it with `%out`. Terminates with an error if the key does not exist.
+
+### Check a key - `map … has`
+
+```
+map <name> has <key>
+```
+
+Pushes `True` if `<key>` exists, `False` otherwise, onto the output stack.
+
+```ynt
+map settings new
+map settings put name Alice
+map settings has name
+var present = %out
+print_line ${present}
+```
+
+### Remove an entry - `map … remove`
+
+```
+map <name> remove <key>
+```
+
+Removes `<key>` and its value. Removing a key that does not exist is silently ignored.
+
+### Get the size - `map … size`
+
+```
+map <name> size
+```
+
+Pushes the number of entries onto the output stack.
+
+```ynt
+map settings size
+var n = %out
+print_line ${n} entries
+```
+
+### Clear all entries - `map … clear`
+
+```
+map <name> clear
+```
+
+Removes all entries but keeps the map alive.
+
+### Delete a map - `map … delete`
+
+```
+map <name> delete
+```
+
+Removes the map entirely.
+
+---
+
 ## Processing
 
 ### Arithmetic - `calc`
@@ -632,7 +802,8 @@ print_line One second later.
 length <text>
 ```
 
-Pushes the character count of `<text>` onto the output stack.
+Replaces the output stack with the character count of `<text>`. The input stack is left as it
+is.
 
 ```ynt
 length Hello, world!
@@ -683,6 +854,10 @@ You can also stage arguments with `push_in` before a bare `exec`:
 push_in --version
 exec python
 ```
+
+Like `call`, `exec` takes **every** value on the input stack as an argument, then empties it.
+Values pushed earlier for a function would become the program's arguments, so call the
+function first.
 
 ---
 
@@ -741,7 +916,7 @@ if ${x} < 0 call validate_fail
 
 func validate_fail:
     throw x must not be negative
-return
+end_func
 ```
 
 ### Non-fatal error - `error`
@@ -778,7 +953,8 @@ Like `throw` but does **not** cancel background tasks.
 | `if … call`        | `if cond call name`            | Conditional function call                                    |
 | `push_in`          | `push_in value`                | Push input argument                                          |
 | `push_out`         | `push_out value`               | Push output value (inside function)                          |
-| `return`           | `return`                       | Return from function                                         |
+| `end_func`         | `end_func`                     | End current function                                         |
+| `return`           | `return value`                 | Return from function (optional value via output stack)       |
 | `clear_call_stack` | `clear_call_stack`             | Clear call stack                                             |
 | `list … new`       | `list name new`                | Create/reset list                                            |
 | `list … add`       | `list name add value`          | Append to list                                               |
@@ -789,6 +965,14 @@ Like `throw` but does **not** cancel background tasks.
 | `list … length`    | `list name length`             | Get count → `%out`                                           |
 | `list … clear`     | `list name clear`              | Clear all items                                              |
 | `list … delete`    | `list name delete`             | Delete list                                                  |
+| `map … new`        | `map name new`                 | Create/reset map                                             |
+| `map … put`        | `map name put key, value`      | Add or update entry                                          |
+| `map … get`        | `map name get key`             | Get value → `%out`                                           |
+| `map … has`        | `map name has key`             | `True`/`False` if key exists → `%out`                        |
+| `map … remove`     | `map name remove key`          | Remove entry                                                 |
+| `map … size`       | `map name size`                | Get entry count → `%out`                                     |
+| `map … clear`      | `map name clear`               | Clear all entries                                            |
+| `map … delete`     | `map name delete`              | Delete map                                                   |
 | `calc`             | `expr calc`                    | Evaluate arithmetic                                          |
 | `eval`             | `expr eval`                    | Decode string encoding                                       |
 | `task`             | `line task`                    | Run current line (without `task`) and continue in background |

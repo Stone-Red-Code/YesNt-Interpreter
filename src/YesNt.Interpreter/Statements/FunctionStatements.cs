@@ -10,7 +10,7 @@ namespace YesNt.Interpreter.Statements;
 
 internal class FunctionStatements : StatementRuntimeInformation
 {
-    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":")]
+    [Statement("func", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, Separator = ":", BlockPair = "end_func")]
     public void FindFunction(string args)
     {
         if (RuntimeInfo.InternalIsInFunction)
@@ -19,17 +19,9 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        string functionDeclaration = args.Trim();
-        if (!functionDeclaration.EndsWith(':'))
+        if (!TryParseFunctionSignature(args, out string key, out _))
         {
-            RuntimeInfo.Exit(ExitMessages.InvalidSyntaxColonRequired, true);
-            return;
-        }
-
-        string key = NormalizeBlockName(functionDeclaration);
-        if (string.IsNullOrWhiteSpace(key))
-        {
-            RuntimeInfo.Exit(ExitMessages.InvalidSyntax, true);
+            RuntimeInfo.Exit(args.Trim().Contains(':') ? ExitMessages.InvalidSyntax : ExitMessages.InvalidSyntaxColonRequired, true);
             return;
         }
 
@@ -40,7 +32,26 @@ internal class FunctionStatements : StatementRuntimeInformation
             RuntimeInfo.SearchFunction = string.Empty;
         }
 
-        RuntimeInfo.IsInFunction = true;
+        bool isDefinitionScan = RuntimeInfo.FunctionCallStack.Count == 0
+            && string.IsNullOrEmpty(RuntimeInfo.SearchFunction)
+            && string.IsNullOrEmpty(RuntimeInfo.SearchLabel);
+
+        if (isDefinitionScan)
+        {
+            if (RuntimeInfo.BlockBoundaries.TryGetValue(RuntimeInfo.LineNumber, out int endLine) && endLine > RuntimeInfo.LineNumber)
+            {
+                RuntimeInfo.IsInFunction = false;
+                RuntimeInfo.LineNumber = endLine;
+            }
+            else
+            {
+                RuntimeInfo.Exit(ExitMessages.FunctionWithoutEndFunc(key), true);
+            }
+        }
+        else
+        {
+            RuntimeInfo.IsInFunction = true;
+        }
     }
 
     [Statement("push_in", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Yellow)]
@@ -83,6 +94,7 @@ internal class FunctionStatements : StatementRuntimeInformation
 
         RuntimeInfo.FunctionCallStack.Push(new FunctionScope(RuntimeInfo.LineNumber, new Stack<string>(RuntimeInfo.InParametersStack)));
         RuntimeInfo.InParametersStack.Clear();
+        BindNamedParameters(key);
         RuntimeInfo.CurrentLine = string.Empty;
 
         if (RuntimeInfo.Functions.TryGetValue(key, out int value))
@@ -133,8 +145,25 @@ internal class FunctionStatements : StatementRuntimeInformation
         RuntimeInfo.FunctionCallStack.Peek().Results.Push(args);
     }
 
+    [Statement("end_func", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true, IsBlockEnd = true)]
+    public void EndFunction(string _)
+    {
+        HandleReturn(string.Empty);
+    }
+
     [Statement("return", SearchMode.Exact, SpaceAround.None, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
     public void Return(string _)
+    {
+        HandleReturn(string.Empty);
+    }
+
+    [Statement("return", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.DarkYellow, ExecuteInSearchMode = true)]
+    public void ReturnWithValue(string args)
+    {
+        HandleReturn(args.Trim());
+    }
+
+    private void HandleReturn(string value)
     {
         if (!RuntimeInfo.IsInFunction)
         {
@@ -153,10 +182,14 @@ internal class FunctionStatements : StatementRuntimeInformation
             return;
         }
 
-        RuntimeInfo.IsInFunction = false;
-
         if (RuntimeInfo.FunctionCallStack.Count > 0)
         {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                RuntimeInfo.FunctionCallStack.Peek().Results.Push(value);
+            }
+
+            RuntimeInfo.IsInFunction = false;
             FunctionScope functionScope = RuntimeInfo.FunctionCallStack.Pop();
 
             RuntimeInfo.OutParametersStack = new Stack<string>(functionScope.Results);

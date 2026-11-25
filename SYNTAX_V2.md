@@ -26,7 +26,7 @@ var name = world
 func greet:
 print_line "Hello world"
 print_line Hello ${name}
-return
+end_func
 call greet
 ```
 
@@ -78,7 +78,7 @@ print_line ${value}
 | Code flow | `lbl name` | `label name:` | Label declaration/target. |
 | Code flow | `jmp name` | `goto name` | Unconditional jump. |
 | Code flow | `jif name \| cond` | `if cond goto name` | Conditional jump. |
-| Functions | `fnc name` | `func name:` | Function declaration. |
+| Functions | `fnc name` | `func name:` | Function declaration (optional `, ` separated named parameters). |
 | Functions | `cal name` | `call name` | Function call without args. |
 | Functions | `cal name \| a,b,c` | `call name with a, b, c` | Function call with args. |
 | Functions | `in value` | `push_in value` | Push in-arg onto input stack. |
@@ -87,7 +87,8 @@ print_line ${value}
 | Functions | `put value` | `push_out value` | Push out-arg in function. |
 | Functions | `%out` | `%out` | Keep token name for familiarity. |
 | Functions | `%iso` | `%has_out` | Inline token, bool if out arg exists. |
-| Functions | `ret` | `return` | Return from function. |
+| Functions | `ret` | `end_func` | Return from function. |
+| Functions | `return value` | `return value` | Return from function, optionally pushing a value to the out stack. |
 | Functions | `ccs` | `clear_call_stack` | Clear call stack. |
 | Condition-call | `cif name \| cond` | `if cond call name` | Conditional function call. |
 | Termination | `end` | `exit` | Planned termination. |
@@ -113,4 +114,8 @@ print_line ${value}
 
 - `%out` is intentionally kept as `%out`.
 - Postfix operations are `calc`, `eval`, and `task`.
+- `return` exits the function early (optionally with a value via `return <value>`);
+  `end_func` is the explicit end-of-function marker. Both terminate the current function call.
+- Functions may declare named parameters after the name (e.g. `func add: a, b`); each parameter
+  is bound to a local variable from the call arguments, equivalent to `var a = %in` / `var b = %in`.
 

@@ -16,6 +16,7 @@ public class CodeFlowTests
             "func yes:",
             "global result = 1",
             "return",
+            "end_func",
             "${result}"
         ];
         YesNtAssert.IsLastLineEqual(lines, "1");
@@ -193,6 +194,7 @@ public class CodeFlowTests
             "func set_result:",
             "global result = ok",
             "return",
+            "end_func",
             "if 1 == 1 call set_result",
             "${result}"
         ];

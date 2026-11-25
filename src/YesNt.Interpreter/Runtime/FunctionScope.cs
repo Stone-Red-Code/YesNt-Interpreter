@@ -17,6 +17,9 @@ internal class FunctionScope(int callerLine, Stack<string> arguments)
     /// <summary>Gets the local list table for this function invocation.</summary>
     public Dictionary<string, List<string>> Lists { get; } = [];
 
+    /// <summary>Gets the local map table for this function invocation.</summary>
+    public Dictionary<string, Dictionary<string, string>> Maps { get; } = [];
+
     /// <summary>Gets the local label table for this function invocation.</summary>
     public Dictionary<string, int> Labels { get; } = [];
 

@@ -207,19 +207,16 @@ internal class TextEditor
     {
         const int indentationSize = 4;
         List<string> blockStack = [];
+        List<string> output = [];
+        string previousLine = string.Empty;
+        bool pendingBlank = false;
 
         for (int i = 0; i < Lines.Count; i++)
         {
             string trimmed = Lines[i].Trim(' ');
             if (string.IsNullOrWhiteSpace(trimmed))
             {
-                Lines[i] = string.Empty;
-                continue;
-            }
-
-            if (trimmed.StartsWith('#'))
-            {
-                Lines[i] = trimmed;
+                pendingBlank = true;
                 continue;
             }
 
@@ -261,26 +258,56 @@ internal class TextEditor
                     }
                 }
             }
-            else if (trimmed == "return")
+            else if (trimmed == "end_func")
             {
-                for (int j = blockStack.Count - 1; j >= 0; j--)
+                if (blockStack.Count > 0 && blockStack[^1] == "func")
                 {
-                    if (blockStack[j] == "func")
-                    {
-                        blockStack.RemoveAt(j);
-                        break;
-                    }
+                    blockStack.RemoveAt(blockStack.Count - 1);
                 }
             }
 
             int lineIndentation = closesFunctionBlock ? Math.Max(0, blockStack.Count - 1) : blockStack.Count;
-            Lines[i] = new string(' ', lineIndentation * indentationSize) + trimmed;
+            string indented = new string(' ', lineIndentation * indentationSize) + trimmed;
 
-            if (!isTerminatingStatement && (
+            bool isBlockOpener = !isTerminatingStatement && (
                 (trimmed.StartsWith("if ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
                 || (trimmed.StartsWith("while ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
-                || (trimmed.StartsWith("func ", StringComparison.Ordinal) && trimmed.EndsWith(':'))
-                || trimmed == "else:"))
+                || (trimmed.StartsWith("func ", StringComparison.Ordinal) && trimmed.Contains(':'))
+                || trimmed == "else:");
+            bool isBlockCloser = trimmed == "end_if" || trimmed == "end_while" || trimmed == "end_func";
+
+            bool insertBlank = pendingBlank;
+
+            if (previousLine.Length > 0 && !previousLine.StartsWith('#'))
+            {
+                bool previousIsCloser = previousLine == "end_if" || previousLine == "end_while" || previousLine == "end_func";
+                bool previousIsOpener = previousLine.StartsWith("if ", StringComparison.Ordinal) && previousLine.EndsWith(':')
+                    || previousLine.StartsWith("while ", StringComparison.Ordinal) && previousLine.EndsWith(':')
+                    || previousLine.StartsWith("func ", StringComparison.Ordinal) && previousLine.Contains(':')
+                    || previousLine == "else:";
+
+                if (previousIsCloser)
+                {
+                    if (!isBlockCloser && trimmed != "else:")
+                    {
+                        insertBlank = true;
+                    }
+                }
+                else if (isBlockOpener && trimmed != "else:" && !previousIsOpener)
+                {
+                    insertBlank = true;
+                }
+            }
+
+            if (insertBlank && output.Count > 0 && output[^1].Length > 0)
+            {
+                output.Add(string.Empty);
+            }
+
+            output.Add(indented);
+            pendingBlank = false;
+
+            if (isBlockOpener)
             {
                 if (trimmed.StartsWith("if ", StringComparison.Ordinal))
                 {
@@ -312,7 +339,22 @@ internal class TextEditor
                     blockStack.RemoveAt(blockStack.Count - 1);
                 }
             }
+
+            previousLine = trimmed;
         }
+
+        while (output.Count > 0 && output[0].Length == 0)
+        {
+            output.RemoveAt(0);
+        }
+
+        while (output.Count > 0 && output[^1].Length == 0)
+        {
+            output.RemoveAt(output.Count - 1);
+        }
+
+        Lines.Clear();
+        Lines.AddRange(output);
     }
 
     private static string ToLiteral(string input)

@@ -43,12 +43,10 @@ YesNt is intentionally minimal and is well suited for:
 func greet:
     var name = %in
     print_line Hello, ${name}!
-return
+end_func
 
-func add:
-    var result = %in + %in calc
-    push_out ${result}
-return
+func add: a, b
+    return ${a} + ${b} calc
 
 call greet with Alice
 call greet with Bob

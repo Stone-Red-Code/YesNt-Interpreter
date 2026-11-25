@@ -10,12 +10,15 @@ to embed the YesNt interpreter and run scripts programmatically.
 1. [Adding the reference](#adding-the-reference)
 2. [Running a script file](#running-a-script-file)
 3. [Running an in-memory script](#running-an-in-memory-script)
-4. [Capturing output (debug mode)](#capturing-output-debug-mode)
-5. [Adding custom statements](#adding-custom-statements)
-6. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
-7. [Stopping a script](#stopping-a-script)
-8. [Reading registered statements](#reading-registered-statements)
-9. [API reference](#api-reference)
+4. [Stepwise and time-budgeted execution](#stepwise-and-time-budgeted-execution)
+5. [Capturing output (debug mode)](#capturing-output-debug-mode)
+6. [Giving the script a console and files](#giving-the-script-a-console-and-files)
+7. [Adding custom statements](#adding-custom-statements)
+8. [Removing and disabling built-in statements](#removing-and-disabling-built-in-statements)
+9. [Tasks](#tasks)
+10. [Stopping a script](#stopping-a-script)
+11. [Reading registered statements](#reading-registered-statements)
+12. [API reference](#api-reference)
 
 ---
 
@@ -127,6 +130,27 @@ You can also run the remaining script to completion:
 interpreter.RunToCompletion();
 ```
 
+### Waiting
+
+A script that waits does not block `Step` or `RunFor`: a `sleep`, a `%read_line` or `%read_key`
+before the input is there, or a custom statement that calls `WaitUntil`. They return
+`StepResult.Waiting` at once, and the script goes on when it is stepped after the wait is over.
+Step it again later (at the next frame, or after a short sleep) rather than at once in a tight
+loop:
+
+```csharp
+while (interpreter.IsRunning)
+{
+    if (interpreter.RunFor(TimeSpan.FromMilliseconds(5)) == StepResult.Waiting)
+    {
+        // Nothing to run yet: do other work, or wait for the next frame.
+    }
+}
+```
+
+`RunToCompletion` and `Execute` sleep on the calling thread while the script waits, so a
+`sleep` in a script run with `Execute` behaves as it always did.
+
 ---
 
 ## Capturing output (debug mode)
@@ -167,6 +191,78 @@ Console.Write(output);
 `OnLineExecuted` is invoked with `null` only when execution reaches end-of-file (EOF).
 If execution stops via `exit`, `throw`, `error`, or `Stop()`, no terminal `null` event is emitted.
 
+To show output somewhere else without debug mode, give the interpreter a host instead (next section).
+
+---
+
+## Giving the script a console and files
+
+Outside debug mode a script's console and files are its **host**, an `IYesNtHost`. The host
+decides:
+
+- where `print` and `print_line` write;
+- where `%read_line` and `%read_key` read from;
+- what `clear` clears;
+- how script files are read: the script given to `Execute`/`Prepare`, and every file it `import`s.
+
+The default, `ConsoleHost`, uses the process's console and file system. Set `Host` before the
+script starts; tasks the script starts share it.
+
+Derive from `ConsoleHost` to change part of it, for example to check that a script may read a
+file before it does:
+
+```csharp
+sealed class SandboxedHost(string root) : ConsoleHost
+{
+    public override string[] ReadScript(string path)
+    {
+        if (!Path.GetFullPath(path).StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new UnauthorizedAccessException(path);   // import ends with "Could not load file"
+
+        return base.ReadScript(path);
+    }
+}
+
+var interpreter = new YesNtInterpreter { Host = new SandboxedHost(@"C:\scripts\") };
+```
+
+Or implement `IYesNtHost` to put the script in a window. Input need not be there yet. Return
+`InputStatus.Pending` and the script waits without blocking (see [Waiting](#waiting)), then asks
+again when it is next stepped. `InputStatus.Closed` ends the script.
+
+```csharp
+sealed class WindowHost(TextBox output, ConcurrentQueue<string> typedLines) : IYesNtHost
+{
+    public void Write(string text) => output.AppendText(text);
+
+    public InputStatus TryReadLine(out string line)
+    {
+        return typedLines.TryDequeue(out line) ? InputStatus.Ready : InputStatus.Pending;
+    }
+
+    public InputStatus TryReadKey(out char key)
+    {
+        key = default;
+        if (!typedLines.TryDequeue(out string line))
+            return InputStatus.Pending;
+
+        key = line.Length > 0 ? line[0] : ' ';
+        return InputStatus.Ready;
+    }
+
+    public void Clear() => output.Clear();
+
+    public string[] ReadScript(string path) => File.ReadAllLines(path);
+}
+```
+
+`ReadScript` throws:
+
+- `FileNotFoundException` for a file that is not there. A missing script does not start; a
+  missing import ends the script with "Could not find file".
+- any other `IOException`, or `UnauthorizedAccessException`, for a file that cannot be read.
+  The script ends with "Could not load file".
+
 ---
 
 ## Adding custom statements
@@ -192,7 +288,7 @@ interpreter.Execute(new List<string> { "log Hello from custom statement" });
 
 Pass an `Action<string, IStatementContext>` instead of `Action<string>` to receive the current
 script state. `IStatementContext` exposes the variable tables, the current line, the line number,
-and the ability to terminate execution.
+the output stack, waiting, and the ability to terminate execution.
 
 ```csharp
 using YesNt.Interpreter.Runtime;
@@ -205,19 +301,65 @@ interpreter.AddStatement("set_var", SearchMode.StartOfLine, SpaceAround.End,
         if (parts.Length == 2)
             ctx.Variables[parts[0]] = parts[1];
         else
-            ctx.Exit("set_var requires: <name> <value>", isError: true);
+            ctx.Exit("set_var requires: <name> <value>", stopAllTasks: true);
     });
 ```
 
 `IStatementContext` provides:
 
-| Property                 | Type                        | Description                                                                |
-| ------------------------ | --------------------------- | -------------------------------------------------------------------------- |
-| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                 |
-| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
-| `CurrentLine`            | `string`                    | The line text being processed; write here for inline-substitution handlers |
-| `LineNumber`             | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
-| `Exit(message, isError)` | `void`                      | Terminate execution; `isError: true` signals an error condition            |
+| Property                      | Type                        | Description                                                                |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------- |
+| `Variables`                   | `Dictionary<string,string>` | Local variable table for the current scope                                 |
+| `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                             |
+| `CurrentLine`                 | `string`                    | The line text being processed; write here for inline-substitution handlers |
+| `LineNumber`                  | `int`                       | Zero-based index of the _next_ line to execute; set to implement jumps     |
+| `SetOut(params values)`       | `void`                      | Replace the output stack with `values`, the last on top, for `%out`        |
+| `WaitUntil(ready)`            | `void`                      | Hold the script before its next line until `ready()` is true               |
+| `RetryLine(ready = null)`     | `void`                      | Run the current line again once `ready()` is true (or at the next step)    |
+| `Exit(message, stopAllTasks)` | `void`                      | Terminate execution; `stopAllTasks: true` also ends all tasks              |
+
+### Returning a value
+
+A statement that produces a value gives it to the script the way the built-in `length` and
+`list get` do: through the output stack, which the script reads with `%out`. `SetOut` empties
+the stack, then pushes the values in order, so the last is read first. Values are plain text:
+spaces and keywords in them stay part of the value.
+
+```csharp
+interpreter.AddStatement("user_name", SearchMode.Exact, SpaceAround.None,
+    (_, ctx) => ctx.SetOut(Environment.UserName));
+```
+
+```ynt
+user_name
+var name = %out
+print_line Hello ${name}
+```
+
+### Waiting without blocking
+
+A statement that takes time should not block, since the host may be stepping the script from a
+game loop. `WaitUntil` holds the script before its next line until a condition is met.
+Meanwhile `Step` and `RunFor` return `StepResult.Waiting`. The condition is asked each time the
+script is stepped, on the stepping thread.
+
+```csharp
+interpreter.AddStatement("wait_for_click", SearchMode.Exact, SpaceAround.None,
+    (_, ctx) =>
+    {
+        int clicksBefore = button.Clicks;
+        ctx.WaitUntil(() => button.Clicks != clicksBefore);
+    });
+```
+
+Sometimes a line needs something that is not there yet, such as input. `RetryLine` runs the line
+again once the condition is met (or at the next step, if there is no condition), starting from
+`CurrentLine` as it is now:
+
+- Put what is already known into `CurrentLine` first.
+- Other statements do not run on the line until it is complete.
+
+This is how `%read_line` waits when a host returns `InputStatus.Pending`.
 
 ### With a syntax-highlight colour
 
@@ -307,6 +449,9 @@ interpreter.Execute(new List<string>
 Restores the original handlers saved when `DisableStatement` was called.
 Has no effect if the statement is not currently disabled.
 
+Tasks the script starts (`task`) get every statement added, removed, disabled and enabled
+again, so removing `exec` keeps it out of tasks too.
+
 ```csharp
 interpreter.DisableStatement("sleep");
 // ... configure other things ...
@@ -333,10 +478,52 @@ interpreter.AddStatement("exec", SearchMode.StartOfLine, SpaceAround.End, args =
 
 ---
 
+## Tasks
+
+A line ending in `task` runs in a task alongside the script (see the language reference). A
+task's interpreter gets these from the script's:
+
+- its statements: the built-in ones as the host left them, and the custom ones, whose
+  `IStatementContext` is the task's own;
+- its host and task mode;
+- the functions the script has already passed, so a task can call a function defined above it.
+
+It also shares the script's global variables.
+
+`TaskMode` says how tasks run:
+
+| Value         | Tasks run…                                                                                                        |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `Thread`      | Each on a thread of its own, at the same time as the script (the default). A task goes on after the script ends. |
+| `Cooperative` | On the thread that steps the script, taking turns with it. For single-threaded hosts.                            |
+
+With `Cooperative`:
+
+- Each step runs a line of the script and a line of each task.
+- `IsRunning` stays `true` until the script and all its tasks end.
+- Custom statements run on the stepping thread, even in tasks, so they may touch state that
+  belongs to it (a window, a game object) without locks.
+- A task that waits (`sleep`, input) does not hold up the script or the other tasks.
+
+```csharp
+var interpreter = new YesNtInterpreter { TaskMode = TaskMode.Cooperative };
+interpreter.Prepare("game.ynt");
+
+void OnFrame()   // the game's loop, on its one thread
+{
+    if (interpreter.IsRunning)
+        _ = interpreter.RunFor(TimeSpan.FromMilliseconds(2));
+}
+```
+
+---
+
 ## Stopping a script
 
 Call `Stop()` from any thread to request graceful termination. The script stops at the next line
-boundary (or immediately if it is currently blocked waiting for console input).
+boundary. A script that waits (a `sleep`, or input a host has not got yet) stops at once.
+`ConsoleHost` reads a line by waiting for it, so a script reading from the console stops once
+the line is entered.
 
 ```csharp
 var interpreter = new YesNtInterpreter();
@@ -400,13 +587,10 @@ Creates a new interpreter instance and registers all built-in statements.
 ```csharp
 public event Action<string>         OnDebugOutput;
 public event Action<DebugEventArgs> OnLineExecuted;
-public event Action                 OnWaitingForInput;
 ```
 
 `OnDebugOutput` and `OnLineExecuted` are only raised in debug mode (`isDebugMode: true`).
 `OnLineExecuted` receives `null` only on EOF completion.
-`OnWaitingForInput` is raised (in any mode) immediately before the interpreter blocks on
-`%read_key`. Use it to call `Stop()` deterministically without relying on `Thread.Sleep`.
 
 #### Methods
 
@@ -461,8 +645,14 @@ public void Stop();
 // Read-only snapshot of all registered statements
 public ReadOnlyCollection<StatementInformation> StatementInformation { get; }
 
-// Whether a prepared script is currently active/running
+// Whether a prepared script (or, with TaskMode.Cooperative, one of its tasks) is still running
 public bool IsRunning { get; }
+
+// The script's console and files (default: ConsoleHost); set before the script starts
+public IYesNtHost Host { get; set; }
+
+// How task lines run (default: TaskMode.Thread); set before the script starts
+public TaskMode TaskMode { get; set; }
 ```
 
 ---
@@ -476,13 +666,14 @@ public interface IStatementContext  // YesNt.Interpreter.Runtime
 Passed to `Action<string, IStatementContext>` handlers registered via `AddStatement`.
 Provides access to the script state that a built-in statement handler would have.
 
-| Member                   | Type                        | Description                                                               |
-| ------------------------ | --------------------------- | ------------------------------------------------------------------------- |
-| `Variables`              | `Dictionary<string,string>` | Local variable table for the current scope                                |
-| `GlobalVariables`        | `Dictionary<string,string>` | Global variable table shared across all scopes                            |
-| `CurrentLine`            | `string`                    | The line being processed; write here for inline-substitution handlers     |
-| `LineNumber`             | `int`                       | Zero-based index of the next line to execute; set this to implement jumps |
-| `Exit(message, isError)` | `void`                      | Terminate execution with a message; `isError: true` signals an error      |
+| Member                        | Type                        | Description                                                                  |
+| ----------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
+| `Variables`                   | `Dictionary<string,string>` | Local variable table for the current scope                                   |
+| `GlobalVariables`             | `Dictionary<string,string>` | Global variable table shared across all scopes                               |
+| `CurrentLine`                 | `string`                    | The line being processed; write here for inline-substitution handlers        |
+| `LineNumber`                  | `int`                       | Zero-based index of the next line to execute; set this to implement jumps    |
+| `SetOut(params values)`       | `void`                      | Replace the output stack with `values`, the last on top, for `%out`          |
+| `Exit(message, stopAllTasks)` | `void`                      | Terminate execution with a message; `stopAllTasks: true` also ends all tasks |
 
 ---
 
@@ -498,4 +689,40 @@ Returned by `Step` and `RunFor` to indicate the outcome of the incremental execu
 | ---------- | -------------------------------------------------------------- |
 | `Continue` | A line was executed and more lines remain.                     |
 | `Paused`   | The step or time budget was exhausted before the script ended. |
+| `Waiting`  | The script waits; step it again later, not at once.            |
 | `Finished` | The script ran to completion (or terminated/exited).           |
+
+---
+
+### `IYesNtHost` and `ConsoleHost`
+
+```csharp
+public interface IYesNtHost  // YesNt.Interpreter.Runtime
+{
+    void Write(string text);                    // output outside debug mode, line ends included
+    InputStatus TryReadLine(out string line);   // %read_line
+    InputStatus TryReadKey(out char key);       // %read_key
+    void Clear();                               // clear
+    string[] ReadScript(string path);           // the script and its imports
+}
+
+public class ConsoleHost : IYesNtHost          // the default; every member is virtual
+```
+
+`ConsoleHost.TryReadLine` waits for a console line. `TryReadKey` returns `Pending` until a key
+is pressed, so the script waits without blocking the thread that steps it.
+
+### `InputStatus`
+
+| Value     | Description                                            |
+| --------- | ------------------------------------------------------ |
+| `Ready`   | The input is there.                                    |
+| `Pending` | Not yet: the script waits and asks again when stepped. |
+| `Closed`  | There will be no more input: the script ends.          |
+
+### `TaskMode`
+
+| Value         | Description                                                   |
+| ------------- | ------------------------------------------------------------- |
+| `Thread`      | Each task runs on a thread of its own (the default).          |
+| `Cooperative` | Tasks take turns with the script on the thread that steps it. |
