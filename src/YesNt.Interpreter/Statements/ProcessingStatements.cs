@@ -59,10 +59,8 @@ internal partial class ProcessingStatements : StatementRuntimeInformation
     [Statement("length", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]
     public void Length(string args)
     {
-        RuntimeInfo.InParametersStack.Clear();
-        RuntimeInfo.OutParametersStack.Clear();
-
-        RuntimeInfo.OutParametersStack.Push(args.FromSafeString().Length.ToString());
+        // Its argument is on the line: values pushed for a later call stay where they are.
+        RuntimeInfo.SetOut(args.FromSafeString().Length.ToString());
     }
 
     [Statement("import", SearchMode.StartOfLine, SpaceAround.End, ConsoleColor.Magenta)]

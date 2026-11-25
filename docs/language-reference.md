@@ -410,6 +410,30 @@ call greet
 call add with 3, 7
 ```
 
+### Arguments and results: `%in` and `%out`
+
+Values travel through two stacks, which do different jobs:
+
+- **The input stack (`%in`) holds arguments for something you call:** a function, or a
+  program run with `exec`. Their code is not on the calling line, so the arguments are pushed
+  first (`push_in`, or `with a, b`) and taken by what is called.
+- **The output stack (`%out`) holds the last result.** YesNt has no expressions, so a result
+  cannot appear in the line that asked for it. It waits on the output stack for a later line
+  to read with `%out`. Functions put results there with `push_out`. Statements that produce a
+  value (`length`, `list … get`, `list … length`, `exec`) replace whatever was there with their
+  result.
+
+Other statements take their arguments on their own line (`length Hello`, `list items get 1`), so
+they leave the input stack alone. Values pushed for a later `call` are still there after them.
+Here `length` leaves `Alice` for `greet`, which takes it with `%in`:
+
+```ynt
+push_in Alice
+length abc
+var size = %out
+call greet
+```
+
 ### Input arguments
 
 #### Push an input argument - `push_in`
@@ -461,8 +485,8 @@ Only valid inside a function. Pushes a return value onto the output stack.
 
 #### Consume an output value - `%out`
 
-`%out` is an inline token that pops and inserts the top value from the output stack.
-Valid anywhere after a function call or list/processing statement that pushes to the output stack.
+`%out` is an inline token that pops and inserts the top value from the output stack: the last
+result of a function or a statement that produces a value. Each value is read once.
 
 ```ynt
 call add with 3, 7
@@ -778,7 +802,8 @@ print_line One second later.
 length <text>
 ```
 
-Pushes the character count of `<text>` onto the output stack.
+Replaces the output stack with the character count of `<text>`. The input stack is left as it
+is.
 
 ```ynt
 length Hello, world!
@@ -829,6 +854,10 @@ You can also stage arguments with `push_in` before a bare `exec`:
 push_in --version
 exec python
 ```
+
+Like `call`, `exec` takes **every** value on the input stack as an argument, then empties it.
+Values pushed earlier for a function would become the program's arguments, so call the
+function first.
 
 ---
 

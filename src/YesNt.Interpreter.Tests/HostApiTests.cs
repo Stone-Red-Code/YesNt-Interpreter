@@ -140,6 +140,16 @@ public class HostApiTests
         StringAssert.StartsWith(host.Text, "a, b goto calc" + Environment.NewLine);
     }
 
+    [TestMethod]
+    public void LengthLeavesArgumentsForALaterCallTest()
+    {
+        (YesNtInterpreter interpreter, TestHost host) = Create();
+
+        interpreter.Execute(["push_in Alice", "length abc", "print_line %out", "call greet", "exit", "func greet:", "print_line Hello %in", "end_func"]);
+
+        StringAssert.StartsWith(host.Text, "3" + Environment.NewLine + "Hello Alice" + Environment.NewLine);
+    }
+
     // --- Host ---
 
     [TestMethod]
